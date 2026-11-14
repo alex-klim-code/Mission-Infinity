@@ -102,7 +102,11 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
       {/* desktop pane */}
       <aside className="scroll-thin hidden min-h-0 overflow-y-auto border-l md:order-2 border-white/10 bg-void/60 p-4 backdrop-blur-xl md:block" data-testid="panel-builder-summary">
         <div className="kicker mb-2">Your rocket</div>
-        <HullVisual hullId={summary.hullId} className="h-64 w-full lg:h-80" />
+        <div className="relative overflow-hidden rounded-md border border-white/10 bg-[radial-gradient(ellipse_at_50%_100%,hsl(22_96%_58%/.12),transparent_60%),repeating-linear-gradient(90deg,transparent_0_23px,hsl(186_92%_56%/.06)_23px_24px),repeating-linear-gradient(0deg,transparent_0_23px,hsl(186_92%_56%/.06)_23px_24px)]">
+          <div className="pointer-events-none absolute inset-x-6 bottom-3 h-px bg-ion/30" aria-hidden />
+          <div className="pointer-events-none absolute left-2 top-2 font-mono text-[8px] uppercase tracking-widest text-muted-foreground/60" aria-hidden>{summary.count}/{summary.total}</div>
+          <HullVisual hullId={summary.hullId} className="h-64 w-full lg:h-80" />
+        </div>
         <div className="mt-2 text-center font-display text-lg font-bold uppercase tracking-wider" data-testid="text-builder-hull">{hull?.name ?? 'Body not bought'}</div>
         <div className="mt-3">{stats}</div>
         {session.science?.completed && <p className="mt-2 font-mono text-xs text-ion" data-testid="text-summary-payload">Science payload: {session.science.instrumentIds.length} instruments / {formatExact(session.science.spent)}</p>}

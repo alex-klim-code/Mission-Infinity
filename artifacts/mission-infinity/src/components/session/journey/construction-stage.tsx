@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { HullVisual, formatExact, hullById, useCalm, type Props } from '../rocket-shared';
+import { HangarFx } from '@/components/visual/hangar-fx';
 import { TickError, Waiting, clamp01, useJourneyTicker, useNow } from './shared';
 
 const FALLBACK = ['Engine bay', 'Propellant tanks', 'Avionics ring', 'Payload bay', 'Nose fairing'];
@@ -49,6 +50,7 @@ export function ConstructionStage({ session, mission, isHost, act, pending, pend
       <div className="mx-auto grid max-w-5xl gap-6 px-4 py-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:px-8">
         <div className={cn('glass hud-corners scanline relative h-[420px] overflow-hidden rounded-lg sm:h-[480px]', failed && 'border-destructive/40')} data-testid="panel-construction-hangar">
           <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent_0_47px,hsl(186_92%_56%/.05)_47px_48px),repeating-linear-gradient(0deg,transparent_0_47px,hsl(186_92%_56%/.05)_47px_48px)]" aria-hidden />
+          <HangarFx running={running} progress={p} failed={failed} />
           {failed && <div className="absolute inset-0 bg-destructive/[.06]" aria-hidden />}
           <div className="absolute left-3 top-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Integration hall 2 / {failed ? 'Integration halted' : delivering ? 'Launch platform' : 'Assembly bay'}</div>
           <div className={cn('absolute bottom-6 h-2 w-28 rounded-sm transition-colors duration-700', delivering ? 'bg-burn/70' : 'bg-white/10')} style={{ right: '12%' }} aria-hidden />

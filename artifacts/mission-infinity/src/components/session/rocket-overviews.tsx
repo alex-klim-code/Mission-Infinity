@@ -1,7 +1,8 @@
 import { Check, ChevronRight, Circle, Lock } from 'lucide-react';
 import type { RocketComponent, RocketSection } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
-import { BODY_CATEGORY, categoryIcon, hullById } from './rocket-shared';
+import { BODY_CATEGORY, hullById } from './rocket-shared';
+import { PartArt, partKind } from '@/components/visual/part-art';
 import { completionPercent, completionStats } from '@/lib/rocket-completion';
 
 export type Crumb = { label: string; onClick?: () => void; testId: string };
@@ -64,7 +65,10 @@ export function RootOverview({ sections, official, onSection }: Omit<Common, 'by
                   <span className="min-w-0 flex-1 font-display text-sm font-bold uppercase tracking-wider [overflow-wrap:anywhere]">{s.name}</span>
                   {full ? <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[10px] uppercase text-burn"><Check className="h-3 w-3" /> Complete</span> : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-ion" />}
                 </div>
-                <div className="mt-3"><Bar pct={p.pct} label={`${s.name} completion`} testId={`progress-section-${s.id}`} /></div>
+                <div className="mt-2 flex h-12 items-center gap-1" aria-hidden>
+                  {s.categories.slice(0, 5).map((c) => <PartArt key={c.id} kind={partKind(c)} className={cn('h-10 w-14', official.has(c.id) ? 'opacity-100' : 'opacity-40')} />)}
+                </div>
+                <div className="mt-2"><Bar pct={p.pct} label={`${s.name} completion`} testId={`progress-section-${s.id}`} /></div>
                 <div className="mt-1.5 flex justify-between font-mono text-[11px] text-muted-foreground">
                   <span data-testid={`text-section-count-${s.id}`}>{p.done}/{p.total}</span>
                   <span data-testid={`text-section-percent-${s.id}`}>{p.pct}%</span>
@@ -90,14 +94,13 @@ export function SectionOverview({ section, official, byOption, hullBought, onCat
       <div className="mt-2"><Bar pct={pct} label={`${section.name} completion`} testId="progress-section" /></div>
       <ul className="mt-4 divide-y divide-white/[.06] overflow-hidden rounded-lg border border-white/10 bg-void/70">
         {section.categories.map((c) => {
-          const Icon = categoryIcon(c);
           const optId = official.get(c.id);
           const name = optId ? byOption.get(optId)?.name ?? hullById(optId)?.name : undefined;
           const locked = !hullBought && c.id !== BODY_CATEGORY;
           return (
             <li key={c.id}>
               <button type="button" onClick={() => onCategory(c.id)} className="group flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-ion/[.05] focus-visible:bg-ion/[.08] focus-visible:outline-none" data-testid={`button-category-${c.id}`}>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ion/[.06] text-ion/80"><Icon className="h-4 w-4" aria-hidden /></span>
+                <span className={cn('flex h-11 w-16 shrink-0 items-center justify-center rounded-md border bg-ion/[.05] transition-colors group-hover:border-ion/40', optId ? 'border-burn/40' : 'border-white/10')}><PartArt kind={partKind(c)} className="h-9 w-14" /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm [overflow-wrap:anywhere]">{c.name}</span>
                   <span className={cn('block truncate text-[11px]', name ? 'text-foreground/80' : 'text-muted-foreground/60')} data-testid={`text-category-choice-${c.id}`}>{name ?? 'Not selected'}</span>

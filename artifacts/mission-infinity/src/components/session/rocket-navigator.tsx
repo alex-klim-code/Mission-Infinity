@@ -5,6 +5,7 @@ import { imgUrl } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import { useEngineeringGuard } from './engineering-guard';
 import { BODY_CATEGORY, categoryIcon, damageRiskOf, fmtKg, fmtRisk, fmtSigned, formatExact, hullById, isRepairLocked, shortDescription, type Props } from './rocket-shared';
+import { PartArt, partKind } from '@/components/visual/part-art';
 import { OptionDialog } from './rocket-option-dialog';
 import { useDemoGuide } from '@/hooks/use-demo-guide';
 import { DEMO_RING, DemoChoiceBadge, DemoGuidePanel } from './demo-guide';
@@ -135,7 +136,7 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
   return (
     <section className="mt-5" data-testid={`panel-category-${cat.id}`}>
       <div className="flex flex-wrap items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-ion/30 bg-ion/10 text-ion"><Icon className="h-5 w-5" aria-hidden /></span>
+        <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-ion/30 bg-ion/10 text-ion"><Icon className="h-5 w-5" aria-hidden /></span>
         <div className="min-w-0 flex-1">
           <div className="font-mono text-[10px] uppercase tracking-[.22em] text-muted-foreground" data-testid="text-current-section">{secName} / {pos} of {of}</div>
           <h2 ref={headRef} tabIndex={-1} className="font-display text-2xl font-bold uppercase leading-tight outline-none [overflow-wrap:anywhere]" data-testid="text-category-name">{cat.name}</h2>
@@ -173,8 +174,9 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
                     <img src={imgUrl(hull.image)} alt={`${hull.name} rocket`} loading="lazy" className="relative h-full w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" data-testid={`img-option-${o.id}`} />
                   </div>
                 ) : (
-                  <div className="flex h-20 items-center justify-center border-b border-white/[.04] bg-gradient-to-br from-ion/[.06] to-transparent">
-                    <Icon className="h-9 w-9 text-ion/70 transition-colors group-hover:text-ion" aria-hidden data-testid={`icon-option-${o.id}`} />
+                  <div className="relative flex h-24 items-center justify-center overflow-hidden border-b border-white/[.04] bg-[radial-gradient(ellipse_at_50%_80%,hsl(186_92%_56%/.10),transparent_70%)]" data-testid={`icon-option-${o.id}`}>
+                    <PartArt kind={partKind(cat)} live={sel} className="h-20 w-32" />
+                    <span className="absolute bottom-1 right-2 font-mono text-[8px] uppercase tracking-widest text-muted-foreground/50">Schematic</span>
                   </div>
                 )}
                 <div className="flex min-w-0 flex-1 flex-col p-3.5">

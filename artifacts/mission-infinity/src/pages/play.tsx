@@ -20,6 +20,7 @@ import { InvitationRow } from '@/components/invitations';
 import { ErrorState, HudButton, Panel } from '@/components/ui-kit';
 import { SCENE_STATUS_LABEL, errMsg, imgUrl, invalidateGame } from '@/lib/game';
 import { MissionFacts, MissionSchedule } from '@/components/session/mission-summary';
+import { LunarRoute } from '@/components/visual/lunar-route';
 import { DemoToggle } from '@/components/session/demo-guide';
 import { useDemoMode } from '@/hooks/use-demo-guide';
 
@@ -144,7 +145,8 @@ function PlayInner({ account }: { account: PlayerAccount }) {
                   <div className="kicker mb-3">Mission {featured.number} / {featured.difficulty}</div>
                   <h2 className="break-words font-display text-4xl font-bold uppercase md:text-6xl">{featured.title}</h2>
                   <p className="mt-2 text-lg text-foreground/80">{featured.subtitle}</p>
-                  <div className="mt-8 flex flex-wrap gap-3">
+                  <LunarRoute className="mt-6 hidden h-40 max-w-md sm:block" />
+                  <div className="mt-6 flex flex-wrap gap-3">
                     <HudButton variant="burn" onClick={() => setPicked(featured)} data-testid="button-select-mission">
                       <Play className="h-4 w-4" /> Select mission
                     </HudButton>
@@ -161,8 +163,8 @@ function PlayInner({ account }: { account: PlayerAccount }) {
           )}
           <div className="grid gap-4 md:grid-cols-3">
             {locked.map((m, i) => (
-              <motion.div key={m.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }} className="relative h-56 overflow-hidden rounded-lg border border-white/10" data-testid={`card-mission-${m.id}`}>
-                <img src={imgUrl(m.image)} alt={m.title} className="absolute inset-0 h-full w-full object-cover opacity-45 grayscale-[.5]" />
+              <motion.div key={m.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }} className="group relative h-56 overflow-hidden rounded-lg border border-white/10 transition-colors hover:border-ion/40" data-testid={`card-mission-${m.id}`}>
+                <img src={imgUrl(m.image)} alt={m.title} className="absolute inset-0 h-full w-full object-cover opacity-45 grayscale-[.5] transition-[transform,opacity] duration-700 group-hover:scale-105 group-hover:opacity-60" />
                 <div className="absolute inset-0 bg-gradient-to-t from-void to-void/20" />
                 <div className="relative flex h-full flex-col justify-between p-5">
                   <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest">
