@@ -7,6 +7,7 @@
  */
 import type { FuelLoad } from "./fuelLoad";
 import type { GameSessionStatus } from "./gameSessionStatus";
+import type { MissionJourney } from "./missionJourney";
 import type { RocketAssembly } from "./rocketAssembly";
 import type { RocketBuild } from "./rocketBuild";
 import type { ScienceLoadout } from "./scienceLoadout";
@@ -27,5 +28,6 @@ export interface GameSession {
   assembly?: RocketAssembly;
   science?: ScienceLoadout;
   fueling?: FuelLoad;
+  journey?: MissionJourney;
   createdAt: string;
 }

@@ -538,6 +538,251 @@ export interface FuelLoad {
   fuelType: string;
 }
 
+export interface MissionConstruction {
+  opened: boolean;
+  /** @nullable */
+  startedAt: string | null;
+  durationMs: number;
+  months: number;
+  cost: number;
+  progress: number;
+  elapsedMonths: number;
+  delivered: boolean;
+  legacy: boolean;
+}
+
+export type MissionJourneyPhase =
+  (typeof MissionJourneyPhase)[keyof typeof MissionJourneyPhase];
+
+export const MissionJourneyPhase = {
+  NONE: "NONE",
+  ROUTE: "ROUTE",
+  CALENDAR: "CALENDAR",
+  MISSION_DAY: "MISSION_DAY",
+  FLIGHT: "FLIGHT",
+  MOON_ARRIVAL: "MOON_ARRIVAL",
+  DIAGNOSTICS: "DIAGNOSTICS",
+  LUNAR_OPERATIONS: "LUNAR_OPERATIONS",
+  FAILED: "FAILED",
+  LANDING: "LANDING",
+  SAMPLE_COLLECTION: "SAMPLE_COLLECTION",
+  LANDING_FAILED: "LANDING_FAILED",
+  RETURN_FLIGHT: "RETURN_FLIGHT",
+  RETURN_FAILED: "RETURN_FAILED",
+  REENTRY: "REENTRY",
+  RECOVERY: "RECOVERY",
+  RESULTS: "RESULTS",
+} as const;
+
+export type MissionLandingStatus =
+  (typeof MissionLandingStatus)[keyof typeof MissionLandingStatus];
+
+export const MissionLandingStatus = {
+  READY: "READY",
+  DESCENDING: "DESCENDING",
+  LANDED: "LANDED",
+  CRASHED: "CRASHED",
+} as const;
+
+export interface MissionLanding {
+  status: MissionLandingStatus;
+  altitudeM: number;
+  velocityMps: number;
+  thrust: number;
+  recommendedThrust: number;
+  fuelUsedKg: number;
+  /** @nullable */
+  startedAt: string | null;
+  /** @nullable */
+  lastTickAt: string | null;
+  elapsedSeconds: number;
+}
+
+export type MissionEquipmentStatus =
+  (typeof MissionEquipmentStatus)[keyof typeof MissionEquipmentStatus];
+
+export const MissionEquipmentStatus = {
+  MISSING: "MISSING",
+  UNKNOWN: "UNKNOWN",
+  OPERATIONAL: "OPERATIONAL",
+  DAMAGED: "DAMAGED",
+  CRITICAL_FAILURE: "CRITICAL_FAILURE",
+} as const;
+
+export interface MissionEquipment {
+  id: string;
+  name: string;
+  status: MissionEquipmentStatus;
+  available: boolean;
+  potential: number;
+  /** @nullable */
+  warning: string | null;
+}
+
+export interface MissionSelectedComponent {
+  categoryId: string;
+  name: string;
+  quality: number;
+}
+
+export interface MissionObjective {
+  id: string;
+  label: string;
+  weight: number;
+  completion: number;
+  detail: string;
+}
+
+export interface MissionResults {
+  success: boolean;
+  completionPercent: number;
+  sampleMassKg: number;
+  recoveredSampleMassKg: number;
+  scienceEarned: number;
+  recoveredSciencePoints: number;
+  durationDays: number;
+  remainingBudget: number;
+  /** @nullable */
+  failure: string | null;
+  objectives: MissionObjective[];
+}
+
+export interface MissionOperations {
+  landing: MissionLanding;
+  equipment: MissionEquipment[];
+  components: MissionSelectedComponent[];
+  warnings: string[];
+  hasCamera: boolean;
+  alternativeNavigation: boolean;
+  canCollect: boolean;
+  collectionProgress: number;
+  /** @nullable */
+  siteId: string | null;
+  /** @nullable */
+  siteStartedAt: string | null;
+  collectedSites: string[];
+  sampleMassKg: number;
+  scienceEarned: number;
+  remainingFuelKg: number;
+  returnInitialFuelKg: number;
+  /** @nullable */
+  returnStartedAt: string | null;
+  returnRequiredKg: number;
+  returnProgress: number;
+  returnManeuver: string;
+  /** @nullable */
+  reentryStartedAt: string | null;
+  /** @nullable */
+  recoveryStartedAt: string | null;
+  missionDay: number;
+  /** @nullable */
+  failure: string | null;
+  results: MissionResults | null;
+}
+
+export type MissionWeatherCondition =
+  (typeof MissionWeatherCondition)[keyof typeof MissionWeatherCondition];
+
+export const MissionWeatherCondition = {
+  SUNNY: "SUNNY",
+  PARTLY_CLOUDY: "PARTLY_CLOUDY",
+  CLOUDY: "CLOUDY",
+  RAIN: "RAIN",
+  STRONG_WIND: "STRONG_WIND",
+  STORM: "STORM",
+} as const;
+
+export interface MissionWeather {
+  date: string;
+  condition: MissionWeatherCondition;
+}
+
+export interface MissionFlightPlan {
+  routeId: string;
+  routeLabel: string;
+  distanceKm: number;
+  outboundDays: number;
+  returnDays: number;
+  totalDays: number;
+  dryMassKg: number;
+  initialMassKg: number;
+  engineCount: number;
+  engineNames: string[];
+  thrustN: number;
+  specificImpulseSeconds: number;
+  fuelLoadedKg: number;
+  departureFuelKg: number;
+  arrivalFuelKg: number;
+  requiredOutboundKg: number;
+  requiredReturnKg: number;
+  requiredFuelKg: number;
+  massAssumed: boolean;
+  assumptions: string;
+  animationDurationMs: number;
+}
+
+export type MissionFlightTelemetryManeuver =
+  (typeof MissionFlightTelemetryManeuver)[keyof typeof MissionFlightTelemetryManeuver];
+
+export const MissionFlightTelemetryManeuver = {
+  PAD: "PAD",
+  LAUNCH_BURN: "LAUNCH_BURN",
+  COAST: "COAST",
+  LUNAR_INSERTION: "LUNAR_INSERTION",
+  COMPLETE: "COMPLETE",
+  FAILED: "FAILED",
+} as const;
+
+export interface MissionFlightTelemetry {
+  progress: number;
+  currentDay: number;
+  remainingFuelKg: number;
+  consumptionKgPerSecond: number;
+  speedKmPerSecond: number;
+  massKg: number;
+  maneuver: MissionFlightTelemetryManeuver;
+  /** @nullable */
+  startedAt: string | null;
+}
+
+export type InstrumentDiagnosticStatus =
+  (typeof InstrumentDiagnosticStatus)[keyof typeof InstrumentDiagnosticStatus];
+
+export const InstrumentDiagnosticStatus = {
+  UNKNOWN: "UNKNOWN",
+  OPERATIONAL: "OPERATIONAL",
+  DAMAGED: "DAMAGED",
+  CRITICAL_FAILURE: "CRITICAL_FAILURE",
+} as const;
+
+export interface InstrumentDiagnostic {
+  instrumentId: string;
+  name: string;
+  quality: number;
+  status: InstrumentDiagnosticStatus;
+  maxSciencePoints: number;
+  availableSciencePoints: number;
+  /** @nullable */
+  failure: string | null;
+  progress: number;
+}
+
+export interface MissionJourney {
+  construction: MissionConstruction;
+  phase: MissionJourneyPhase;
+  operations?: MissionOperations | null;
+  weather: MissionWeather[];
+  /** @nullable */
+  briefingDate: string | null;
+  plan: MissionFlightPlan | null;
+  flight: MissionFlightTelemetry;
+  diagnostics: InstrumentDiagnostic[];
+  diagnosticsProgress: number;
+  diagnosticsComplete: boolean;
+  availableSciencePoints: number;
+  maxSciencePoints: number;
+}
+
 export interface GameSession {
   id: string;
   roomCode: string;
@@ -552,6 +797,7 @@ export interface GameSession {
   assembly?: RocketAssembly;
   science?: ScienceLoadout;
   fueling?: FuelLoad;
+  journey?: MissionJourney;
   createdAt: string;
 }
 
@@ -583,6 +829,28 @@ export const SessionActionAction = {
   "fuel-tick": "fuel-tick",
   "pause-fueling": "pause-fueling",
   "confirm-fuel": "confirm-fuel",
+  "start-construction": "start-construction",
+  "journey-tick": "journey-tick",
+  "open-briefing": "open-briefing",
+  "briefing-continue": "briefing-continue",
+  "confirm-briefing-date": "confirm-briefing-date",
+  "launch-flight": "launch-flight",
+  "check-instruments": "check-instruments",
+  "continue-lunar": "continue-lunar",
+  "start-landing": "start-landing",
+  "set-landing-thrust": "set-landing-thrust",
+  "collect-site": "collect-site",
+  "start-return": "start-return",
+  "view-results": "view-results",
+} as const;
+
+export type SessionActionSiteId =
+  (typeof SessionActionSiteId)[keyof typeof SessionActionSiteId];
+
+export const SessionActionSiteId = {
+  regolith: "regolith",
+  crater: "crater",
+  ridge: "ridge",
 } as const;
 
 export type SessionActionHullId =
@@ -596,6 +864,14 @@ export const SessionActionHullId = {
 
 export interface SessionAction {
   action: SessionActionAction;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  thrust?: number;
+  siteId?: SessionActionSiteId;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  briefingDate?: string;
   /**
    * @minimum 0
    * @maximum 30000

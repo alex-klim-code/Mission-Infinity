@@ -17,6 +17,7 @@ import { getCatalog } from "../game/content";
 import { getAccount, getCareer, resolveUser, savePlayer } from "../game/players";
 import { friendshipAction, socialState } from "../game/social";
 import { createSession, notifySession, sessionState, updateSession } from "../game/sessions";
+import { consumeGameRate, gameRatePolicy } from "../game/rate-policy";
 import { rocketCatalog } from "../game/rocket-catalog";
 import { scientificInstruments } from "../game/scientific-instruments";
 import { inviteToSession, respondToInvite } from "../game/invitations";
@@ -61,14 +62,8 @@ gameApi.addHook("onRequest", async request => {
   const auth = getAuth(request.raw as Request);
   const authId = auth?.userId;
   requireCondition(authId, 401, "Sign in to access your mission.");
-  const key = `${authId}:${request.method === "GET" ? "read" : "write"}`;
-  const limit = request.method === "GET" ? 240 : 80;
-  const window = windows.get(key);
-  if (!window || window.until < Date.now()) windows.set(key, { count: 1, until: Date.now() + 60_000 });
-  else {
-    window.count++;
-    requireCondition(window.count <= limit, 429, "Too many requests. Please wait a moment.");
-  }
+  const policy=gameRatePolicy(request.method,route);
+  requireCondition(consumeGameRate(windows,`${authId}:${policy.bucket}`,policy.limit),429,"Too many requests. Please wait a moment.");
   request.playerId = await resolveUser(authId);
 });
 

@@ -59,6 +59,22 @@ interface Invites {
   created_at: Time;
 }
 export interface GameDatabase {
+  game_session_mission_journeys: {
+    operations: Generated<import("@workspace/api-zod").MissionOperations | null>;
+    session_id: string;
+    construction_opened: Generated<boolean>;
+    construction_started_at: Date | null;
+    construction_months: Generated<number>;
+    construction_cost: Generated<number>;
+    delivered: Generated<boolean>;
+    phase: Generated<import("@workspace/api-zod").MissionJourney["phase"]>;
+    weather: Generated<import("@workspace/api-zod").MissionWeather[]>;
+    briefing_date: string | null;
+    plan: import("@workspace/api-zod").MissionFlightPlan | null;
+    flight_started_at: Date | null;
+    diagnostics_started_at: Date | null;
+    diagnostics: Generated<import("@workspace/api-zod").InstrumentDiagnostic[]>;
+  };
   game_session_fuel_loads: {
     session_id: string;
     opened: Generated<boolean>;

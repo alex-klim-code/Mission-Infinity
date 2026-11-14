@@ -28,7 +28,6 @@ export async function updateAssembly(
     const build = await db.selectFrom("game_session_builds").selectAll().where("session_id","=",session.id).executeTakeFirst();
     requireCondition(build?.selected_hull_id && componentCategories.every(c => assembly.selections[c.id]),409,"Choose a hull and all 27 component categories first.");
     await db.updateTable("game_session_rocket_assemblies").set({completed:true}).where("session_id","=",session.id).execute();
-    await db.updateTable("game_session_builds").set({elapsed_months:12}).where("session_id","=",session.id).execute();
     return;
   }
   requireCondition(!assembly.completed,409,"The rocket is already built.");

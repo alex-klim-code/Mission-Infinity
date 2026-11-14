@@ -7,9 +7,18 @@
  */
 import type { SessionActionAction } from "./sessionActionAction";
 import type { SessionActionHullId } from "./sessionActionHullId";
+import type { SessionActionSiteId } from "./sessionActionSiteId";
 
 export interface SessionAction {
   action: SessionActionAction;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  thrust?: number;
+  siteId?: SessionActionSiteId;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  briefingDate?: string;
   /**
    * @minimum 0
    * @maximum 30000

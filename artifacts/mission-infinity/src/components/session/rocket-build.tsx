@@ -16,6 +16,7 @@ import { BODY_CATEGORY, HullVisual, fmtKg, formatExact, hullById, useCalm, type 
 import { Navigator } from './rocket-navigator';
 import { ScienceStage } from './science-stage';
 import { FuelStage } from './fuel-stage';
+import { ConstructionStage, MissionJourneyStage, FlightStatusPane } from './journey';
 import type { ActFn } from './session-shared';
 import { RocketFuelCheck } from './rocket-fuel-check';
 import { assessFuel, fuelCopy } from '@/lib/rocket-fuel';
@@ -176,6 +177,10 @@ export function RocketBuildView(props: Props) {
   const catalog = useGetGameCatalog();
   const sections = useMemo(() => catalog.data?.rocketCatalog ?? [], [catalog.data]);
   const { byOption, cats, official } = useOfficial(session, sections);
+  const journey = session.journey;
+  const journeyOpen = !!journey && journey.phase !== 'NONE';
+  const flightStatus = !!journey && !['NONE','ROUTE','CALENDAR'].includes(journey.phase);
+  const constructionOpen = !!journey?.construction.opened && !journey.construction.delivered && !session.fueling?.opened;
 
   if (catalog.isLoading)
     return (
@@ -207,10 +212,10 @@ export function RocketBuildView(props: Props) {
   return (
     <div className="relative z-10 flex h-full min-h-0 flex-col md:grid md:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
       <div className="md:order-2 md:min-h-0 md:contents">
-        <SummaryPane session={session} sections={sections} summary={summary} isHost={props.isHost} act={props.act} pending={props.pending} pendingAction={props.pendingAction} official={official} byOption={byOption} />
+        {flightStatus ? <FlightStatusPane {...props} /> : <SummaryPane session={session} sections={sections} summary={summary} isHost={props.isHost} act={props.act} pending={props.pending} pendingAction={props.pendingAction} official={official} byOption={byOption} />}
       </div>
       <div className="scroll-thin min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden md:order-1" data-testid="panel-builder-left">
-        {session.fueling?.opened ? <FuelStage {...props} /> : session.science?.opened ? <ScienceStage {...props} /> :
+        {journeyOpen ? <MissionJourneyStage {...props} /> : constructionOpen ? <ConstructionStage {...props} /> : session.fueling?.opened ? <FuelStage {...props} /> : session.science?.opened ? <ScienceStage {...props} /> :
           <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div>}
       </div>
     </div>

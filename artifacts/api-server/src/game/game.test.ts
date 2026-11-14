@@ -18,6 +18,7 @@ import { rocketCatalog, componentCategories, rocketOptions } from "./rocket-cata
 import { rocketHulls } from "./rocket-builds";
 import { scientificInstruments } from "./scientific-instruments";
 import { fuelIncrement } from "./fuel-loads";
+import { constructionMonths } from "./mission-flight-model";
 
 test("fuel heartbeat caps offline time, quantity and available budget", () => {
   assert.equal(fuelIncrement(0,30000,100,1000000),150);
@@ -201,7 +202,7 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await Promise.all([1,2].map(()=>updateSession(leader,session.id,{action:"finish-rocket"})));
       const finished = await sessionState(session.id,crew);
       assert.equal(finished.assembly.completed,true);
-      assert.equal(finished.build.elapsedMonths,12);
+      assert.equal(finished.build.elapsedMonths,0,"Parts selection does not spend construction months.");
       assert.equal(finished.build.spent,expected);
       await assert.rejects(updateSession(leader,session.id,{action:"confirm-component",optionId:expensive.id}),/already built/);
       await assert.rejects(updateSession(crew,session.id,{action:"choose-component",optionId:cheap.id}),/already built/);
@@ -232,7 +233,7 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.deepEqual(state.science.instrumentIds,ids);
       assert.equal(state.science.spent,49000000);
       assert.equal(state.build.spent,expected+49000000);
-      assert.equal(state.build.elapsedMonths,12);
+      assert.equal(state.build.elapsedMonths,0);
       assert.deepEqual(state.assembly,finished.assembly);
       await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:[]}),/already purchased/);
       await assert.rejects(updateSession(crew,session.id,{action:"propose-instruments",instrumentIds:[]}),/already purchased/);
@@ -243,6 +244,13 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/Open Stage 3/);
       await updateSession(leader,session.id,{action:"open-fueling"});
       await updateSession(leader,session.id,{action:"open-fueling"});
+      assert.equal((await sessionState(session.id,leader)).journey.construction.opened,true);
+      await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/Open Stage 3/);
+      await updateSession(leader,session.id,{action:"start-construction"});
+      await updateSession(leader,session.id,{action:"start-construction"});
+      await gameDb.updateTable("game_session_mission_journeys").set({construction_started_at:new Date(Date.now()-11000)}).where("session_id","=",session.id).execute();
+      await Promise.all([1,2].map(()=>updateSession(leader,session.id,{action:"journey-tick"})));
+      assert.equal((await sessionState(session.id,leader)).journey.construction.delivered,true);
       await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/Connect/);
       await assert.rejects(updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:30001}),/target/);
       await assert.rejects(updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:-1}),/target/);
@@ -297,12 +305,28 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.equal(fueled.fueling.loadedKg,3000);
       assert.equal(fueled.fueling.spent,24000);
       assert.equal(fueled.build.spent,expected+49000000+24000);
-      assert.equal(fueled.build.elapsedMonths,12);
+      assert.equal(fueled.build.elapsedMonths,constructionMonths(expected));
       assert.deepEqual(fueled.assembly,finished.assembly);
       await assert.rejects(updateSession(crew,session.id,{action:"confirm-fuel"}),/Leader/);
       await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/already confirmed/);
       await updateSession(leader,session.id,{action:"disconnect-fuel-hose"});
       assert.equal((await sessionState(session.id,leader)).fueling.connected,false);
+      // Too little fuel has a persisted mission consequence, not a free Moon arrival.
+      await assert.rejects(updateSession(crew,session.id,{action:"open-briefing"}),/Leader/);
+      await updateSession(leader,session.id,{action:"open-briefing"});
+      const briefing = await sessionState(session.id,leader);
+      assert.equal(briefing.journey.plan!.routeId,"earth-moon-earth");
+      assert.ok(briefing.journey.plan!.requiredOutboundKg>3000);
+      await updateSession(leader,session.id,{action:"briefing-continue"});
+      await updateSession(leader,session.id,{action:"confirm-briefing-date",briefingDate:briefing.journey.weather[0].date});
+      await updateSession(leader,session.id,{action:"launch-flight"});
+      await gameDb.updateTable("game_session_mission_journeys").set({flight_started_at:new Date(Date.now()-30000)}).where("session_id","=",session.id).execute();
+      await updateSession(leader,session.id,{action:"journey-tick"});
+      const failedFlight = await sessionState(session.id,crew);
+      assert.equal(failedFlight.journey.phase,"FAILED");
+      assert.equal(failedFlight.journey.flight.remainingFuelKg,0);
+      assert.equal(failedFlight.journey.flight.consumptionKgPerSecond,0);
+      await assert.rejects(updateSession(leader,session.id,{action:"check-instruments"}),/Reach the Moon/);
     });
     await t.test("Stage 2 catalog matches supplied game balance and an empty purchase advances for free", async () => {
       assert.deepEqual(scientificInstruments.map(item=>[item.price,item.massKg,item.powerW,item.quality,item.maxSciencePoints]),[

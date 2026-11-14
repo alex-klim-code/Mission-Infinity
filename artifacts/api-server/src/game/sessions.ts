@@ -8,6 +8,8 @@ import { rocketBuildState, updateRocketBuild } from "./rocket-builds";
 import { assemblyState, updateAssembly } from "./rocket-assemblies";
 import { scienceState, updateScience } from "./science-loadouts";
 import { fuelingState, updateFueling } from "./fuel-loads";
+import { journeyState, openConstruction, updateJourney } from "./mission-journeys";
+import { updateLunarOperations } from "./lunar-operations";
 
 export async function sessionMembers(id: string, db: GameConnection = gameDb) {
   return db.selectFrom("game_session_players").selectAll()
@@ -27,14 +29,17 @@ export async function sessionState(id: string, userId: string, db: GameConnectio
       lastMessage: member.last_message && Date.parse(member.last_message.expiresAt) > Date.now() ? member.last_message : null,
     });
   }
+  const journey = await journeyState(db, id);
+  const build = await rocketBuildState(id, db, members.map(m => m.user_id));
   return {
     id: session.id, roomCode: session.room_code, hostId: session.host_id, missionId: session.mission_id,
     status: session.status, scene: session.scene, revision: session.revision,
     createdAt: session.created_at.toISOString(), players, chat: await sessionHistory(id, db),
-    build: await rocketBuildState(id, db, members.map(m => m.user_id)),
+    build: {...build, elapsedMonths:journey.construction.elapsedMonths},
     assembly: await assemblyState(db, id, members.map(m => m.user_id)),
     science: await scienceState(db, id, members.map(m => m.user_id)),
     fueling: await fuelingState(db, id),
+    journey,
   };
 }
 export async function notifySession(id: string, extraIds: string[] = []) {
@@ -98,7 +103,7 @@ export async function maybeCompleteAcceptance(id: string, tx: GameConnection) {
   }
 }
 
-export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number; hullId?: string; optionId?: string; instrumentIds?: string[]; quantityKg?: number }) {
+export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number; hullId?: string; optionId?: string; instrumentIds?: string[]; quantityKg?: number; briefingDate?: string; thrust?: number; siteId?: "regolith"|"crater"|"ridge" }) {
   await gameDb.transaction().execute(async tx => {
     const session = await tx.selectFrom("game_sessions").selectAll().where("id", "=", id).forUpdate().executeTakeFirst();
     requireCondition(session, 404, "Mission session not found.");
@@ -121,7 +126,13 @@ export async function updateSession(userId: string, id: string, input: { action:
         await tx.updateTable("game_sessions").set({ host_id: successor.user_id }).where("id", "=", id).execute();
       }
       await maybeCompleteAcceptance(id, tx);
-    } else if (["open-fueling", "set-fuel-target", "connect-fuel-hose", "disconnect-fuel-hose", "start-fueling", "fuel-tick", "pause-fueling", "confirm-fuel"].includes(input.action)) {
+    } else if (input.action === "open-fueling") {
+      await openConstruction(tx,session,userId);
+    } else if (["start-landing","set-landing-thrust","collect-site","start-return","view-results"].includes(input.action)) {
+      await updateLunarOperations(tx,session,userId,input);
+    } else if (["start-construction", "journey-tick", "open-briefing", "briefing-continue", "confirm-briefing-date", "launch-flight", "check-instruments", "continue-lunar"].includes(input.action)) {
+      await updateJourney(tx,session,userId,input.action,input.briefingDate);
+    } else if (["set-fuel-target", "connect-fuel-hose", "disconnect-fuel-hose", "start-fueling", "fuel-tick", "pause-fueling", "confirm-fuel"].includes(input.action)) {
       await updateFueling(tx, session, userId, input.action, input.quantityKg);
     } else if (["open-science", "propose-instruments", "purchase-instruments"].includes(input.action)) {
       await updateScience(tx, session, userId, input.action, input.instrumentIds);

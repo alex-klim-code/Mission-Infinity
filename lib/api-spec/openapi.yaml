@@ -508,6 +508,7 @@ components:
         assembly: { $ref: '#/components/schemas/RocketAssembly' }
         science: { $ref: '#/components/schemas/ScienceLoadout' }
         fueling: { $ref: '#/components/schemas/FuelLoad' }
+        journey: { $ref: '#/components/schemas/MissionJourney' }
         createdAt: { type: string }
     RocketBuild:
       type: object
@@ -528,7 +529,10 @@ components:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments, open-fueling, set-fuel-target, connect-fuel-hose, disconnect-fuel-hose, start-fueling, fuel-tick, pause-fueling, confirm-fuel] }
+        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments, open-fueling, set-fuel-target, connect-fuel-hose, disconnect-fuel-hose, start-fueling, fuel-tick, pause-fueling, confirm-fuel, start-construction, journey-tick, open-briefing, briefing-continue, confirm-briefing-date, launch-flight, check-instruments, continue-lunar, start-landing, set-landing-thrust, collect-site, start-return, view-results] }
+        thrust: { type: number, minimum: 0, maximum: 100 }
+        siteId: { type: string, enum: [regolith, crater, ridge] }
+        briefingDate: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
         quantityKg: { type: integer, minimum: 0, maximum: 30000 }
         instrumentIds: { type: array, maxItems: 7, uniqueItems: true, items: { type: string } }
         optionId: { type: string }
@@ -563,6 +567,180 @@ components:
         instrumentIds: { type: array, items: { type: string } }
         spent: { type: integer }
         proposals: { type: array, items: { $ref: '#/components/schemas/InstrumentProposal' } }
+    MissionJourney:
+      type: object
+      required: [construction, phase, weather, briefingDate, plan, flight, diagnostics, diagnosticsProgress, diagnosticsComplete, availableSciencePoints, maxSciencePoints]
+      properties:
+        construction: { $ref: '#/components/schemas/MissionConstruction' }
+        phase: { type: string, enum: [NONE, ROUTE, CALENDAR, MISSION_DAY, FLIGHT, MOON_ARRIVAL, DIAGNOSTICS, LUNAR_OPERATIONS, FAILED, LANDING, SAMPLE_COLLECTION, LANDING_FAILED, RETURN_FLIGHT, RETURN_FAILED, REENTRY, RECOVERY, RESULTS] }
+        operations:
+          anyOf:
+            - { $ref: '#/components/schemas/MissionOperations' }
+            - { type: 'null' }
+        weather: { type: array, items: { $ref: '#/components/schemas/MissionWeather' } }
+        briefingDate: { type: [string, 'null'] }
+        plan:
+          anyOf:
+            - { $ref: '#/components/schemas/MissionFlightPlan' }
+            - { type: 'null' }
+        flight: { $ref: '#/components/schemas/MissionFlightTelemetry' }
+        diagnostics: { type: array, items: { $ref: '#/components/schemas/InstrumentDiagnostic' } }
+        diagnosticsProgress: { type: number }
+        diagnosticsComplete: { type: boolean }
+        availableSciencePoints: { type: number }
+        maxSciencePoints: { type: integer }
+    MissionConstruction:
+      type: object
+      required: [opened, startedAt, durationMs, months, cost, progress, elapsedMonths, delivered, legacy]
+      properties:
+        opened: { type: boolean }
+        startedAt: { type: [string, 'null'] }
+        durationMs: { type: integer }
+        months: { type: integer }
+        cost: { type: integer }
+        progress: { type: number }
+        elapsedMonths: { type: integer }
+        delivered: { type: boolean }
+        legacy: { type: boolean }
+    MissionOperations:
+      type: object
+      required: [landing, equipment, components, warnings, hasCamera, alternativeNavigation, canCollect, collectionProgress, siteId, siteStartedAt, collectedSites, sampleMassKg, scienceEarned, remainingFuelKg, returnInitialFuelKg, returnStartedAt, returnRequiredKg, returnProgress, returnManeuver, reentryStartedAt, recoveryStartedAt, missionDay, failure, results]
+      properties:
+        landing: { $ref: '#/components/schemas/MissionLanding' }
+        equipment: { type: array, items: { $ref: '#/components/schemas/MissionEquipment' } }
+        components: { type: array, items: { $ref: '#/components/schemas/MissionSelectedComponent' } }
+        warnings: { type: array, items: { type: string } }
+        hasCamera: { type: boolean }
+        alternativeNavigation: { type: boolean }
+        canCollect: { type: boolean }
+        collectionProgress: { type: number }
+        siteId: { type: [string, 'null'] }
+        siteStartedAt: { type: [string, 'null'] }
+        collectedSites: { type: array, items: { type: string } }
+        sampleMassKg: { type: number }
+        scienceEarned: { type: integer }
+        remainingFuelKg: { type: number }
+        returnInitialFuelKg: { type: number }
+        returnStartedAt: { type: [string, 'null'] }
+        returnRequiredKg: { type: number }
+        returnProgress: { type: number }
+        returnManeuver: { type: string }
+        reentryStartedAt: { type: [string, 'null'] }
+        recoveryStartedAt: { type: [string, 'null'] }
+        missionDay: { type: number }
+        failure: { type: [string, 'null'] }
+        results:
+          anyOf:
+            - { $ref: '#/components/schemas/MissionResults' }
+            - { type: 'null' }
+    MissionLanding:
+      type: object
+      required: [status, altitudeM, velocityMps, thrust, recommendedThrust, fuelUsedKg, startedAt, lastTickAt, elapsedSeconds]
+      properties:
+        status: { type: string, enum: [READY, DESCENDING, LANDED, CRASHED] }
+        altitudeM: { type: number }
+        velocityMps: { type: number }
+        thrust: { type: number }
+        recommendedThrust: { type: number }
+        fuelUsedKg: { type: number }
+        startedAt: { type: [string, 'null'] }
+        lastTickAt: { type: [string, 'null'] }
+        elapsedSeconds: { type: number }
+    MissionSelectedComponent:
+      type: object
+      required: [categoryId, name, quality]
+      properties:
+        categoryId: { type: string }
+        name: { type: string }
+        quality: { type: number }
+    MissionEquipment:
+      type: object
+      required: [id, name, status, available, potential, warning]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [MISSING, UNKNOWN, OPERATIONAL, DAMAGED, CRITICAL_FAILURE] }
+        available: { type: boolean }
+        potential: { type: number }
+        warning: { type: [string, 'null'] }
+    MissionResults:
+      type: object
+      required: [success, completionPercent, sampleMassKg, recoveredSampleMassKg, scienceEarned, recoveredSciencePoints, durationDays, remainingBudget, failure, objectives]
+      properties:
+        success: { type: boolean }
+        completionPercent: { type: integer }
+        sampleMassKg: { type: number }
+        recoveredSampleMassKg: { type: number }
+        scienceEarned: { type: integer }
+        recoveredSciencePoints: { type: integer }
+        durationDays: { type: number }
+        remainingBudget: { type: integer }
+        failure: { type: [string, 'null'] }
+        objectives: { type: array, items: { $ref: '#/components/schemas/MissionObjective' } }
+    MissionObjective:
+      type: object
+      required: [id, label, weight, completion, detail]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        weight: { type: integer }
+        completion: { type: number }
+        detail: { type: string }
+    MissionWeather:
+      type: object
+      required: [date, condition]
+      properties:
+        date: { type: string }
+        condition: { type: string, enum: [SUNNY, PARTLY_CLOUDY, CLOUDY, RAIN, STRONG_WIND, STORM] }
+    MissionFlightPlan:
+      type: object
+      required: [routeId, routeLabel, distanceKm, outboundDays, returnDays, totalDays, dryMassKg, initialMassKg, engineCount, engineNames, thrustN, specificImpulseSeconds, fuelLoadedKg, departureFuelKg, arrivalFuelKg, requiredOutboundKg, requiredReturnKg, requiredFuelKg, massAssumed, assumptions, animationDurationMs]
+      properties:
+        routeId: { type: string }
+        routeLabel: { type: string }
+        distanceKm: { type: number }
+        outboundDays: { type: number }
+        returnDays: { type: number }
+        totalDays: { type: number }
+        dryMassKg: { type: number }
+        initialMassKg: { type: number }
+        engineCount: { type: integer }
+        engineNames: { type: array, items: { type: string } }
+        thrustN: { type: number }
+        specificImpulseSeconds: { type: number }
+        fuelLoadedKg: { type: number }
+        departureFuelKg: { type: number }
+        arrivalFuelKg: { type: number }
+        requiredOutboundKg: { type: number }
+        requiredReturnKg: { type: number }
+        requiredFuelKg: { type: number }
+        massAssumed: { type: boolean }
+        assumptions: { type: string }
+        animationDurationMs: { type: integer }
+    MissionFlightTelemetry:
+      type: object
+      required: [progress, currentDay, remainingFuelKg, consumptionKgPerSecond, speedKmPerSecond, massKg, maneuver, startedAt]
+      properties:
+        progress: { type: number }
+        currentDay: { type: integer }
+        remainingFuelKg: { type: number }
+        consumptionKgPerSecond: { type: number }
+        speedKmPerSecond: { type: number }
+        massKg: { type: number }
+        maneuver: { type: string, enum: [PAD, LAUNCH_BURN, COAST, LUNAR_INSERTION, COMPLETE, FAILED] }
+        startedAt: { type: [string, 'null'] }
+    InstrumentDiagnostic:
+      type: object
+      required: [instrumentId, name, quality, status, maxSciencePoints, availableSciencePoints, failure, progress]
+      properties:
+        instrumentId: { type: string }
+        name: { type: string }
+        quality: { type: integer }
+        status: { type: string, enum: [UNKNOWN, OPERATIONAL, DAMAGED, CRITICAL_FAILURE] }
+        maxSciencePoints: { type: integer }
+        availableSciencePoints: { type: number }
+        failure: { type: [string, 'null'] }
+        progress: { type: number }
     FuelLoad:
       type: object
       required: [opened, completed, connected, loading, targetKg, loadedKg, spent, capacityKg, pricePerKg, rateKgPerSecond, fuelType]

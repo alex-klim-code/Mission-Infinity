@@ -23,3 +23,4 @@ export * from "./rocket-builds";
 export * from "./rocket-assemblies";
 export * from "./science-loadouts";
 export * from "./fuel-loads";
+export * from "./mission-journeys";

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as RKeyboardEvent, type PointerEvent as RPointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, Check, CheckCircle2, Fuel, Info, Link2, Lock, Plug, Unplug } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, Fuel, Info, Link2, Lock, Plug, Unplug } from 'lucide-react';
 import type { SessionAction } from '@workspace/api-client-react';
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
@@ -263,7 +263,11 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
               <Row label="Fuel cost" value={formatExact(f.spent)} tone="text-burn" testid="text-fuel-final-cost" />
               <Row label="Budget remaining" value={formatExact(available)} tone="text-ion" testid="text-fuel-final-remaining" />
             </dl>
-            <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-fuel-next">Awaiting next mission phase from Mission Control.</p>
+            <div className="mt-4">
+              {isHost
+                ? <HudButton variant="burn" loading={pendingAction === 'open-briefing'} disabled={pending} onClick={() => act({ action: 'open-briefing' })} data-testid="button-open-briefing">Continue to Mission Briefing <ArrowRight className="h-4 w-4" /></HudButton>
+                : <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-fuel-next">Waiting for the Leader to open the Mission Briefing.</p>}
+            </div>
             <div className="mt-4"><Disclaimer /></div>
           </div>
         </motion.div>

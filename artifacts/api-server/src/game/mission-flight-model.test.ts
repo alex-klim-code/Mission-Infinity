@@ -1,0 +1,73 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { constructionMonths, missionWeather, makeFlightPlan, flightTelemetry, drawDiagnostics, failureProbability, rocketDesignCost } from "./mission-flight-model";
+import { componentCategories } from "./rocket-catalog";
+
+const selections = Object.fromEntries(componentCategories.map(c=>[c.id,c.options[0].id]));
+test("construction follows all supplied knots and interpolates monotonically in whole months",()=>{
+  const costs = [50,100,150,200,250,300,350,400];
+  assert.deepEqual(costs.map(c=>constructionMonths(c*1000000)),[12,15,18,22,26,30,33,36]);
+  assert.equal(constructionMonths(75000000),14);
+  assert.equal(constructionMonths(175000000),20);
+  assert.equal(constructionMonths(0),12);
+  assert.equal(constructionMonths(500000000),36);
+  const designCost=rocketDesignCost("falcon-shadow",selections);
+  assert.equal(designCost,rocketDesignCost("falcon-shadow",{...selections,"rocket-body":"falcon-shadow"}));
+  assert.equal(rocketDesignCost("nova-prime",selections)-designCost,40000000);
+  for(let c=0;c<400000000;c+=1000000) assert.ok(constructionMonths(c)<=constructionMonths(c+1000000));
+});
+test("calendar has 28 stable UTC dates, including month and year boundaries",()=>{
+  const days = missionWeather("fixture","2026-12-20");
+  assert.equal(days.length,28);
+  assert.equal(days[0].date,"2026-12-20");
+  assert.equal(days[27].date,"2027-01-16");
+  assert.deepEqual(days,missionWeather("fixture","2026-12-20"));
+  assert.equal(new Set(days.map(d=>d.date)).size,28);
+});
+test("fixed-route gameplay estimate uses engines, mass, payload and loaded fuel explicitly",()=>{
+  const plan = makeFlightPlan("falcon-shadow",selections,[],30000);
+  assert.equal(plan.routeId,"earth-moon-earth");
+  assert.equal(plan.engineCount,5);
+  assert.equal(plan.initialMassKg,plan.dryMassKg+30000);
+  assert.ok(plan.requiredOutboundKg>0);
+  assert.ok(plan.requiredFuelKg>plan.requiredOutboundKg);
+  assert.equal(plan.massAssumed,true);
+  const heavier = makeFlightPlan("nova-prime",selections,["advanced-sample-analyzer"],30000);
+  assert.ok(heavier.dryMassKg>plan.dryMassKg);
+  assert.ok(heavier.requiredOutboundKg>plan.requiredOutboundKg);
+  assert.notEqual(heavier.outboundDays,plan.outboundDays);
+  const lowFuel = makeFlightPlan("falcon-shadow",selections,[],1000);
+  assert.notEqual(lowFuel.outboundDays,plan.outboundDays);
+  const alternative = {...selections,"main-engines":componentCategories.find(c=>c.id==="main-engines")!.options.at(-1)!.id};
+  const changed = makeFlightPlan("falcon-shadow",alternative,[],30000);
+  assert.notEqual(changed.thrustN,plan.thrustN);
+});
+test("flight burns only during maneuvers, freezes on fuel exhaustion and resumes by server clock",()=>{
+  const plan = makeFlightPlan("falcon-shadow",selections,[],30000);
+  const start = new Date(100000);
+  const coastA = flightTelemetry(plan,start,106000);
+  const coastB = flightTelemetry(plan,start,114000);
+  assert.equal(coastA.maneuver,"COAST");
+  assert.equal(coastA.remainingFuelKg,coastB.remainingFuelKg);
+  assert.equal(coastB.consumptionKgPerSecond,0);
+  assert.equal(coastB.massKg,Math.round((plan.dryMassKg+coastB.remainingFuelKg)*100)/100);
+  const arrival = flightTelemetry(plan,start,120000);
+  assert.equal(arrival.maneuver,"COMPLETE");
+  assert.equal(arrival.progress,1);
+  const poor = makeFlightPlan("falcon-shadow",selections,[],1);
+  const fail = flightTelemetry(poor,start,120000);
+  assert.equal(fail.maneuver,"FAILED");
+  assert.equal(fail.remainingFuelKg,0);
+  assert.deepEqual(fail,flightTelemetry(poor,start,160000));
+  assert.equal(flightTelemetry(plan,null).maneuver,"PAD");
+});
+test("diagnostics uses all supplied quality bands, separates potential from earned points",()=>{
+  assert.deepEqual([100,90,89,80,79,70,69,60,59,40,39].map(failureProbability),[.03,.03,.07,.07,.12,.12,.2,.2,.3,.3,.45]);
+  const values = [0.99,0,0.5,0,0.99];
+  const results = drawDiagnostics(["panchromatic-camera","multispectral-camera","lunar-magnetometer"],()=>values.shift()!);
+  assert.deepEqual(results.map(r=>r.status),["OPERATIONAL","DAMAGED","CRITICAL_FAILURE"]);
+  assert.deepEqual(results.map(r=>r.availableSciencePoints),[100,90,0]);
+  assert.equal(results[0].failure,null);
+  assert.ok(results[1].failure);
+  assert.deepEqual(drawDiagnostics([],()=>0),[]);
+});
