@@ -10,6 +10,11 @@ import type { SessionActionHullId } from "./sessionActionHullId";
 
 export interface SessionAction {
   action: SessionActionAction;
+  /**
+   * @minimum 0
+   * @maximum 30000
+   */
+  quantityKg?: number;
   /** @maxItems 7 */
   instrumentIds?: string[];
   optionId?: string;

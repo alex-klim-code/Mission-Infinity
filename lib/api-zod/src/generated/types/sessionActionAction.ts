@@ -26,4 +26,12 @@ export const SessionActionAction = {
   "open-science": "open-science",
   "propose-instruments": "propose-instruments",
   "purchase-instruments": "purchase-instruments",
+  "open-fueling": "open-fueling",
+  "set-fuel-target": "set-fuel-target",
+  "connect-fuel-hose": "connect-fuel-hose",
+  "disconnect-fuel-hose": "disconnect-fuel-hose",
+  "start-fueling": "start-fueling",
+  "fuel-tick": "fuel-tick",
+  "pause-fueling": "pause-fueling",
+  "confirm-fuel": "confirm-fuel",
 } as const;

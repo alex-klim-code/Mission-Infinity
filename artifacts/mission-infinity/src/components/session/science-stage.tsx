@@ -88,6 +88,15 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
             </ul>
           )}
           <div className="mt-4"><Disclaimer /></div>
+          <div className="mt-6 flex justify-end">
+            {isHost ? (
+              <HudButton variant="burn" disabled={pending || !!session.fueling?.opened} loading={pendingAction === 'open-fueling'} onClick={() => act({ action: 'open-fueling' })} data-testid="button-open-fueling">
+                Continue to fueling
+              </HudButton>
+            ) : (
+              <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-waiting-fueling"><Lock className="h-3.5 w-3.5" /> Waiting for the Leader to open the fuel station</p>
+            )}
+          </div>
         </motion.div>
       </div>
     );

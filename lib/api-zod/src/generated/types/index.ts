@@ -36,6 +36,7 @@ export * from "./componentProposal";
 export * from "./componentSelection";
 export * from "./friendAction";
 export * from "./friendActionAction";
+export * from "./fuelLoad";
 export * from "./gameSession";
 export * from "./gameSessionStatus";
 export * from "./getSessionMessagesParams";

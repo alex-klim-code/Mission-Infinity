@@ -169,7 +169,7 @@ export function SessionTopBar({ session, mission, me, act, pending, onOpenBadge 
         <div className="min-w-0 flex-1">
           <div className="font-mono text-[9px] uppercase tracking-[.25em] text-ion" data-testid="text-session-stage">
             {session.status === 'MISSION_STARTED'
-              ? session.science?.opened ? 'Stage 2 / Scientific Instruments' : 'Stage 1 / Rocket Construction'
+              ? session.fueling?.opened ? 'Stage 3 / Rocket Fueling' : session.science?.opened ? 'Stage 2 / Scientific Instruments' : 'Stage 1 / Rocket Construction'
               : 'Mission preparation'}
           </div>
           <div className="truncate font-display text-base font-bold uppercase tracking-wider md:text-lg" data-testid="text-mission-name">{mission?.title ?? 'Mission'}</div>

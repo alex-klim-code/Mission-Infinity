@@ -507,6 +507,7 @@ components:
         build: { $ref: '#/components/schemas/RocketBuild' }
         assembly: { $ref: '#/components/schemas/RocketAssembly' }
         science: { $ref: '#/components/schemas/ScienceLoadout' }
+        fueling: { $ref: '#/components/schemas/FuelLoad' }
         createdAt: { type: string }
     RocketBuild:
       type: object
@@ -527,7 +528,8 @@ components:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments] }
+        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments, open-fueling, set-fuel-target, connect-fuel-hose, disconnect-fuel-hose, start-fueling, fuel-tick, pause-fueling, confirm-fuel] }
+        quantityKg: { type: integer, minimum: 0, maximum: 30000 }
         instrumentIds: { type: array, maxItems: 7, uniqueItems: true, items: { type: string } }
         optionId: { type: string }
         hullId: { type: string, enum: [falcon-shadow, titan-explorer, nova-prime] }
@@ -561,6 +563,21 @@ components:
         instrumentIds: { type: array, items: { type: string } }
         spent: { type: integer }
         proposals: { type: array, items: { $ref: '#/components/schemas/InstrumentProposal' } }
+    FuelLoad:
+      type: object
+      required: [opened, completed, connected, loading, targetKg, loadedKg, spent, capacityKg, pricePerKg, rateKgPerSecond, fuelType]
+      properties:
+        opened: { type: boolean }
+        completed: { type: boolean }
+        connected: { type: boolean }
+        loading: { type: boolean }
+        targetKg: { type: integer }
+        loadedKg: { type: integer }
+        spent: { type: integer }
+        capacityKg: { type: integer }
+        pricePerKg: { type: integer }
+        rateKgPerSecond: { type: integer }
+        fuelType: { type: string }
     RocketFuel:
       type: object
       required: [role, status, systems, sourceText, sourceLocation]

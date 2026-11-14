@@ -341,6 +341,7 @@ function Build({ session, mission, me, isHost, openBadge }: StageProps) {
   const completed = !!session.assembly?.completed;
   const hullBought = !!session.build?.selectedHullId;
   const flag: CrewFlag = (sp, leader) => {
+    if (session.fueling?.opened) return { on: true, label: session.fueling.completed ? 'Fuel confirmed' : leader ? 'Leader' : 'Fuel station' };
     if (session.science?.opened) {
       if (session.science.completed) return { on: true, label: 'Payload locked' };
       const proposal = session.science.proposals.find((p) => p.playerId === sp.player.id);

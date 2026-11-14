@@ -59,6 +59,16 @@ interface Invites {
   created_at: Time;
 }
 export interface GameDatabase {
+  game_session_fuel_loads: {
+    session_id: string;
+    opened: Generated<boolean>;
+    completed: Generated<boolean>;
+    connected: Generated<boolean>;
+    target_kg: Generated<number>;
+    loaded_kg: Generated<number>;
+    spent: Generated<number>;
+    flowing_at: Date | null;
+  };
   game_session_science_loadouts: {
     session_id: string;
     opened: Generated<boolean>;

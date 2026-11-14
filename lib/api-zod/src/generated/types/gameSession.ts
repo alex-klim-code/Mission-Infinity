@@ -5,6 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { FuelLoad } from "./fuelLoad";
 import type { GameSessionStatus } from "./gameSessionStatus";
 import type { RocketAssembly } from "./rocketAssembly";
 import type { RocketBuild } from "./rocketBuild";
@@ -25,5 +26,6 @@ export interface GameSession {
   build?: RocketBuild;
   assembly?: RocketAssembly;
   science?: ScienceLoadout;
+  fueling?: FuelLoad;
   createdAt: string;
 }

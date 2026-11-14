@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { BODY_CATEGORY, HullVisual, fmtKg, formatExact, hullById, useCalm, type Props } from './rocket-shared';
 import { Navigator } from './rocket-navigator';
 import { ScienceStage } from './science-stage';
+import { FuelStage } from './fuel-stage';
 import type { ActFn } from './session-shared';
 import { RocketFuelCheck } from './rocket-fuel-check';
 import { assessFuel, fuelCopy } from '@/lib/rocket-fuel';
@@ -36,7 +37,7 @@ function useOfficial(session: GameSession, sections: RocketSection[]) {
       // amount, so their configuration rows must still add up to saved spending.
       const hull = byOption.get(hullId);
       const partsCost = (session.assembly?.selections ?? []).reduce((sum, s) => sum + (byOption.get(s.optionId)?.price ?? 0), 0);
-      if (hull) byOption.set(hullId, {...hull, price: Math.max(0, (session.build?.spent ?? 0) - (session.science?.spent ?? 0) - partsCost)});
+      if (hull) byOption.set(hullId, {...hull, price: Math.max(0, (session.build?.spent ?? 0) - (session.science?.spent ?? 0) - (session.fueling?.spent ?? 0) - partsCost)});
     }
     return { byOption, cats, official };
   }, [session, sections]);
@@ -102,10 +103,12 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
       </div>
       {/* desktop pane */}
       <aside className="scroll-thin hidden min-h-0 overflow-y-auto border-l md:order-2 border-white/10 bg-void/60 p-4 backdrop-blur-xl md:block" data-testid="panel-builder-summary">
-        <div className="kicker mb-2">Assembly</div>
+        <div className="kicker mb-2">Your rocket</div>
         <HullVisual hullId={summary.hullId} className="h-64 w-full lg:h-80" />
         <div className="mt-2 text-center font-display text-lg font-bold uppercase tracking-wider" data-testid="text-builder-hull">{hull?.name ?? 'Body not bought'}</div>
         <div className="mt-3">{stats}</div>
+        {session.science?.completed && <p className="mt-2 font-mono text-xs text-ion" data-testid="text-summary-payload">Science payload: {session.science.instrumentIds.length} instruments / {formatExact(session.science.spent)}</p>}
+        {session.fueling?.opened && <p className="mt-2 font-mono text-xs text-ion" data-testid="text-summary-fuel">Fuel: {fmtKg(session.fueling.loadedKg)} / {formatExact(session.fueling.spent)}</p>}
         <p className="mt-2 text-[10px] leading-snug text-muted-foreground">Dry mass sums parts with known catalog mass only{summary.unknownMass ? ` (${summary.unknownMass} without data)` : ''}; body mass is not included. Not a total wet mass.</p>
         {finish && <div className="mt-3">{finish}</div>}
         {fuelCheck}
@@ -196,21 +199,19 @@ export function RocketBuildView(props: Props) {
     if (o?.massKg != null) dryMass += o.massKg;
     else unknownMass += 1;
   });
-  const spent = (session.build?.spent ?? 0) - (session.science?.spent ?? 0);
+  const spent = session.build?.spent ?? 0;
   const summary: Summary = { spent, remaining: (mission?.budget ?? 0) - spent, count: cats.filter((c) => official.has(c.id)).length, total: cats.length, dryMass, unknownMass, hullId: session.build?.selectedHullId };
 
-  if (session.assembly?.completed && session.science?.opened) return <ScienceStage {...props} />;
-  if (session.assembly?.completed) return <Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} />;
+  if (session.assembly?.completed && !session.science?.opened) return <Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} />;
 
   return (
     <div className="relative z-10 flex h-full min-h-0 flex-col md:grid md:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
       <div className="md:order-2 md:min-h-0 md:contents">
         <SummaryPane session={session} sections={sections} summary={summary} isHost={props.isHost} act={props.act} pending={props.pending} pendingAction={props.pendingAction} official={official} byOption={byOption} />
       </div>
-      <div className="scroll-thin min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 md:order-1 md:px-6" data-testid="panel-builder-left">
-        <div className="mx-auto max-w-4xl">
-          <Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} />
-        </div>
+      <div className="scroll-thin min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden md:order-1" data-testid="panel-builder-left">
+        {session.fueling?.opened ? <FuelStage {...props} /> : session.science?.opened ? <ScienceStage {...props} /> :
+          <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div>}
       </div>
     </div>
   );

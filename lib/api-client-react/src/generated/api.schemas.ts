@@ -524,6 +524,20 @@ export interface ScienceLoadout {
   proposals: InstrumentProposal[];
 }
 
+export interface FuelLoad {
+  opened: boolean;
+  completed: boolean;
+  connected: boolean;
+  loading: boolean;
+  targetKg: number;
+  loadedKg: number;
+  spent: number;
+  capacityKg: number;
+  pricePerKg: number;
+  rateKgPerSecond: number;
+  fuelType: string;
+}
+
 export interface GameSession {
   id: string;
   roomCode: string;
@@ -537,6 +551,7 @@ export interface GameSession {
   build?: RocketBuild;
   assembly?: RocketAssembly;
   science?: ScienceLoadout;
+  fueling?: FuelLoad;
   createdAt: string;
 }
 
@@ -560,6 +575,14 @@ export const SessionActionAction = {
   "open-science": "open-science",
   "propose-instruments": "propose-instruments",
   "purchase-instruments": "purchase-instruments",
+  "open-fueling": "open-fueling",
+  "set-fuel-target": "set-fuel-target",
+  "connect-fuel-hose": "connect-fuel-hose",
+  "disconnect-fuel-hose": "disconnect-fuel-hose",
+  "start-fueling": "start-fueling",
+  "fuel-tick": "fuel-tick",
+  "pause-fueling": "pause-fueling",
+  "confirm-fuel": "confirm-fuel",
 } as const;
 
 export type SessionActionHullId =
@@ -573,6 +596,11 @@ export const SessionActionHullId = {
 
 export interface SessionAction {
   action: SessionActionAction;
+  /**
+   * @minimum 0
+   * @maximum 30000
+   */
+  quantityKg?: number;
   /** @maxItems 7 */
   instrumentIds?: string[];
   optionId?: string;

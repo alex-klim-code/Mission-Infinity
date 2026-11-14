@@ -17,6 +17,16 @@ import { avatarFixture } from "./testing/avatar";
 import { rocketCatalog, componentCategories, rocketOptions } from "./rocket-catalog";
 import { rocketHulls } from "./rocket-builds";
 import { scientificInstruments } from "./scientific-instruments";
+import { fuelIncrement } from "./fuel-loads";
+
+test("fuel heartbeat caps offline time, quantity and available budget", () => {
+  assert.equal(fuelIncrement(0,30000,100,1000000),150);
+  assert.equal(fuelIncrement(0,30000,60000,1000000),2250);
+  assert.equal(fuelIncrement(1000,1100,1000,1000000),100);
+  assert.equal(fuelIncrement(0,30000,1000,19),2);
+  assert.equal(fuelIncrement(0,30000,-1,1000000),0);
+  assert.equal(fuelIncrement(30000,30000,1000,1000000),0);
+});
 
 // Domain/integration tests use disposable identities, never bypass browser auth.
 test("Mission Infinity server-authoritative game rules", async t => {
@@ -227,6 +237,72 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:[]}),/already purchased/);
       await assert.rejects(updateSession(crew,session.id,{action:"propose-instruments",instrumentIds:[]}),/already purchased/);
       assert.equal((await sessionState(session.id,leader)).build.spent,expected+49000000);
+      // Stage 3: real persisted progress, private crew access and atomic fuel charges.
+      await assert.rejects(updateSession(crew,session.id,{action:"open-fueling"}),/Leader/);
+      await assert.rejects(updateSession(outsider,session.id,{action:"open-fueling"}),/member/);
+      await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/Open Stage 3/);
+      await updateSession(leader,session.id,{action:"open-fueling"});
+      await updateSession(leader,session.id,{action:"open-fueling"});
+      await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/Connect/);
+      await assert.rejects(updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:30001}),/target/);
+      await assert.rejects(updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:-1}),/target/);
+      await assert.rejects(updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:1.5}),/target/);
+      await updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:1500});
+      await updateSession(leader,session.id,{action:"connect-fuel-hose"});
+      await updateSession(leader,session.id,{action:"start-fueling"});
+      await assert.rejects(updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:2000}),/Pause/);
+      await gameDb.updateTable("game_session_fuel_loads").set({flowing_at:new Date(Date.now()-400)}).where("session_id","=",session.id).execute();
+      await updateSession(leader,session.id,{action:"pause-fueling"});
+      let fueled = await sessionState(session.id,crew);
+      assert.ok(fueled.fueling.loadedKg >= 600 && fueled.fueling.loadedKg < 1500);
+      assert.equal(fueled.fueling.loading,false);
+      assert.equal(fueled.fueling.spent,fueled.fueling.loadedKg*8);
+      assert.equal(fueled.build.spent,expected+49000000+fueled.fueling.spent);
+      const pausedKg = fueled.fueling.loadedKg;
+      await updateSession(leader,session.id,{action:"fuel-tick"});
+      assert.equal((await sessionState(session.id,leader)).fueling.loadedKg,pausedKg);
+      await assert.rejects(updateSession(leader,session.id,{action:"confirm-fuel"}),/selected fuel/);
+      await assert.rejects(updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:0}),/target/);
+      await updateSession(leader,session.id,{action:"start-fueling"});
+      await gameDb.updateTable("game_session_fuel_loads").set({flowing_at:new Date(Date.now()-1000)}).where("session_id","=",session.id).execute();
+      await Promise.all([1,2].map(()=>updateSession(leader,session.id,{action:"fuel-tick"})));
+      fueled = await sessionState(session.id,crew);
+      assert.equal(fueled.fueling.loadedKg,1500);
+      assert.equal(fueled.fueling.spent,12000);
+      assert.equal(fueled.fueling.loading,false);
+      // Increase target after completion, pause on disconnect, budget stops flow exactly.
+      await updateSession(leader,session.id,{action:"set-fuel-target",quantityKg:3000});
+      await updateSession(leader,session.id,{action:"start-fueling"});
+      await updateSession(leader,session.id,{action:"disconnect-fuel-hose"});
+      assert.equal((await sessionState(session.id,leader)).fueling.connected,false);
+      await updateSession(leader,session.id,{action:"connect-fuel-hose"});
+      await gameDb.updateTable("game_session_builds").set({spent:399999984}).where("session_id","=",session.id).execute();
+      const beforeBudget = (await sessionState(session.id,leader)).fueling.loadedKg;
+      await updateSession(leader,session.id,{action:"start-fueling"});
+      await gameDb.updateTable("game_session_fuel_loads").set({flowing_at:new Date(Date.now()-500)}).where("session_id","=",session.id).execute();
+      await updateSession(leader,session.id,{action:"fuel-tick"});
+      fueled = await sessionState(session.id,crew);
+      assert.equal(fueled.fueling.loadedKg,beforeBudget+2);
+      assert.equal(fueled.build.spent,400000000);
+      assert.equal(fueled.fueling.loading,false);
+      await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/insufficient/);
+      // Restore only this fixture's funds and finish, including idempotent confirmation.
+      await gameDb.updateTable("game_session_builds").set({spent:expected+49000000+fueled.fueling.spent}).where("session_id","=",session.id).execute();
+      await updateSession(leader,session.id,{action:"start-fueling"});
+      await gameDb.updateTable("game_session_fuel_loads").set({flowing_at:new Date(Date.now()-1000)}).where("session_id","=",session.id).execute();
+      await updateSession(leader,session.id,{action:"pause-fueling"});
+      await Promise.all([1,2].map(()=>updateSession(leader,session.id,{action:"confirm-fuel"})));
+      fueled = await sessionState(session.id,crew);
+      assert.equal(fueled.fueling.completed,true);
+      assert.equal(fueled.fueling.loadedKg,3000);
+      assert.equal(fueled.fueling.spent,24000);
+      assert.equal(fueled.build.spent,expected+49000000+24000);
+      assert.equal(fueled.build.elapsedMonths,12);
+      assert.deepEqual(fueled.assembly,finished.assembly);
+      await assert.rejects(updateSession(crew,session.id,{action:"confirm-fuel"}),/Leader/);
+      await assert.rejects(updateSession(leader,session.id,{action:"start-fueling"}),/already confirmed/);
+      await updateSession(leader,session.id,{action:"disconnect-fuel-hose"});
+      assert.equal((await sessionState(session.id,leader)).fueling.connected,false);
     });
     await t.test("Stage 2 catalog matches supplied game balance and an empty purchase advances for free", async () => {
       assert.deepEqual(scientificInstruments.map(item=>[item.price,item.massKg,item.powerW,item.quality,item.maxSciencePoints]),[
@@ -241,6 +317,7 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await assert.rejects(updateSession(player,session.id,{action:"open-science"}),/Start the mission/);
       for(let scene=0;scene<5;scene++) await updateSession(player,session.id,{action:"next",expectedScene:scene});
       await updateSession(player,session.id,{action:"initiate"});
+      await assert.rejects(updateSession(player,session.id,{action:"open-fueling"}),/Complete Stage 2/);
       await assert.rejects(updateSession(player,session.id,{action:"open-science"}),/Complete Stage 1/);
       assert.deepEqual((await sessionState(session.id,player)).science,{opened:false,completed:false,instrumentIds:[],spent:0,proposals:[]});
       // Isolated, disposable fixture: Stage 1 validation is covered by the test above.

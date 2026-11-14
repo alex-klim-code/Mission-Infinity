@@ -1305,6 +1305,21 @@ export const CreateGameSessionResponse = zod.object({
       ),
     })
     .optional(),
+  fueling: zod
+    .object({
+      opened: zod.boolean(),
+      completed: zod.boolean(),
+      connected: zod.boolean(),
+      loading: zod.boolean(),
+      targetKg: zod.number().int(),
+      loadedKg: zod.number().int(),
+      spent: zod.number().int(),
+      capacityKg: zod.number().int(),
+      pricePerKg: zod.number().int(),
+      rateKgPerSecond: zod.number().int(),
+      fuelType: zod.string(),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1522,12 +1537,30 @@ export const GetGameSessionResponse = zod.object({
       ),
     })
     .optional(),
+  fueling: zod
+    .object({
+      opened: zod.boolean(),
+      completed: zod.boolean(),
+      connected: zod.boolean(),
+      loading: zod.boolean(),
+      targetKg: zod.number().int(),
+      loadedKg: zod.number().int(),
+      spent: zod.number().int(),
+      capacityKg: zod.number().int(),
+      pricePerKg: zod.number().int(),
+      rateKgPerSecond: zod.number().int(),
+      fuelType: zod.string(),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
 export const UpdateGameSessionParams = zod.object({
   id: zod.coerce.string(),
 });
+
+export const updateGameSessionBodyQuantityKgMin = 0;
+export const updateGameSessionBodyQuantityKgMax = 30000;
 
 export const updateGameSessionBodyInstrumentIdsMax = 7;
 
@@ -1549,7 +1582,21 @@ export const UpdateGameSessionBody = zod.object({
     "open-science",
     "propose-instruments",
     "purchase-instruments",
+    "open-fueling",
+    "set-fuel-target",
+    "connect-fuel-hose",
+    "disconnect-fuel-hose",
+    "start-fueling",
+    "fuel-tick",
+    "pause-fueling",
+    "confirm-fuel",
   ]),
+  quantityKg: zod
+    .number()
+    .int()
+    .min(updateGameSessionBodyQuantityKgMin)
+    .max(updateGameSessionBodyQuantityKgMax)
+    .optional(),
   instrumentIds: zod
     .array(zod.string())
     .max(updateGameSessionBodyInstrumentIdsMax)
@@ -1772,6 +1819,21 @@ export const UpdateGameSessionResponse = zod.object({
               instrumentIds: zod.array(zod.string()),
             }),
           ),
+        })
+        .optional(),
+      fueling: zod
+        .object({
+          opened: zod.boolean(),
+          completed: zod.boolean(),
+          connected: zod.boolean(),
+          loading: zod.boolean(),
+          targetKg: zod.number().int(),
+          loadedKg: zod.number().int(),
+          spent: zod.number().int(),
+          capacityKg: zod.number().int(),
+          pricePerKg: zod.number().int(),
+          rateKgPerSecond: zod.number().int(),
+          fuelType: zod.string(),
         })
         .optional(),
       createdAt: zod.string(),
@@ -2027,6 +2089,21 @@ export const SendSessionMessageResponse = zod.object({
       ),
     })
     .optional(),
+  fueling: zod
+    .object({
+      opened: zod.boolean(),
+      completed: zod.boolean(),
+      connected: zod.boolean(),
+      loading: zod.boolean(),
+      targetKg: zod.number().int(),
+      loadedKg: zod.number().int(),
+      spent: zod.number().int(),
+      capacityKg: zod.number().int(),
+      pricePerKg: zod.number().int(),
+      rateKgPerSecond: zod.number().int(),
+      fuelType: zod.string(),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -2261,6 +2338,21 @@ export const RespondToInvitationResponse = zod.object({
               instrumentIds: zod.array(zod.string()),
             }),
           ),
+        })
+        .optional(),
+      fueling: zod
+        .object({
+          opened: zod.boolean(),
+          completed: zod.boolean(),
+          connected: zod.boolean(),
+          loading: zod.boolean(),
+          targetKg: zod.number().int(),
+          loadedKg: zod.number().int(),
+          spent: zod.number().int(),
+          capacityKg: zod.number().int(),
+          pricePerKg: zod.number().int(),
+          rateKgPerSecond: zod.number().int(),
+          fuelType: zod.string(),
         })
         .optional(),
       createdAt: zod.string(),
