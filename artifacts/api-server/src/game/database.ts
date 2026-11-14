@@ -59,6 +59,15 @@ interface Invites {
   created_at: Time;
 }
 export interface GameDatabase {
+  game_session_messages: {
+    id: string;
+    session_id: string;
+    user_id: string;
+    sender_name: string;
+    text: string;
+    created_at: Time;
+    expires_at: Time;
+  };
   avatar_uploads: {
     id: Generated<string>;
     user_id: string;

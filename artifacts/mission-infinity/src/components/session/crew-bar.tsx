@@ -5,6 +5,7 @@ import type { GameSession, SessionPlayer } from '@workspace/api-client-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Portrait } from '@/components/ui-kit';
 import { MessageComposer } from '@/components/session/session-shared';
+import { ChatHistory } from '@/components/session/chat-history';
 import { cn } from '@/lib/utils';
 
 export type CrewFlag = (sp: SessionPlayer, leader: boolean) => { on: boolean; label: string };
@@ -28,8 +29,7 @@ export function orderCrew(session: GameSession, meId: string) {
 
 /* ---------- Crew chat dialog ---------- */
 
-function CrewChatDialog({ open, onOpenChange, session, meId, now }: { open: boolean; onOpenChange: (o: boolean) => void; session: GameSession; meId: string; now: number }) {
-  const crew = orderCrew(session, meId);
+function CrewChatDialog({ open, onOpenChange, session, meId }: { open: boolean; onOpenChange: (o: boolean) => void; session: GameSession; meId: string }) {
   const panelRef = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     if (!open) return;
@@ -50,26 +50,7 @@ function CrewChatDialog({ open, onOpenChange, session, meId, now }: { open: bool
             <X className="h-4 w-4" />
           </button>
         </div>
-        <ul className="scroll-thin max-h-[20dvh] space-y-2 overflow-y-auto p-3">
-          {crew.map((sp) => {
-            const msg = live(sp, now);
-            const leader = sp.player.id === session.hostId;
-            return (
-              <li key={sp.player.id} className="flex gap-3 rounded-md border border-white/[.06] bg-void/40 p-2.5" data-testid={`chat-row-${sp.player.id}`}>
-                <Portrait player={sp.player} size={36} ring={leader ? 'burn' : 'none'} className={cn(!sp.connected && 'opacity-40')} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold">
-                    <span className="truncate">{sp.player.name}{sp.player.id === meId ? ' (you)' : ''}</span>
-                    {leader && <span className="font-mono text-[9px] uppercase tracking-widest text-burn">Leader</span>}
-                  </div>
-                  <p className={cn('mt-0.5 whitespace-pre-wrap break-words text-sm', msg ? 'text-foreground' : 'text-muted-foreground/70')} data-testid={`text-chat-message-${sp.player.id}`}>
-                    {msg ? msg.text : sp.connected ? 'Quiet on channel' : 'Offline'}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <ChatHistory session={session} meId={meId} open={open} />
         <div className="border-t border-white/10 p-3">
           <MessageComposer sessionId={session.id} />
         </div>
@@ -179,7 +160,7 @@ export function CrewBar({ session, flag, meId, onOpenBadge, children }: { sessio
           </button>
         </div>
       </div>
-      <CrewChatDialog key={`chat:${session.id}:${meId}`} open={chat} onOpenChange={setChat} session={session} meId={meId} now={now} />
+      <CrewChatDialog key={`chat:${session.id}:${meId}`} open={chat} onOpenChange={setChat} session={session} meId={meId} />
       <AiDraftDialog key={`advisor:${session.id}:${meId}`} open={ai} onOpenChange={setAi} draftKey={`${session.id}:${meId}`} />
     </div>
   );

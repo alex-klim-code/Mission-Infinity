@@ -5,8 +5,11 @@ export type CrewNotice = {
 };
 type NoticePlayer = Pick<SessionPlayer, 'lastMessage'> & { player: Pick<SessionPlayer['player'], 'id' | 'name'> };
 
-export function collectCrewNotices(previous: readonly CrewNotice[], players: readonly NoticePlayer[], now: number): CrewNotice[] {
+export function collectCrewNotices(previous: readonly CrewNotice[], players: readonly NoticePlayer[], now: number, history: readonly CrewNotice[] = []): CrewNotice[] {
   const notices = new Map(previous.filter(n => Date.parse(n.expiresAt) > now).map(n => [n.id, n]));
+  for (const message of history) {
+    if (Date.parse(message.expiresAt) > now && !notices.has(message.id)) notices.set(message.id, message);
+  }
   for (const { player, lastMessage: message } of players) {
     if (message && Date.parse(message.expiresAt) > now && !notices.has(message.id)) {
       notices.set(message.id, { ...message, playerId: player.id, name: player.name });

@@ -12,9 +12,9 @@ The mission creator is the initial **Leader**. Crew members signal readiness and
 
 Every session stage has mission details, budget and timeline, live Uplink status, the current player's badge, and a confirmed exit action in its top bar. Crew avatars show their nicknames and open the corresponding employee badge.
 
-The crew channel shows new messages as right-side notifications for the remainder of their 12-second display lifetime. Messages are limited to 180 characters, rate-limited per sender, and visible only to active session members. The frontend keeps a bounded temporary queue so successive received messages from the same sender can appear separately without duplicate notifications on polling. Server storage remains bounded to one latest message per membership, not an accumulating chat log. Existing realtime notifications and session polling synchronize the crew.
+The crew channel stores each message in PostgreSQL for its mission session. The non-modal chat panel shows saved history after refresh, including multiple messages per sender, names and timestamps. Older messages can be loaded in 50-message pages. The latest page travels with realtime session updates and fallback polling; new transmissions also appear as non-interactive notifications on the right for 12 seconds. Notification expiry never deletes history. Messages are limited to 180 characters, rate-limited per sender and readable only by active members of that mission. Remaining legacy per-member transmissions are imported idempotently, including expired ones; already-overwritten legacy messages cannot be recovered.
 
-Publishing this feature adds the nullable `game_session_players.last_message` field through the normal managed schema comparison; existing characters and memberships are preserved.
+Publishing this feature adds `game_session_messages` through the normal managed schema comparison; existing characters and memberships are preserved. The old per-member snapshot remains for compatibility and rate limiting, not as the history source.
 
 ## Custom characters
 

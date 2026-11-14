@@ -32,6 +32,7 @@ import type {
   CharacterInput,
   FriendAction,
   GameSession,
+  GetSessionMessagesParams,
   GetSocialParams,
   HealthStatus,
   InvitationInput,
@@ -39,6 +40,7 @@ import type {
   Player,
   PlayerAccount,
   SessionAction,
+  SessionChatPage,
   SessionInput,
   SessionMessageInput,
   SessionResult,
@@ -1845,6 +1847,197 @@ export const useUpdateGameSession = <
 > => {
   return useMutation(getUpdateGameSessionMutationOptions(options), queryClient);
 };
+
+export const getGetSessionMessagesUrl = (
+  id: string,
+  params?: GetSessionMessagesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/game/sessions/${id}/messages?${stringifiedParams}`
+    : `/api/game/sessions/${id}/messages`;
+};
+
+export const getSessionMessages = async (
+  id: string,
+  params?: GetSessionMessagesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<SessionChatPage> => {
+  return customFetch<SessionChatPage>(getGetSessionMessagesUrl(id, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSessionMessagesQueryKey = (
+  id: string,
+  params?: GetSessionMessagesParams,
+) => {
+  return [
+    `/api/game/sessions/${id}/messages`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetSessionMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSessionMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  params?: GetSessionMessagesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionMessages>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionMessagesQueryKey(id, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSessionMessages>>
+  > = ({ signal }) =>
+    getSessionMessages(id, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSessionMessages>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSessionMessagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionMessages>>
+>;
+export type GetSessionMessagesQueryError = ErrorType<unknown>;
+
+export function useGetSessionMessages<
+  TData = Awaited<ReturnType<typeof getSessionMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  params: undefined | GetSessionMessagesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionMessages>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionMessages>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionMessages>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionMessages<
+  TData = Awaited<ReturnType<typeof getSessionMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  params?: GetSessionMessagesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionMessages>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionMessages>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionMessages>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionMessages<
+  TData = Awaited<ReturnType<typeof getSessionMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  params?: GetSessionMessagesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionMessages>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetSessionMessages<
+  TData = Awaited<ReturnType<typeof getSessionMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  params?: GetSessionMessagesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionMessages>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetSessionMessagesQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export const getSendSessionMessageUrl = (id: string) => {
   return `/api/game/sessions/${id}/messages`;

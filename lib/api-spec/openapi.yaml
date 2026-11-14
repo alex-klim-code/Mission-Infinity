@@ -177,6 +177,17 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/SessionResult' }
   /game/sessions/{id}/messages:
+    get:
+      operationId: getSessionMessages
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: query, name: before, required: false, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Persistent crew history, oldest first, up to 50 messages per page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionChatPage' }
     post:
       operationId: sendSessionMessage
       parameters:
@@ -188,7 +199,7 @@ paths:
             schema: { $ref: '#/components/schemas/SessionMessageInput' }
       responses:
         '200':
-          description: Session with the sender's updated speech bubble
+          description: Session after durably saving the message
           content:
             application/json:
               schema: { $ref: '#/components/schemas/GameSession' }
@@ -463,6 +474,20 @@ components:
           anyOf:
             - { $ref: '#/components/schemas/SessionMessage' }
             - { type: 'null' }
+    SessionChatMessage:
+      allOf:
+        - { $ref: '#/components/schemas/SessionMessage' }
+        - type: object
+          required: [playerId, name]
+          properties:
+            playerId: { type: string }
+            name: { type: string }
+    SessionChatPage:
+      type: object
+      required: [messages, hasMore]
+      properties:
+        messages: { type: array, items: { $ref: '#/components/schemas/SessionChatMessage' } }
+        hasMore: { type: boolean }
     GameSession:
       type: object
       required: [id, roomCode, hostId, missionId, status, scene, players, createdAt, revision]
@@ -475,6 +500,7 @@ components:
         scene: { type: integer }
         revision: { type: integer }
         players: { type: array, items: { $ref: '#/components/schemas/SessionPlayer' } }
+        chat: { $ref: '#/components/schemas/SessionChatPage' }
         createdAt: { type: string }
     SessionAction:
       type: object

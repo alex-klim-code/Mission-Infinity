@@ -16,6 +16,7 @@ A browser-based cooperative space mission story for 1–4 players.
 - Current story requirements: the first three scenes use the provided Warsaw graduation and NASA images, followed by Get a Message (mission description), Meet Your Crew (mission parameters), and Start Mission. Crew may signal readiness there; only Leader launches.
 - The AI advisor is currently a private text draft only. Do not connect a model, send the draft, or invent AI responses until the user asks for that integration.
 - Crew chat must be non-modal and must not block gameplay. Show live player messages as temporary notifications on the right, not as avatar speech bubbles.
+- Preserve mission chat history in PostgreSQL across refreshes; expiring a right-side notification must never remove the saved message.
 - Position the product as an educational space mission game for ages 14+, accessible without prior engineering knowledge and with planned beginner-to-advanced scenarios.
 - Monthly missions are a goal, not an established release schedule. Never invent advisers, credentials or NASA involvement.
 - Character onboarding now targets ages 14–60 (default 20), Female/Male bases, and a searchable country selector defaulting to Poland. Preserve legacy profiles and their portraits until their owner explicitly customizes them.

@@ -3,6 +3,7 @@ import { gameDb, requireCondition, type GameConnection } from "./database";
 import { activeMembership, getPlayer, requireCharacter } from "./players";
 import { isOnline, joinSessionRoom, leaveSessionRoom, notifyUsers } from "./presence";
 import { getMissionStory } from "./content";
+import { sessionHistory } from "./session-history";
 
 export async function sessionMembers(id: string, db: GameConnection = gameDb) {
   return db.selectFrom("game_session_players").selectAll()
@@ -25,7 +26,7 @@ export async function sessionState(id: string, userId: string, db: GameConnectio
   return {
     id: session.id, roomCode: session.room_code, hostId: session.host_id, missionId: session.mission_id,
     status: session.status, scene: session.scene, revision: session.revision,
-    createdAt: session.created_at.toISOString(), players,
+    createdAt: session.created_at.toISOString(), players, chat: await sessionHistory(id, db),
   };
 }
 export async function notifySession(id: string, extraIds: string[] = []) {

@@ -379,6 +379,16 @@ export interface SessionPlayer {
   lastMessage?: SessionMessage | null;
 }
 
+export type SessionChatMessage = SessionMessage & {
+  playerId: string;
+  name: string;
+};
+
+export interface SessionChatPage {
+  messages: SessionChatMessage[];
+  hasMore: boolean;
+}
+
 export type GameSessionStatus =
   (typeof GameSessionStatus)[keyof typeof GameSessionStatus];
 
@@ -401,6 +411,7 @@ export interface GameSession {
   scene: number;
   revision: number;
   players: SessionPlayer[];
+  chat?: SessionChatPage;
   createdAt: string;
 }
 
@@ -455,4 +466,8 @@ export type GetSocialParams = {
    * @maxLength 40
    */
   q?: string;
+};
+
+export type GetSessionMessagesParams = {
+  before?: string;
 };

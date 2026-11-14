@@ -11,6 +11,7 @@ import {
   GetAvatarConfigResponse, RequestAvatarUploadBody, RequestAvatarUploadResponse,
   CompleteAvatarUploadParams, CompleteAvatarUploadResponse, GetAvatarFileParams,
   SendSessionMessageBody, SendSessionMessageResponse, GetStoryImageParams,
+  GetSessionMessagesQueryParams, GetSessionMessagesResponse,
 } from "@workspace/api-zod";
 import { getCatalog } from "../game/content";
 import { getAccount, getCareer, resolveUser, savePlayer } from "../game/players";
@@ -18,6 +19,7 @@ import { friendshipAction, socialState } from "../game/social";
 import { createSession, notifySession, sessionState, updateSession } from "../game/sessions";
 import { inviteToSession, respondToInvite } from "../game/invitations";
 import { sendSessionMessage } from "../game/session-messages";
+import { getSessionMessages } from "../game/session-history";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { GameError, requireCondition } from "../game/database";
 import { logger } from "../lib/logger";
@@ -123,6 +125,10 @@ gameApi.get("/api/game/sessions/:id", async req => GetGameSessionResponse.parse(
 gameApi.post("/api/game/sessions/:id/actions", async req => {
   const result = await updateSession(req.playerId, idParam(req), UpdateGameSessionBody.parse(req.body));
   return UpdateGameSessionResponse.parse(result);
+});
+gameApi.get("/api/game/sessions/:id/messages", async req => {
+  const { before } = GetSessionMessagesQueryParams.parse(req.query);
+  return GetSessionMessagesResponse.parse(await getSessionMessages(req.playerId, idParam(req), before));
 });
 gameApi.post("/api/game/sessions/:id/messages", async req => {
   return SendSessionMessageResponse.parse(await sendSessionMessage(

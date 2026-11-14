@@ -2,6 +2,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { collectCrewNotices } from './session-notices';
 
+test('all fresh stored messages create notices, but expired history does not replay', () => {
+  const at = Date.parse('2026-11-14T14:00:00Z');
+  const history = [0, 1, 2].map(i => ({
+    id: `stored-${i}`, playerId: 'same-sender', name: 'Engineer', text: `Entry ${i}`,
+    createdAt: new Date(at + i * 1000).toISOString(),
+    expiresAt: new Date(i === 0 ? at - 1 : at + 12000).toISOString(),
+  }));
+  const notices = collectCrewNotices([], [], at, history);
+  assert.deepEqual(notices.map(m => m.id), ['stored-1', 'stored-2']);
+  assert.equal(collectCrewNotices(notices, [], at + 1, history).length, 2);
+});
+
 const now = Date.parse('2026-11-14T14:00:00Z');
 const member = (id: string, seconds = 0) => ({
   player: { id: 'sender', name: 'Engineer' },

@@ -9,15 +9,15 @@ export function MessageNotifications({ session, meId }: { session: GameSession; 
   const [now, setNow] = useState(Date.now);
   const reducedMotion = useReducedMotion();
   useEffect(() => {
-    setNotices(previous => collectCrewNotices(previous, session.players, Date.now()));
-  }, [session.players]);
+    setNotices(previous => collectCrewNotices(previous, session.players, Date.now(), session.chat?.messages));
+  }, [session.players, session.chat]);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
   const visible = notices.filter(n => Date.parse(n.expiresAt) > now).slice(-3).reverse();
   return (
-    <aside className="pointer-events-none fixed right-3 top-32 z-30 flex w-[min(18rem,calc(100vw-1.5rem))] flex-col gap-2"
+    <aside className="pointer-events-none fixed bottom-32 right-3 z-30 flex w-[min(18rem,calc(100vw-1.5rem))] flex-col-reverse gap-2"
       role="log" aria-label="Live crew messages" aria-live="polite" aria-relevant="additions" data-testid="crew-message-notifications">
       <AnimatePresence initial={false}>
         {visible.map(notice => (
@@ -29,7 +29,7 @@ export function MessageNotifications({ session, meId }: { session: GameSession; 
               <MessageSquare className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span className="min-w-0 break-words">{notice.name}{notice.playerId === meId ? ' (you)' : ''}</span>
             </div>
-            <p className="whitespace-pre-wrap break-words text-foreground [overflow-wrap:anywhere]">{notice.text}</p>
+            <p className="line-clamp-3 whitespace-pre-wrap break-words text-foreground [overflow-wrap:anywhere]">{notice.text}</p>
           </motion.div>
         ))}
       </AnimatePresence>

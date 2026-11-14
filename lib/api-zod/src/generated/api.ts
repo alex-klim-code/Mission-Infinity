@@ -1170,6 +1170,26 @@ export const CreateGameSessionResponse = zod.object({
         .optional(),
     }),
   ),
+  chat: zod
+    .object({
+      messages: zod.array(
+        zod
+          .object({
+            id: zod.string(),
+            text: zod.string(),
+            createdAt: zod.string(),
+            expiresAt: zod.string(),
+          })
+          .and(
+            zod.object({
+              playerId: zod.string(),
+              name: zod.string(),
+            }),
+          ),
+      ),
+      hasMore: zod.boolean(),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1316,6 +1336,26 @@ export const GetGameSessionResponse = zod.object({
         .optional(),
     }),
   ),
+  chat: zod
+    .object({
+      messages: zod.array(
+        zod
+          .object({
+            id: zod.string(),
+            text: zod.string(),
+            createdAt: zod.string(),
+            expiresAt: zod.string(),
+          })
+          .and(
+            zod.object({
+              playerId: zod.string(),
+              name: zod.string(),
+            }),
+          ),
+      ),
+      hasMore: zod.boolean(),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1478,10 +1518,57 @@ export const UpdateGameSessionResponse = zod.object({
             .optional(),
         }),
       ),
+      chat: zod
+        .object({
+          messages: zod.array(
+            zod
+              .object({
+                id: zod.string(),
+                text: zod.string(),
+                createdAt: zod.string(),
+                expiresAt: zod.string(),
+              })
+              .and(
+                zod.object({
+                  playerId: zod.string(),
+                  name: zod.string(),
+                }),
+              ),
+          ),
+          hasMore: zod.boolean(),
+        })
+        .optional(),
       createdAt: zod.string(),
     }),
     zod.null(),
   ]),
+});
+
+export const GetSessionMessagesParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetSessionMessagesQueryParams = zod.object({
+  before: zod.coerce.string().uuid().optional(),
+});
+
+export const GetSessionMessagesResponse = zod.object({
+  messages: zod.array(
+    zod
+      .object({
+        id: zod.string(),
+        text: zod.string(),
+        createdAt: zod.string(),
+        expiresAt: zod.string(),
+      })
+      .and(
+        zod.object({
+          playerId: zod.string(),
+          name: zod.string(),
+        }),
+      ),
+  ),
+  hasMore: zod.boolean(),
 });
 
 export const SendSessionMessageParams = zod.object({
@@ -1633,6 +1720,26 @@ export const SendSessionMessageResponse = zod.object({
         .optional(),
     }),
   ),
+  chat: zod
+    .object({
+      messages: zod.array(
+        zod
+          .object({
+            id: zod.string(),
+            text: zod.string(),
+            createdAt: zod.string(),
+            expiresAt: zod.string(),
+          })
+          .and(
+            zod.object({
+              playerId: zod.string(),
+              name: zod.string(),
+            }),
+          ),
+      ),
+      hasMore: zod.boolean(),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1798,6 +1905,26 @@ export const RespondToInvitationResponse = zod.object({
             .optional(),
         }),
       ),
+      chat: zod
+        .object({
+          messages: zod.array(
+            zod
+              .object({
+                id: zod.string(),
+                text: zod.string(),
+                createdAt: zod.string(),
+                expiresAt: zod.string(),
+              })
+              .and(
+                zod.object({
+                  playerId: zod.string(),
+                  name: zod.string(),
+                }),
+              ),
+          ),
+          hasMore: zod.boolean(),
+        })
+        .optional(),
       createdAt: zod.string(),
     }),
     zod.null(),

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { GameSessionStatus } from "./gameSessionStatus";
+import type { SessionChatPage } from "./sessionChatPage";
 import type { SessionPlayer } from "./sessionPlayer";
 
 export interface GameSession {
@@ -17,5 +18,6 @@ export interface GameSession {
   scene: number;
   revision: number;
   players: SessionPlayer[];
+  chat?: SessionChatPage;
   createdAt: string;
 }

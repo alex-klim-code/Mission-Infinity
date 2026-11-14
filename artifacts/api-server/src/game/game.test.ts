@@ -5,6 +5,7 @@ import { gameDb } from "./database";
 import { seedGameContent, getCatalog } from "./content";
 import { getAccount, savePlayer, getCareer } from "./players";
 import { sendSessionMessage } from "./session-messages";
+import { getSessionMessages } from "./session-history";
 import { friendshipAction, socialState } from "./social";
 import { createSession, sessionState, updateSession, reconcilePresence } from "./sessions";
 import { inviteToSession, respondToInvite } from "./invitations";
@@ -57,7 +58,7 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.equal(mission.requirements.length, 10);
       assert.equal(mission.briefing.length, 10);
     });
-    await t.test("crew speech bubbles are private, bounded, rate-limited and expire without changing leadership", async () => {
+    await t.test("crew messages persist privately after notification expiry and successive sends", async () => {
       const [leader, crew, outsider] = await players(3);
       const mission = (await getCatalog()).missions.find(m => m.enabled)!;
       const session = await createSession(leader, mission.id, "crew");
@@ -90,8 +91,52 @@ test("Mission Infinity server-authoritative game rules", async t => {
         last_message: { ...bubble, expiresAt: new Date(Date.now() - 1).toISOString() },
       }).where("session_id", "=", session.id).where("user_id", "=", leader).execute();
       assert.equal((await sessionState(session.id, crew)).players.find(p => p.player.id === leader)!.lastMessage, null);
+      await gameDb.updateTable("game_session_messages").set({ expires_at: new Date(Date.now() - 1) })
+        .where("session_id", "=", session.id).execute();
+      assert.ok((await getSessionMessages(crew, session.id)).messages.some(m => m.id === bubble.id && m.text === "Welcome aboard!"));
+      await assert.rejects(getSessionMessages(outsider, session.id));
+      await gameDb.updateTable("game_session_players").set({
+        last_message: { ...bubble, createdAt: new Date(Date.now() - 2000).toISOString() },
+      }).where("session_id", "=", session.id).where("user_id", "=", leader).execute();
+      const second = await sendSessionMessage(leader, session.id, { text: "Second entry" });
+      assert.equal(second.chat.messages.filter(m => m.playerId === leader).length, 2);
+      const afterReload = await sessionState(session.id, crew);
+      assert.ok(afterReload.chat.messages.some(m => m.text === "Welcome aboard!"));
+      assert.ok(afterReload.chat.messages.some(m => m.text === "Second entry"));
       await updateSession(crew, session.id, { action: "leave" });
       await assert.rejects(sendSessionMessage(crew, session.id, { text: "Already left" }));
+      await assert.rejects(getSessionMessages(crew, session.id));
+    });
+    await t.test("chat pagination is complete, stable for equal timestamps, and rejects foreign cursors", async () => {
+      const [a, b] = await players(2);
+      const session = await createSession(a, "earth-observer", "solo");
+      const other = await createSession(b, "earth-observer", "solo");
+      const ids = Array.from({ length: 55 }, () => randomUUID()).sort();
+      await gameDb.insertInto("game_session_messages").values(ids.map((id, i) => ({
+        id, session_id: session.id, user_id: a, sender_name: "Saved engineer",
+        text: `Entry ${i}`, created_at: new Date("2026-01-01T00:00:00Z"),
+        expires_at: new Date("2026-01-01T00:00:12Z"),
+      }))).execute();
+      const first = await getSessionMessages(a, session.id);
+      assert.equal(first.messages.length, 50);
+      assert.equal(first.hasMore, true);
+      const older = await getSessionMessages(a, session.id, first.messages[0].id);
+      assert.equal(older.messages.length, 5);
+      assert.equal(older.hasMore, false);
+      assert.deepEqual([...older.messages, ...first.messages].map(m => m.id), ids);
+      const foreign = await sendSessionMessage(b, other.id, { text: "Private other mission" });
+      await assert.rejects(getSessionMessages(a, session.id, foreign.chat.messages[0].id));
+      await assert.rejects(getSessionMessages(b, session.id));
+      // Import the remaining old snapshot once, even after its notification expired.
+      const legacyId = randomUUID();
+      await gameDb.updateTable("game_session_players").set({ last_message: {
+        id: legacyId, text: "Legacy transmission", createdAt: "2025-01-01T00:00:00Z",
+        expiresAt: "2025-01-01T00:00:12Z",
+      } }).where("session_id", "=", session.id).execute();
+      await getSessionMessages(a, session.id);
+      await getSessionMessages(a, session.id);
+      const imported = await gameDb.selectFrom("game_session_messages").select("id").where("id", "=", legacyId).execute();
+      assert.equal(imported.length, 1);
     });
     await t.test("character saves, reloads, edits and rejects unknown presets and duplicate names", async () => {
       const [a, b] = await players(2);
