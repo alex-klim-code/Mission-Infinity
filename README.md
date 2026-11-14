@@ -6,7 +6,9 @@ LUNA has a $400M budget, Easy difficulty, 36 months of preparation and four week
 
 ## Rocket Builder
 
-After mission start, players use a two-pane builder: component selection and full details on the left, with the rocket, selected parts, spent funds and known dry-mass subtotal alongside. The mobile layout keeps a compact summary visible. Lists show only names and prices; opening details never purchases.
+Clickable **Rocket Builder / Section / Category** breadcrumbs navigate between the full section overview, a section's categories and its component cards. The overview shows overall and per-section percentages, based on confirmed categories only (including the purchased body). Browsing never purchases or changes saved choices.
+
+After mission start, players use a two-pane builder: component cards on the left, with the rocket, selected parts, spent funds and known dry-mass subtotal alongside. Desktop cards show three per row, with rocket images for bodies and category icons for other parts, names, USD prices and short English descriptions. Clicking opens full details in a dialog; opening or dismissing it never purchases. Successful guest proposals and Leader-confirmed purchases advance locally to the next category, then the next section; a Leader's proposal remains open for confirmation. Other players' changes never interrupt local navigation. The mobile layout keeps a compact summary visible.
 
 The supplied workbook contributes 116 non-body parts across 27 categories. Its four LUNA Frame variants are intentionally excluded, following the user's decision to keep Falcon Shadow ($50,000,000), Titan Explorer ($60,000,000) and Nova Prime ($90,000,000). This makes seven sections, 28 categories and 119 options. Run `python3 scripts/import-luna-catalog.py` to reproduce the imported catalog using Python's standard library. Original source data is preserved, while `luna-catalog.en.json` supplies English display translations without changing stable IDs, component specifications or non-body prices. All player-facing copy is English. Existing hull purchases retain their actual paid amounts and are never charged the new price retroactively.
 

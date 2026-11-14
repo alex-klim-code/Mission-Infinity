@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Coins, Crown, ExternalLink, Lock, Rocket, Send } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Check, ChevronDown, Rocket } from 'lucide-react';
 import {
   useGetGameCatalog,
   type GameSession,
@@ -8,43 +8,15 @@ import {
   type RocketCategory,
   type RocketComponent,
   type RocketSection,
-  type SessionActionHullId,
 } from '@workspace/api-client-react';
 import { ErrorState, HudButton } from '@/components/ui-kit';
-import { errMsg, imgUrl } from '@/lib/game';
-import { usePrefs } from '@/lib/prefs';
+import { errMsg } from '@/lib/game';
 import { cn } from '@/lib/utils';
+import { BODY_CATEGORY, HullVisual, fmtKg, formatExact, hullById, useCalm, type Props } from './rocket-shared';
+import { Navigator } from './rocket-navigator';
 import type { ActFn } from './session-shared';
 
-export const HULLS: { id: SessionActionHullId; name: string; colors: string; price: number; image: string }[] = [
-  { id: 'falcon-shadow', name: 'Falcon Shadow', colors: 'black and white', price: 50000000, image: '/api/game/story-images/falcon-shadow.webp' },
-  { id: 'titan-explorer', name: 'Titan Explorer', colors: 'orange and white', price: 60000000, image: '/api/game/story-images/titan-explorer.webp' },
-  { id: 'nova-prime', name: 'Nova Prime', colors: 'white and blue', price: 90000000, image: '/api/game/story-images/nova-prime.webp' },
-];
-
-export const hullById = (id: string | null | undefined) => HULLS.find((h) => h.id === id);
-export const formatExact = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-const fmtSigned = (n: number) => (n === 0 ? '$0' : `${n > 0 ? '+' : '-'}${formatExact(Math.abs(n))}`);
-const fmtKg = (n: number) => `${n.toLocaleString('en-US', { maximumFractionDigits: 6 })} kg`;
-
-export const BODY_CATEGORY = 'rocket-body';
-const isHullOption = (o: RocketComponent) => o.categoryId === BODY_CATEGORY || !!hullById(o.id);
-
-type Props = { session: GameSession; mission?: Mission; me: string; isHost: boolean; act: ActFn; pending: boolean; pendingAction?: string };
-
-function useCalm() {
-  const sys = useReducedMotion();
-  const { reducedMotion } = usePrefs();
-  return !!sys || reducedMotion;
-}
-
-function Price({ value, className }: { value: number; className?: string }) {
-  return (
-    <span className={cn('inline-flex items-center gap-1.5 font-mono', className)}>
-      <Coins className="h-3.5 w-3.5 text-burn" aria-hidden /> {formatExact(value)}
-    </span>
-  );
-}
+export { HULLS, hullById, formatExact, BODY_CATEGORY } from './rocket-shared';
 
 /** Official selection per category, hull merged from build.selectedHullId. */
 function useOfficial(session: GameSession, sections: RocketSection[]) {
@@ -67,26 +39,6 @@ function useOfficial(session: GameSession, sections: RocketSection[]) {
   }, [session, sections]);
 }
 
-/* ---------------- Right pane: hull + totals ---------------- */
-
-function HullVisual({ hullId, className }: { hullId?: string | null; className?: string }) {
-  const hull = hullById(hullId);
-  if (!hull)
-    return (
-      <div className={cn('relative flex items-center justify-center', className)} data-testid="img-hull-placeholder">
-        <svg viewBox="0 0 60 180" className="h-full w-auto opacity-60" aria-hidden>
-          <path d="M30 4 C44 24 46 52 46 70 L46 150 L54 172 L6 172 L14 150 L14 70 C14 52 16 24 30 4 Z" fill="none" stroke="hsl(186 92% 56% / .5)" strokeWidth="1.2" strokeDasharray="4 4" />
-        </svg>
-        <span className="absolute rounded-sm border border-white/15 bg-void/85 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Not purchased</span>
-      </div>
-    );
-  return (
-    <div className={cn('relative flex items-center justify-center', className)}>
-      <div className="absolute inset-x-8 bottom-1 h-5 rounded-full bg-burn/30 blur-xl" />
-      <img src={imgUrl(hull.image)} alt={`${hull.name} rocket hull`} width={724} height={2172} className="relative h-full w-auto max-w-full object-contain" data-testid="img-builder-hull" />
-    </div>
-  );
-}
 
 type Summary = { spent: number; remaining: number; count: number; total: number; dryMass: number; unknownMass: number; hullId?: string | null };
 
@@ -152,197 +104,6 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
         <div className="mt-4">{list}</div>
       </aside>
     </>
-  );
-}
-
-/* ---------------- Left pane ---------------- */
-
-function OptionDetail({ option, category, props, official, byOption, remaining, onBack }: {
-  option: RocketComponent; category: RocketCategory; props: Props; official: Map<string, string>; byOption: Map<string, RocketComponent>; remaining: number; onBack: () => void;
-}) {
-  const { session, me, isHost, act, pending, pendingAction } = props;
-  const body = category.id === BODY_CATEGORY || isHullOption(option);
-  const hullBought = !!session.build?.selectedHullId;
-  const currentId = official.get(category.id);
-  const current = currentId ? byOption.get(currentId) ?? (body ? undefined : undefined) : undefined;
-  const currentPrice = current?.price ?? (body ? hullById(currentId)?.price : undefined) ?? 0;
-  const isOfficial = currentId === option.id;
-  const diff = option.price - currentPrice;
-  const completed = !!session.assembly?.completed;
-  const nameOf = (id: string) => (id === me ? 'You' : session.players.find((p) => p.player.id === id)?.player.name ?? 'Engineer');
-  const proposals = body
-    ? (session.build?.votes ?? []).map((v) => ({ playerId: v.playerId, optionId: v.hullId }))
-    : (session.assembly?.proposals ?? []).filter((p) => p.categoryId === category.id);
-  const mine = proposals.find((p) => p.playerId === me)?.optionId === option.id;
-  const screen = session.build?.screen ?? 'INTRO';
-  const hullId = option.id as SessionActionHullId;
-  const locked = completed || (body && hullBought) || (!body && !hullBought);
-  const overBudget = diff > remaining;
-
-  const propose = () => {
-    if (body) {
-      if (screen === 'INTRO') { if (isHost) act({ action: 'build-next' }, () => act({ action: 'choose-hull', hullId })); return; }
-      act({ action: 'choose-hull', hullId });
-    } else act({ action: 'choose-component', optionId: option.id });
-  };
-  const confirm = () => {
-    if (body) {
-      if (screen === 'INTRO') act({ action: 'build-next' }, () => act({ action: 'confirm-hull', hullId }));
-      else act({ action: 'confirm-hull', hullId });
-    } else act({ action: 'confirm-component', optionId: option.id });
-  };
-  const guestBlockedIntro = body && !isHost && screen === 'INTRO';
-
-  const rows: [string, string][] = [
-    ['Price', formatExact(option.price)],
-    ['Mass', option.massKg == null ? 'No data' : fmtKg(option.massKg)],
-    ['Game quality score', option.quality == null ? 'Not rated' : String(option.quality)],
-    ['Data status', option.dataStatus || '--'],
-    ['Original category', option.originalCategory || '--'],
-    ['Source', option.source || '--'],
-  ];
-
-  return (
-    <div className="pb-6" data-testid={`panel-option-${option.id}`}>
-      <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-ion" data-testid="button-back-options">
-        <ArrowLeft className="h-4 w-4" /> {category.name}
-      </button>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="font-display text-2xl font-bold uppercase leading-tight [overflow-wrap:anywhere] sm:text-3xl" data-testid="text-option-name">{option.name}</h2>
-          {isOfficial && <div className="mt-1 inline-flex items-center gap-1 rounded-sm bg-burn/20 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-burn"><Check className="h-3 w-3" /> Official choice</div>}
-        </div>
-        <Price value={option.price} className="text-lg text-ion" />
-      </div>
-      {body && hullById(option.id) && <HullVisual hullId={option.id} className="mx-auto mt-3 h-44 w-full" />}
-      <dl className="mt-4 grid grid-cols-1 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 sm:grid-cols-2">
-        {rows.map(([k, v]) => (
-          <div key={k} className="min-w-0 bg-void/85 p-3"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{k}</dt><dd className="mt-0.5 text-sm [overflow-wrap:anywhere]">{v}</dd></div>
-        ))}
-      </dl>
-      {option.parameters && (<><h3 className="kicker mt-5">Parameters</h3><p className="mt-1 whitespace-pre-line text-sm text-foreground/85 [overflow-wrap:anywhere]" data-testid="text-option-parameters">{option.parameters}</p></>)}
-      {option.description && (<><h3 className="kicker mt-5">Description</h3><p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-foreground/85 [overflow-wrap:anywhere]" data-testid="text-option-description">{option.description}</p></>)}
-      {option.qualityMethodology && (<><h3 className="kicker mt-5">Quality methodology</h3><p className="mt-1 whitespace-pre-line text-xs text-muted-foreground [overflow-wrap:anywhere]">{option.qualityMethodology}</p></>)}
-      {option.referenceUrl && (
-        <a href={option.referenceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex max-w-full items-center gap-1.5 text-xs text-ion hover:underline [overflow-wrap:anywhere]" data-testid="link-option-reference">
-          <ExternalLink className="h-3.5 w-3.5 shrink-0" /> Reference
-        </a>
-      )}
-      <p className="mt-3 text-[11px] text-muted-foreground">Quality is a game score, not a reliability figure.</p>
-
-      <h3 className="kicker mt-6">Crew proposals</h3>
-      <ul className="mt-2 flex flex-wrap gap-1.5" data-testid="list-option-proposals">
-        {proposals.length === 0 && <li className="text-xs text-muted-foreground">No proposals in this category yet.</li>}
-        {proposals.map((p) => (
-          <li key={p.playerId} className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider', p.optionId === option.id ? 'bg-ion/20 text-ion' : 'bg-white/5 text-muted-foreground')}>
-            {p.playerId === session.hostId && <Crown className="h-3 w-3" aria-hidden />}
-            {nameOf(p.playerId)}: {byOption.get(p.optionId)?.name ?? hullById(p.optionId)?.name ?? p.optionId}
-          </li>
-        ))}
-      </ul>
-
-      <div className="glass mt-6 space-y-3 rounded-lg p-4" data-testid="panel-option-actions">
-        <div className="text-sm text-muted-foreground" aria-live="polite" data-testid="text-option-status">
-          {completed ? 'Rocket is complete. No further changes.'
-            : body && hullBought ? 'The body is bought once and cannot be changed.'
-            : !body && !hullBought ? 'Buy the rocket body first.'
-            : guestBlockedIntro ? 'Waiting for the Leader to open body selection.'
-            : current && !isOfficial ? <>Replacing <span className="text-foreground">{current.name}</span>. Difference: <span className={cn('font-mono', diff > 0 ? 'text-burn' : 'text-ion')} data-testid="text-option-diff">{fmtSigned(diff)}</span></>
-            : isOfficial ? 'This is the official choice.'
-            : <>Cost if confirmed: <span className="font-mono text-burn" data-testid="text-option-diff">{formatExact(option.price)}</span></>}
-          {!locked && !isOfficial && overBudget && <span className="mt-1 block text-destructive">Exceeds remaining budget.</span>}
-        </div>
-        {!locked && !isOfficial && (
-          <div className="flex flex-wrap gap-2">
-            <HudButton variant={mine ? 'ghost' : 'ion'} disabled={pending || mine || guestBlockedIntro} loading={pendingAction === 'choose-component' || pendingAction === 'choose-hull'} onClick={propose} data-testid="button-propose-option">
-              {mine ? (<><Check className="h-4 w-4" /> Proposed</>) : (<><Send className="h-4 w-4" /> Propose</>)}
-            </HudButton>
-            {isHost && (
-              <HudButton variant="burn" disabled={pending || overBudget} loading={pendingAction === 'confirm-component' || pendingAction === 'confirm-hull' || pendingAction === 'build-next'} onClick={confirm} data-testid="button-confirm-option">
-                <Crown className="h-4 w-4" /> {current ? 'Confirm replacement' : 'Confirm purchase'}
-              </HudButton>
-            )}
-          </div>
-        )}
-        {!isHost && !locked && <p className="text-[11px] text-muted-foreground">Proposals are free. The Leader confirms purchases.</p>}
-      </div>
-    </div>
-  );
-}
-
-function Navigator({ sections, official, byOption, props, remaining }: { sections: RocketSection[]; official: Map<string, string>; byOption: Map<string, RocketComponent>; props: Props; remaining: number }) {
-  const [catId, setCatId] = useState<string | null>(null);
-  const [optId, setOptId] = useState<string | null>(null);
-  const [openSec, setOpenSec] = useState<string | null>(sections[0]?.id ?? null);
-  const cat = sections.flatMap((s) => s.categories).find((c) => c.id === catId);
-  const opt = cat?.options.find((o) => o.id === optId);
-  const hullBought = !!props.session.build?.selectedHullId;
-
-  if (cat && opt) return <OptionDetail option={opt} category={cat} props={props} official={official} byOption={byOption} remaining={remaining} onBack={() => setOptId(null)} />;
-  if (cat)
-    return (
-      <div className="pb-6" data-testid={`panel-category-${cat.id}`}>
-        <button type="button" onClick={() => setCatId(null)} className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-ion" data-testid="button-back-categories">
-          <ArrowLeft className="h-4 w-4" /> All sections
-        </button>
-        <h2 className="font-display text-2xl font-bold uppercase leading-tight [overflow-wrap:anywhere]" data-testid="text-category-name">{cat.name}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">{cat.options.length} options. Open one for full details.</p>
-        <ul className="mt-4 divide-y divide-white/[.06] overflow-hidden rounded-md border border-white/10 bg-void/60">
-          {cat.options.map((o) => {
-            const sel = official.get(cat.id) === o.id;
-            return (
-              <li key={o.id}>
-                <button type="button" onClick={() => setOptId(o.id)} className={cn('flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-ion/[.06] focus-visible:bg-ion/[.08] focus-visible:outline-none', sel && 'bg-burn/[.08]')} data-testid={`button-option-${o.id}`}>
-                  <span className={cn('h-2 w-2 shrink-0 rounded-full', sel ? 'bg-burn' : 'bg-white/15')} aria-hidden />
-                  <span className="min-w-0 flex-1 text-sm [overflow-wrap:anywhere]">{o.name}</span>
-                  <span className="shrink-0 font-mono text-xs text-ion">{formatExact(o.price)}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    );
-  return (
-    <div className="pb-6">
-      <div className="kicker mb-1">Stage 1 / Rocket Construction</div>
-      <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-4xl" data-testid="text-builder-title">Rocket Builder</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{hullBought ? 'Pick one part per category. Crew proposes, the Leader confirms.' : 'Start with the rocket body. Other parts unlock once it is bought.'}</p>
-      <div className="mt-5 space-y-2">
-        {sections.map((s) => {
-          const done = s.categories.filter((c) => official.has(c.id)).length;
-          const open = openSec === s.id;
-          return (
-            <section key={s.id} className="overflow-hidden rounded-md border border-white/10 bg-void/60">
-              <button type="button" onClick={() => setOpenSec(open ? null : s.id)} aria-expanded={open} className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-white/[.03]" data-testid={`button-section-${s.id}`}>
-                <span className="min-w-0 flex-1 font-display text-sm font-bold uppercase tracking-wider [overflow-wrap:anywhere]">{s.name}</span>
-                <span className={cn('font-mono text-[11px]', done === s.categories.length ? 'text-burn' : 'text-muted-foreground')}>{done}/{s.categories.length}</span>
-                <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')} />
-              </button>
-              {open && (
-                <ul className="border-t border-white/[.06]">
-                  {s.categories.map((c) => {
-                    const o = byOption.get(official.get(c.id) ?? '') ?? (c.id === BODY_CATEGORY ? undefined : undefined);
-                    const hull = c.id === BODY_CATEGORY ? hullById(official.get(c.id)) : undefined;
-                    const lockedCat = !hullBought && c.id !== BODY_CATEGORY;
-                    return (
-                      <li key={c.id}>
-                        <button type="button" onClick={() => setCatId(c.id)} className="flex w-full items-center gap-3 px-3 py-2.5 pl-5 text-left text-sm hover:bg-ion/[.05]" data-testid={`button-category-${c.id}`}>
-                          {official.has(c.id) ? <Check className="h-3.5 w-3.5 shrink-0 text-burn" /> : lockedCat ? <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" /> : <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-white/25" />}
-                          <span className="min-w-0 flex-1"><span className="block [overflow-wrap:anywhere]">{c.name}</span>{(o || hull) && <span className="block truncate text-[11px] text-muted-foreground">{o?.name ?? hull?.name}</span>}</span>
-                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -433,7 +194,7 @@ export function RocketBuildView(props: Props) {
         <SummaryPane session={session} sections={sections} summary={summary} isHost={props.isHost} act={props.act} pending={props.pending} pendingAction={props.pendingAction} official={official} byOption={byOption} />
       </div>
       <div className="scroll-thin min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 md:order-1 md:px-6" data-testid="panel-builder-left">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-4xl">
           <Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} />
         </div>
       </div>

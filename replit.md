@@ -5,9 +5,11 @@ A browser-based cooperative space mission story for 1–4 players.
 ## Product scope
 
 - The user's title is **Mission: Infinity**, overriding the title in the original attached brief.
-- `MISSION_STARTED` opens the full **Rocket Builder** in Etap 1 — Budowa Rakiety. Crew members browse/propose parts independently; the Leader confirms shared purchases and completion. It remains an active, resumable mission until explicitly left.
+- `MISSION_STARTED` opens the full **Rocket Builder** in Stage 1 — Rocket Construction. Crew members browse/propose parts independently; the Leader confirms shared purchases and completion. It remains an active, resumable mission until explicitly left.
 - The Rocket Builder now includes seven sections and 28 categories. Use all 116 non-body Excel options plus the three retained hulls (119 total). The user explicitly rejected replacing those hulls with the four LUNA Frame options from Excel.
-- Lists show only component names and prices. Clicking opens the full details; browsing must never purchase. Keep the rocket preview, selected parts and total spent visible alongside the selector.
+- Navigate using **Rocket Builder / Section / Category** breadcrumbs, not an all-section tab strip. Rocket Builder opens all sections with overall and per-section completion percentages; a section opens its category overview. Progress counts confirmed categories only, including the purchased body, not proposals.
+- Show component cards with names, USD prices, short English descriptions and category icons; the three Rocket Body cards use their rocket images. Desktop cards are three per row. Clicking opens a full-details dialog; opening or dismissing it must never purchase. Keep the rocket preview, selected parts and total spent visible alongside the selector.
+- After a successful guest proposal or Leader-confirmed purchase, close details and advance locally to the next category, continuing into the next section when appropriate. A Leader's proposal stays open for confirmation. Do not advance on failure, browsing, cancellation or other players' changes. Final rocket completion still requires the Leader's explicit approval.
 - Crew members propose components; the Leader confirms purchases and may replace non-hull parts for the price difference before completion. Preserve existing hull purchases and all spent funds.
 - The final screen is **Rocket Built**, with no further gameplay until requested. Finishing the complete design advances preparation to 12/36 months; part selection alone does not.
 - Do not claim actual lunar-flight compatibility, verified reliability or calculated performance from the catalog's gameplay quality score. Display known dry-mass subtotals, not an invented total/wet mass; legacy hull mass is unspecified.
