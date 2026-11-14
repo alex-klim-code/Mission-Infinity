@@ -11,6 +11,9 @@ A browser-based cooperative space mission story for 1–4 players.
 - Earth Observer is the only enabled mission. Its $150M budget, 24-month development and 3-year lifetime are fictional educational parameters, not NASA specifications.
 - No chat or direct messages. Friends and game invitations are distinct.
 - No guest authentication, seeded fake players, or nonfunctional primary actions.
+- Product requirement: Google-only sign-in with no separate registration form. Do not confuse hiding email/password UI with disabling that method in the authentication service.
+- Position the product as an educational space mission game for ages 14+, accessible without prior engineering knowledge and with planned beginner-to-advanced scenarios.
+- Monthly missions are a goal, not an established release schedule. Never invent advisers, credentials or NASA involvement.
 
 ## Run and verify
 
