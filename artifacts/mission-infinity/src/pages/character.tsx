@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Box, Check, Palette } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Palette } from 'lucide-react';
 import { useSaveCharacter, type CharacterAppearance, type Player, type PlayerAccount } from '@workspace/api-client-react';
 import { Starfield } from '@/components/starfield';
 import { RequireCharacter, Wordmark } from '@/components/shell';
@@ -10,9 +10,6 @@ import { AgeControl, GenderPicker, nameError } from '@/components/character-fiel
 import { AppearanceEditor, CountryPicker } from '@/components/appearance-editor';
 import { EmployeeBadge } from '@/components/character-avatar';
 import { HudButton, PlayerPortrait } from '@/components/ui-kit';
-import { Avatar3DStudio } from '@/components/avatar3d-studio';
-import { useAvatar3DDraft } from '@/hooks/use-avatar3d-draft';
-import { avatarFileUrl } from '@/lib/avatar3d';
 import { defaultAppearance, randomAppearance, sameAppearance, withBase, type Base } from '@/lib/avatar';
 import { errMsg, imgUrl, invalidateGame } from '@/lib/game';
 import { cn } from '@/lib/utils';
@@ -59,11 +56,8 @@ function Creator({ account }: { account: PlayerAccount }) {
   const [touched, setTouched] = useState(false);
   const [saved, setSaved] = useState<Player | null>(null);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'3d' | 'legacy'>(existing && !existing.avatar3d ? 'legacy' : '3d');
   // Preset-only profiles keep their classic portrait unless the player explicitly customizes.
   const [legacyEdited, setLegacyEdited] = useState(!existing || !!existing.appearance);
-  const draftApi = useAvatar3DDraft();
-  const draft = draftApi.draft;
   const inFlight = useRef(false);
   const save = useSaveCharacter();
   const qc = useQueryClient();
@@ -95,30 +89,18 @@ function Creator({ account }: { account: PlayerAccount }) {
   };
 
   const savedModel = existing?.avatar3d ?? null;
-  const draftInput = draft?.status === 'ready' && draft.input && draft.input.gender === gender ? draft.input : null;
-  const savedOk = !!savedModel && savedModel.gender === gender && !draft;
-  const threeDBlock =
-    mode !== '3d' ? null
-    : draft && gender && draft.meta.gender !== gender ? 'Your Avaturn body does not match your identity. Export a matching body or edit identity.'
-    : draft && draft.status !== 'ready' ? 'Your 3D model is still transferring.'
-    : !draftInput && !savedOk ? (savedModel && gender && savedModel.gender !== gender ? 'Your saved model does not match this identity. Export a matching one, or use the illustrated look.' : 'Create your 3D avatar in Avaturn, or switch to the illustrated look.')
-    : null;
 
   const submit = () => {
     setTouched(true);
-    if (nErr || !gender || inFlight.current || save.isPending || threeDBlock) return;
+    if (nErr || !gender || inFlight.current || save.isPending) return;
     setConfirmationError(null);
     inFlight.current = true;
-    const avatarPart = mode === '3d' ? (draftInput ? { avatar3d: draftInput } : {}) : savedModel ? { avatar3d: null } : {};
+    const avatarPart = savedModel && (sendApp || gender !== existing?.gender) ? { avatar3d: null } : {};
     save.mutate(
       { data: { name: name.trim(), age, gender, countryCode: country, ...(sendApp ? { appearance: live } : {}), ...avatarPart, ...(existing?.presetId ? { presetId: existing.presetId } : {}) } },
       {
         onSuccess: async (p) => {
-          if (mode === '3d' && !p.avatar3d) {
-            setConfirmationError('Mission Control could not confirm your saved 3D model. Please retry.');
-            return;
-          }
-          if (mode === 'legacy' && sendApp && !p.appearance) {
+          if (sendApp && !p.appearance) {
             setConfirmationError('Mission Control could not confirm your saved appearance. Please retry.');
             return;
           }
@@ -270,7 +252,7 @@ function Creator({ account }: { account: PlayerAccount }) {
                   Continue <ArrowRight className="h-4 w-4" />
                 </HudButton>
               ) : (
-                <HudButton variant="burn" onClick={submit} loading={save.isPending} disabled={!!nErr || !gender || !!threeDBlock} data-testid="button-save-character">
+                <HudButton variant="burn" onClick={submit} loading={save.isPending} disabled={!!nErr || !gender} data-testid="button-save-character">
                   Issue my badge
                 </HudButton>
               )}

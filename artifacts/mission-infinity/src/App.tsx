@@ -4,7 +4,8 @@ import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { dark } from '@clerk/themes';
 import { Redirect, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
-import { getGetPlayerQueryKey, useGetPlayer } from '@workspace/api-client-react';
+import { usePlayerAccount } from '@/hooks/use-player-account';
+import { isAccountConnectionError } from '@/lib/account-query-policy';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -133,14 +134,17 @@ function SignUpPage() {
 }
 
 function SignedInHome() {
-  const { data, isLoading, error, refetch } = useGetPlayer({ query: { queryKey: getGetPlayerQueryKey() } });
+  const { data, isLoading, error, refetch } = usePlayerAccount();
   if (isLoading) return <FullScreenLoader />;
   if (error || !data)
     return (
       <div className="relative flex min-h-[100dvh] items-center justify-center bg-background p-6">
         <Starfield />
         <div className="relative w-full max-w-md">
-          <ErrorState message={errMsg(error, 'Could not load your profile.')} onRetry={() => refetch()} />
+          <ErrorState
+            message={isAccountConnectionError(error) ? 'Mission Control is temporarily unreachable. Reconnecting automatically.' : errMsg(error, 'Could not load your profile.')}
+            onRetry={() => refetch({ cancelRefetch: false })}
+          />
         </div>
       </div>
     );

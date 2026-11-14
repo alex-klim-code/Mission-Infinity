@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useAuth } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
-import { getGetPlayerQueryKey, useGetPlayer } from '@workspace/api-client-react';
+import { getGetPlayerQueryKey } from '@workspace/api-client-react';
+import { usePlayerAccount } from './use-player-account';
 import { invalidateGame, invalidateSessions, invalidateSocial } from '@/lib/game';
 
 export type LinkStatus = 'offline' | 'connecting' | 'online';
@@ -11,7 +12,7 @@ const RealtimeContext = createContext<LinkStatus>('offline');
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const { isSignedIn } = useAuth();
   const qc = useQueryClient();
-  const { data: account } = useGetPlayer({ query: { enabled: !!isSignedIn, queryKey: getGetPlayerQueryKey() } });
+  const { data: account } = usePlayerAccount();
   const [status, setStatus] = useState<LinkStatus>('offline');
   const accountId = account?.id;
 

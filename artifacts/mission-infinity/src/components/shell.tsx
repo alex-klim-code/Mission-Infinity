@@ -2,7 +2,9 @@ import { type ReactNode } from 'react';
 import { Link, Redirect, useLocation } from 'wouter';
 import { Show, useClerk } from '@clerk/react';
 import { Award, LogOut, Rocket, Settings, Users } from 'lucide-react';
-import { getGetPlayerQueryKey, getGetSocialQueryKey, useGetPlayer, useGetSocial, type PlayerAccount } from '@workspace/api-client-react';
+import { getGetSocialQueryKey, useGetSocial, type PlayerAccount } from '@workspace/api-client-react';
+import { usePlayerAccount } from '@/hooks/use-player-account';
+import { isAccountConnectionError } from '@/lib/account-query-policy';
 import { Starfield } from '@/components/starfield';
 import { ErrorState, Portrait, SkeletonBlock } from '@/components/ui-kit';
 import { useLinkStatus } from '@/hooks/use-realtime';
@@ -166,14 +168,17 @@ export function RequireCharacter({ children, allowNoCharacter }: { children: (a:
 }
 
 function AccountGate({ children, allowNoCharacter }: { children: (a: PlayerAccount) => ReactNode; allowNoCharacter?: boolean }) {
-  const { data, isLoading, error, refetch } = useGetPlayer({ query: { queryKey: getGetPlayerQueryKey() } });
+  const { data, isLoading, error, refetch } = usePlayerAccount();
   if (isLoading) return <FullScreenLoader />;
   if (error || !data)
     return (
       <div className="relative flex min-h-[100dvh] items-center justify-center bg-background p-6">
         <Starfield />
         <div className="relative w-full max-w-md">
-          <ErrorState message={errMsg(error, 'Could not load your engineer profile.')} onRetry={() => refetch()} />
+          <ErrorState
+            message={isAccountConnectionError(error) ? 'Mission Control is temporarily unreachable. Reconnecting automatically.' : errMsg(error, 'Could not load your engineer profile.')}
+            onRetry={() => refetch({ cancelRefetch: false })}
+          />
         </div>
       </div>
     );
