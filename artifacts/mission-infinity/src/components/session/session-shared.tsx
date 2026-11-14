@@ -34,6 +34,8 @@ import { formatExact } from './rocket-build';
 import { useToast } from '@/hooks/use-toast';
 import { usePlayerAccount } from '@/hooks/use-player-account';
 import { recordMissionNotifications } from '@/hooks/use-mission-notifications';
+import { useDemoMode } from '@/hooks/use-demo-guide';
+import { DemoToggle } from './demo-guide';
 import { cn } from '@/lib/utils';
 
 export type ActFn = (data: SessionAction, after?: () => void) => void;
@@ -173,6 +175,7 @@ const iconBtn = 'inline-flex h-10 w-10 shrink-0 items-center justify-center roun
 
 export function SessionTopBar({ session, mission, me, act, pending, onOpenBadge }: { session: GameSession; mission?: Mission; me: SessionPlayer | undefined; act: ActFn; pending: boolean; onOpenBadge: (id: string) => void }) {
   const [briefOpen, setBriefOpen] = useState(false);
+  const demo = useDemoMode(me?.player.id ?? '');
   return (
     <header className="relative z-30 border-b border-white/[.08] bg-void/60 backdrop-blur-xl" data-testid="bar-session-top">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5 md:px-8">
@@ -203,6 +206,7 @@ export function SessionTopBar({ session, mission, me, act, pending, onOpenBadge 
         )}
         <div className="flex items-center gap-2">
           <div className="hidden sm:block"><LinkStatusPill /></div>
+          <DemoToggle enabled={demo.enabled} onToggle={demo.toggle} storageWarning={demo.storageWarning} disabled={!me} />
           {mission && (
             <button className={iconBtn} aria-label="Mission details" title="Mission details" onClick={() => setBriefOpen(true)} data-testid="button-mission-details">
               <FileText className="h-4 w-4" />

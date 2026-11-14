@@ -30,6 +30,7 @@ import type {
   Career,
   Catalog,
   CharacterInput,
+  DemoPlan,
   EngineeringAdvice,
   EngineeringPreview,
   FriendAction,
@@ -1889,6 +1890,148 @@ export const useUpdateGameSession = <
 > => {
   return useMutation(getUpdateGameSessionMutationOptions(options), queryClient);
 };
+
+export const getGetDemoPlanUrl = (id: string) => {
+  return `/api/game/sessions/${id}/demo-plan`;
+};
+
+export const getDemoPlan = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<DemoPlan> => {
+  return customFetch<DemoPlan>(getGetDemoPlanUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDemoPlanQueryKey = (id: string) => {
+  return [`/api/game/sessions/${id}/demo-plan`] as const;
+};
+
+export const getGetDemoPlanQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDemoPlan>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getDemoPlan>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDemoPlanQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDemoPlan>>> = ({
+    signal,
+  }) => getDemoPlan(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDemoPlan>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetDemoPlanQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDemoPlan>>
+>;
+export type GetDemoPlanQueryError = ErrorType<unknown>;
+
+export function useGetDemoPlan<
+  TData = Awaited<ReturnType<typeof getDemoPlan>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getDemoPlan>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDemoPlan>>,
+          TError,
+          Awaited<ReturnType<typeof getDemoPlan>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDemoPlan<
+  TData = Awaited<ReturnType<typeof getDemoPlan>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getDemoPlan>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDemoPlan>>,
+          TError,
+          Awaited<ReturnType<typeof getDemoPlan>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDemoPlan<
+  TData = Awaited<ReturnType<typeof getDemoPlan>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getDemoPlan>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetDemoPlan<
+  TData = Awaited<ReturnType<typeof getDemoPlan>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getDemoPlan>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetDemoPlanQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export const getPreviewEngineeringUrl = (id: string) => {
   return `/api/game/sessions/${id}/engineering-advice`;

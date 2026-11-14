@@ -20,6 +20,8 @@ import { InvitationRow } from '@/components/invitations';
 import { ErrorState, HudButton, Panel } from '@/components/ui-kit';
 import { SCENE_STATUS_LABEL, errMsg, imgUrl, invalidateGame } from '@/lib/game';
 import { MissionFacts, MissionSchedule } from '@/components/session/mission-summary';
+import { DemoToggle } from '@/components/session/demo-guide';
+import { useDemoMode } from '@/hooks/use-demo-guide';
 
 function ResumeBanner({ id, data }: { id: string; data?: GameSession }) {
   return (
@@ -98,6 +100,7 @@ function LaunchDialog({ mission, onClose, busy }: { mission: Mission | null; onC
 }
 
 function PlayInner({ account }: { account: PlayerAccount }) {
+  const demo=useDemoMode(account.character?.id??'');
   const { data, isLoading, error, refetch } = useGetGameCatalog();
   const params = { q: '' };
   const social = useGetSocial(params, { query: { queryKey: getGetSocialQueryKey(params), refetchInterval: 5000 } });
@@ -113,7 +116,10 @@ function PlayInner({ account }: { account: PlayerAccount }) {
 
   return (
     <AppShell account={account}>
-      <PageHeader kicker={`Welcome back, ${account.character?.name}`} title="Mission board" sub="Pick a mission, pick a mode. The director has been expecting you." />
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1"><PageHeader kicker={`Welcome back, ${account.character?.name}`} title="Mission board" sub="Pick a mission, pick a mode. The director has been expecting you." /></div>
+        <div className="pt-1"><DemoToggle enabled={demo.enabled} onToggle={demo.toggle} storageWarning={demo.storageWarning} disabled={!account.character} /></div>
+      </div>
       {account.activeSessionId && <ResumeBanner id={account.activeSessionId} data={active.data} />}
       {invites.length > 0 && (
         <div className="mb-8 space-y-3">

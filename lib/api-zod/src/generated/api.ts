@@ -3048,6 +3048,23 @@ export const UpdateGameSessionResponse = zod.object({
   ]),
 });
 
+export const GetDemoPlanParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetDemoPlanResponse = zod.object({
+  feasible: zod.boolean(),
+  partIds: zod.array(zod.string()),
+  instrumentIds: zod.array(zod.string()),
+  additionalCost: zod.number().int(),
+  estimatedTotalSpent: zod.number().int(),
+  remainingBudget: zod.number().int(),
+  fuelReserveCost: zod.number().int(),
+  recommendedFuelKg: zod.number(),
+  message: zod.string(),
+  assumptions: zod.string(),
+});
+
 export const PreviewEngineeringParams = zod.object({
   id: zod.coerce.string(),
 });

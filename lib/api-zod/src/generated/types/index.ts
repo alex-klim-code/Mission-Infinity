@@ -36,6 +36,7 @@ export * from "./compatibilityIssue";
 export * from "./compatibilityIssueSource";
 export * from "./componentProposal";
 export * from "./componentSelection";
+export * from "./demoPlan";
 export * from "./engineeringAdvice";
 export * from "./engineeringAttempt";
 export * from "./engineeringAttemptStatus";

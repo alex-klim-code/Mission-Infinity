@@ -19,6 +19,8 @@ import { friendshipAction, socialState } from "../game/social";
 import { createSession, notifySession, sessionState, updateSession } from "../game/sessions";
 import { consumeGameRate, gameRatePolicy } from "../game/rate-policy";
 import {previewEngineering} from "../game/engineering";
+import {demoPlan} from "../game/demo-plan";
+import {GetDemoPlanResponse} from "@workspace/api-zod";
 import {PreviewEngineeringBody,PreviewEngineeringResponse} from "@workspace/api-zod";
 import {gameDb} from "../game/database";
 import { rocketCatalog } from "../game/rocket-catalog";
@@ -131,6 +133,10 @@ gameApi.post("/api/game/sessions/:id/engineering-advice",async req=>{
   await sessionState(id,req.playerId); // Same membership/privacy boundary as session reads.
   const session=await gameDb.selectFrom("game_sessions").selectAll().where("id","=",id).executeTakeFirstOrThrow();
   return PreviewEngineeringResponse.parse(await previewEngineering(gameDb,session,PreviewEngineeringBody.parse(req.body)));
+});
+gameApi.get("/api/game/sessions/:id/demo-plan",async req=>{
+  const session=GetGameSessionResponse.parse(await sessionState(idParam(req),req.playerId));
+  return GetDemoPlanResponse.parse(demoPlan(session));
 });
 gameApi.get("/api/game/sessions/:id/messages", async req => {
   const { before } = GetSessionMessagesQueryParams.parse(req.query);

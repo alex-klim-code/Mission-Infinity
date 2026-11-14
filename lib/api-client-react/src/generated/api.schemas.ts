@@ -1058,6 +1058,19 @@ export interface SessionAction {
   expectedScene?: number;
 }
 
+export interface DemoPlan {
+  feasible: boolean;
+  partIds: string[];
+  instrumentIds: string[];
+  additionalCost: number;
+  estimatedTotalSpent: number;
+  remainingBudget: number;
+  fuelReserveCost: number;
+  recommendedFuelKg: number;
+  message: string;
+  assumptions: string;
+}
+
 export interface EngineeringAdvice {
   easy: boolean;
   issues: CompatibilityIssue[];

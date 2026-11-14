@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 import { useEngineeringGuard } from './engineering-guard';
 import { BODY_CATEGORY, HullVisual, Price, fmtKg, fmtRisk, damageRiskOf, fmtSigned, formatExact, hullById, isHullOption, isRepairLocked, type Props } from './rocket-shared';
 import { RocketFuelCheck } from './rocket-fuel-check';
+import { DEMO_REASON, DemoChoiceBadge } from './demo-guide';
 
 type DetailProps = {
   option: RocketComponent; category: RocketCategory; props: Props; official: Map<string, string>; byOption: Map<string, RocketComponent>; remaining: number;
-  onSelected?: () => void;
+  onSelected?: () => void; demoRecommended?: boolean;
 };
 
-export function OptionDetail({ option, category, props, official, byOption, remaining, onSelected }: DetailProps) {
+export function OptionDetail({ option, category, props, official, byOption, remaining, onSelected, demoRecommended }: DetailProps) {
   const { session, me, isHost, act, pending, pendingAction } = props;
   const { guard, checking } = useEngineeringGuard();
   const repairLocked = isRepairLocked(session, category.id);
@@ -63,6 +64,11 @@ export function OptionDetail({ option, category, props, official, byOption, rema
   return (
     <div data-testid={`panel-option-${option.id}`}>
       {isOfficial && <div className="inline-flex items-center gap-1 rounded-sm bg-burn/20 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-burn"><Check className="h-3 w-3" /> Official choice</div>}
+      {demoRecommended && (
+        <div className="mt-2 rounded-md border border-[hsl(44_95%_60%)]/40 bg-[hsl(44_95%_60%)]/[.06] p-2.5 text-xs text-foreground/85" data-testid="panel-demo-reason">
+          <DemoChoiceBadge /><p className="mt-1.5">{DEMO_REASON} Random failures remain possible.</p>
+        </div>
+      )}
       {body && hullById(option.id) && <HullVisual hullId={option.id} className="mx-auto mt-3 h-52 w-full" />}
       <dl className="mt-4 grid grid-cols-1 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 sm:grid-cols-2">
         {rows.map(([k, v]) => (

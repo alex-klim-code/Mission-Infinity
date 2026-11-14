@@ -176,6 +176,17 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SessionResult' }
+  /game/sessions/{id}/demo-plan:
+    get:
+      operationId: getDemoPlan
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Read-only, budget-aware demo recommendations for this session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DemoPlan' }
   /game/sessions/{id}/engineering-advice:
     post:
       operationId: previewEngineering
@@ -630,6 +641,20 @@ components:
         elapsedMonths: { type: integer }
         delivered: { type: boolean }
         legacy: { type: boolean }
+    DemoPlan:
+      type: object
+      required: [feasible, partIds, instrumentIds, additionalCost, estimatedTotalSpent, remainingBudget, fuelReserveCost, recommendedFuelKg, message, assumptions]
+      properties:
+        feasible: { type: boolean }
+        partIds: { type: array, items: { type: string } }
+        instrumentIds: { type: array, items: { type: string } }
+        additionalCost: { type: integer }
+        estimatedTotalSpent: { type: integer }
+        remainingBudget: { type: integer }
+        fuelReserveCost: { type: integer }
+        recommendedFuelKg: { type: number }
+        message: { type: string }
+        assumptions: { type: string }
     CompatibilityIssue:
       type: object
       required: [id, title, message, categoryIds, optionIds, repairCategoryId, alternatives, source]

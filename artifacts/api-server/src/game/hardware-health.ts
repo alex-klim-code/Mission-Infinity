@@ -3,7 +3,7 @@ import type { MissionOperations } from "@workspace/api-zod";
 import { componentById } from "./rocket-catalog";
 
 // Launch-only stages/fairings/engines remain behind and cannot block Earth return.
-const criticalReturnCategories = new Set([
+export const criticalReturnCategories = new Set([
   "upper-stage-engines", "orbital-maneuvering", "fuel-tanks",
   "onboard-computer", "navigation-sensors", "attitude-control",
   "electrical-power-system", "batteries", "communication", "thermal-protection",

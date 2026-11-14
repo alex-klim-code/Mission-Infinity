@@ -7,6 +7,8 @@ import { errMsg } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import { fmtKg, formatExact, useCalm, type Props } from './rocket-shared';
 import { useEngineeringGuard } from './engineering-guard';
+import { useDemoGuide } from '@/hooks/use-demo-guide';
+import { DemoChoiceBadge, DemoGuidePanel } from './demo-guide';
 
 const fmtW = (n: number) => `${n.toLocaleString('en-US', { maximumFractionDigits: 2 })} W`;
 const fmtPts = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -39,6 +41,8 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
   const calm = useCalm();
   const { guard, checking } = useEngineeringGuard();
   const catalog = useGetGameCatalog();
+  const demo = useDemoGuide(session, me);
+  const demoIds = demo.enabled && demo.plan?.feasible ? demo.plan.instrumentIds : undefined;
   const list = useMemo(() => catalog.data?.scientificInstruments ?? [], [catalog.data]);
   const sci = session.science;
   const [sel, setSel] = useState<Set<string>>(() => new Set(sci?.proposals.find((p) => p.playerId === me)?.instrumentIds ?? []));
@@ -119,6 +123,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
           <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-5xl" data-testid="text-science-title">Choose the Payload</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Select any, all or none of the seven instruments. Every kilogram and watt competes with the budget you have left.</p>
           <div className="mt-3"><Disclaimer /></div>
+          {demo.enabled && <div className="mt-3"><DemoGuidePanel plan={demo.plan} loading={demo.loading} error={demo.error} refetch={demo.refetch} context="science" /></div>}
           <div className="mt-3 flex gap-2">
             <button type="button" className="font-mono text-[11px] uppercase tracking-widest text-ion hover:underline" onClick={() => setSel(new Set(list.map((i) => i.id)))} data-testid="button-science-all">Select all</button>
             <span className="text-white/20">/</span>
@@ -128,14 +133,15 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
             {list.map((i) => {
               const on = sel.has(i.id);
               const exp = open === i.id;
+              const demoPick = !!demoIds?.includes(i.id);
               const backers = proposals.filter((p) => p.instrumentIds.includes(i.id));
               return (
-                <li key={i.id} className={cn('rounded-md border bg-void/70 backdrop-blur transition-colors', on ? 'border-ion/60 bg-ion/[.06]' : 'border-white/10')} data-testid={`row-instrument-${i.id}`}>
+                <li key={i.id} className={cn('rounded-md border bg-void/70 backdrop-blur transition-colors', on ? 'border-ion/60 bg-ion/[.06]' : demoPick ? 'border-[hsl(44_95%_60%)]/60' : 'border-white/10', demoPick && 'border-l-4 border-l-[hsl(44_95%_60%)]')} data-testid={`row-instrument-${i.id}`}>
                   <div className="flex items-start gap-3 p-3">
                     <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
                       <input type="checkbox" checked={on} onChange={() => toggle(i.id)} className="mt-1 h-4 w-4 shrink-0 accent-[hsl(186_92%_56%)]" data-testid={`checkbox-instrument-${i.id}`} />
                       <span className="min-w-0 flex-1">
-                        <span className="block font-semibold [overflow-wrap:anywhere]">{i.name}</span>
+                        <span className="flex flex-wrap items-center gap-2 font-semibold [overflow-wrap:anywhere]">{i.name}{demoPick && <DemoChoiceBadge />}</span>
                         <span className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 font-mono text-[11px] text-muted-foreground sm:grid-cols-5">
                           <span className="text-burn" data-testid={`text-instrument-price-${i.id}`}>{formatExact(i.price)}</span>
                           <span>{fmtKg(i.massKg)}</span>
