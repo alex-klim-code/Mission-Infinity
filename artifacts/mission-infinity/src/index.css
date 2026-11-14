@@ -468,6 +468,28 @@ body { min-height: 100dvh; overflow-x: hidden; }
 .scroll-thin::-webkit-scrollbar { width: 6px; } .scroll-thin::-webkit-scrollbar-thumb { background: hsl(218 40% 22%); border-radius: 3px; }
 
 /* ---- Visual layer: part art, lunar route, hangar ---- */
+.rocket-builder-viewport { container: rocket-options / size; }
+/* Use the actual gameplay panel height, not the whole browser window. Keep
+   compact cards complete (including Purchase); full specifications stay in the dialog. */
+@container rocket-options (max-height: 680px) {
+  .rocket-part-options { gap: 10px; }
+  .rocket-part-options .rocket-option-art { height: 40px; }
+  .rocket-part-options .rocket-option-art .part-art { height: 36px; width: 76px; }
+  .rocket-part-options .rocket-option-content { padding: 8px; }
+  .rocket-part-options .rocket-option-name { font-size: 12px; line-height: 16px; }
+  .rocket-part-options .rocket-option-description { -webkit-line-clamp: 1; margin-top: 4px; line-height: 16px; }
+  .rocket-part-options .rocket-option-metrics { padding-top: 6px; column-gap: 6px; row-gap: 2px; }
+  .rocket-part-options .rocket-option-risk { width: auto; font-size: 9px; }
+  .rocket-part-options .rocket-option-badges { margin-top: 4px; }
+  .rocket-part-options .rocket-option-purchase { min-height: 36px; margin-top: 6px; padding-block: 6px; }
+}
+@container rocket-options (max-height: 580px) {
+  .rocket-part-options .rocket-option-art { height: 28px; }
+  .rocket-part-options .rocket-option-art .part-art { height: 26px; }
+  .rocket-part-options .rocket-option-content { padding: 6px 8px; }
+  .rocket-part-options .rocket-option-description { font-size: 11px; line-height: 14px; margin-top: 2px; }
+  .rocket-part-options .rocket-option-metrics { padding-top: 4px; }
+}
 .part-art { overflow: visible; }
 .part-art .pa-glow, .part-art .pa-blink, .part-art .pa-wave, .part-art .pa-sheen, .part-art .pa-spin { opacity: .55; transition: opacity .3s, transform .4s; }
 .group:hover .part-art, .group:focus-visible .part-art { transform: translateY(-2px) scale(1.04); }

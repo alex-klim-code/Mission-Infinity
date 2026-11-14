@@ -147,7 +147,7 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
       </div>
       {!body && !hullBought && <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><Lock className="h-3.5 w-3.5" /> Buy the rocket body first. You can still review every part.</p>}
       {body && hullBought && <p className="mt-3 text-xs text-muted-foreground">The body is already bought. Review the three hulls freely; it cannot be bought again.</p>}
-      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid={`grid-options-${cat.id}`}>
+      <ul className={cn('mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3', !body && 'rocket-part-options')} data-testid={`grid-options-${cat.id}`}>
         {cat.options.map((o) => {
           const sel = official.get(cat.id) === o.id;
           const mine = proposals.includes(o.id);
@@ -164,8 +164,8 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
           return (
             <li key={o.id} className="flex min-w-0 flex-col">
               <button type="button" onClick={() => onOpen(o.id)} aria-haspopup="dialog"
-                className={cn('group relative flex h-full w-full min-w-0 flex-col overflow-hidden rounded-lg border bg-void/70 text-left transition-[border-color,transform,background-color] duration-200 hover:-translate-y-0.5 hover:border-ion/50 hover:bg-ion/[.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion',
-                  sel ? 'border-burn/70 bg-burn/[.06]' : demoPick ? 'border-[hsl(44_95%_60%)]/70' : 'border-white/10', demoPick && DEMO_RING)}
+                className={cn('group relative flex w-full min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-void/70 text-left transition-[border-color,transform,background-color] duration-200 hover:-translate-y-0.5 hover:border-ion/50 hover:bg-ion/[.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion',
+                  sel ? 'border-burn/70 bg-burn/[.06]' : demoPick ? 'border-[hsl(44_95%_60%)]/70' : 'border-white/10', demoPick && DEMO_RING, demoPick && 'ring-inset ring-offset-0')}
                 data-testid={`button-option-${o.id}`}>
                 {hull ? (
                   <div className="relative flex h-48 items-end justify-center bg-gradient-to-b from-ion/[.06] to-transparent pt-3">
@@ -173,24 +173,24 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
                     <img src={imgUrl(hull.image)} alt={`${hull.name} rocket`} loading="lazy" className="relative h-full w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" data-testid={`img-option-${o.id}`} />
                   </div>
                 ) : (
-                  <div className="relative flex h-24 items-center justify-center overflow-hidden border-b border-white/[.04] bg-[radial-gradient(ellipse_at_50%_80%,hsl(186_92%_56%/.10),transparent_70%)]" data-testid={`icon-option-${o.id}`}>
+                  <div className="rocket-option-art relative flex h-24 shrink-0 items-center justify-center overflow-hidden border-b border-white/[.04] bg-[radial-gradient(ellipse_at_50%_80%,hsl(186_92%_56%/.10),transparent_70%)]" data-testid={`icon-option-${o.id}`}>
                     <PartArt kind={partKind(cat)} live={sel} className="h-20 w-32" />
                     <span className="absolute bottom-1 right-2 font-mono text-[8px] uppercase tracking-widest text-muted-foreground/50">Schematic</span>
                   </div>
                 )}
-                <div className="flex min-w-0 flex-1 flex-col p-3.5">
+                <div className="rocket-option-content flex min-w-0 flex-1 flex-col p-3.5">
                   <div className="flex items-start gap-2">
-                    <span className="min-w-0 flex-1 font-display text-sm font-bold uppercase leading-snug tracking-wide [overflow-wrap:anywhere]" data-testid={`text-option-card-name-${o.id}`}>{o.name}</span>
+                    <span className="rocket-option-name min-w-0 flex-1 font-display text-sm font-bold uppercase leading-snug tracking-wide [overflow-wrap:anywhere]" data-testid={`text-option-card-name-${o.id}`}>{o.name}</span>
                     {sel && <CheckCircle2 className="h-4 w-4 shrink-0 text-burn" aria-label="Official choice" />}
                   </div>
-                  {desc && <p className={cn('mt-1.5 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]', hull ? 'line-clamp-2' : 'line-clamp-3')} data-testid={`text-option-card-desc-${o.id}`}>{desc}</p>}
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-3">
+                  {desc && <p className={cn('rocket-option-description mt-1.5 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]', hull ? 'line-clamp-2' : 'line-clamp-3')} data-testid={`text-option-card-desc-${o.id}`}>{desc}</p>}
+                  <div className="rocket-option-metrics mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-3">
                     <span className="font-mono text-xs text-ion" data-testid={`text-option-card-price-${o.id}`}>{formatExact(price)}</span>
-                    {damageRiskOf(o, cat) != null && <span className="w-full font-mono text-[10px] text-[hsl(44_95%_60%)]" title="Game damage risk, rolled once after lunar arrival" data-testid={`text-option-card-risk-${o.id}`}>Game risk {fmtRisk(damageRiskOf(o, cat)!)}{o.quality == null ? ' (est.)' : ''}</span>}
+                    {damageRiskOf(o, cat) != null && <span className="rocket-option-risk w-full font-mono text-[10px] text-[hsl(44_95%_60%)]" title="Game damage risk, rolled once after lunar arrival" data-testid={`text-option-card-risk-${o.id}`}>Game risk {fmtRisk(damageRiskOf(o, cat)!)}{o.quality == null ? ' (est.)' : ''}</span>}
                     {!hull && <span className="font-mono text-[10px] text-muted-foreground">{o.massKg == null ? 'Mass: no data' : fmtKg(o.massKg)}</span>}
                   </div>
                   {(sel || mine || demoPick) && (
-                    <div className="mt-2 flex flex-wrap gap-1">
+                    <div className="rocket-option-badges mt-2 flex flex-wrap gap-1">
                       {demoPick && <DemoChoiceBadge />}
                       {sel && <span className="rounded-sm bg-burn/20 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-burn">Official</span>}
                       {mine && <span className="rounded-sm bg-ion/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-ion">Your proposal</span>}
@@ -200,7 +200,7 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
               </button>
               <button type="button" disabled={purchaseDisabled} onClick={() => onPurchase(o.id)}
                 aria-label={`Purchase ${o.name}`} title={purchaseReason}
-                className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-burn/50 bg-burn/15 px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-burn transition-colors hover:bg-burn/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burn disabled:cursor-not-allowed disabled:opacity-45"
+                className="rocket-option-purchase mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-burn/50 bg-burn/15 px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-burn transition-colors hover:bg-burn/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burn disabled:cursor-not-allowed disabled:opacity-45"
                 data-testid={`button-purchase-option-${o.id}`}>
                 <ShoppingCart className="h-3.5 w-3.5" /> Purchase{purchaseReason ? ` · ${purchaseReason}` : currentPrice > 0 ? ` · ${fmtSigned(price - currentPrice)}` : ''}
               </button>

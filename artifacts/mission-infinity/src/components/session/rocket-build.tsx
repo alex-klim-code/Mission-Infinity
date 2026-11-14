@@ -217,7 +217,7 @@ export function RocketBuildView(props: Props) {
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col md:order-1">
       {['FLIGHT','MOON_ARRIVAL','FAILED'].includes(journey?.phase ?? '') && <FlightDamageAlarm alerts={journey?.flightAlerts ?? []} />}
-      <Paged className="min-h-0 min-w-0 flex-1 overflow-x-hidden" testid="panel-builder-left" label="Stage" resetKey={`${journey?.phase ?? ''}:${session.science?.opened}:${session.fueling?.opened}:${constructionOpen}`}>
+      <Paged className="rocket-builder-viewport min-h-0 min-w-0 flex-1 overflow-x-hidden" testid="panel-builder-left" label="Stage" resetKey={`${journey?.phase ?? ''}:${session.science?.opened}:${session.fueling?.opened}:${constructionOpen}`}>
         {journeyOpen ? <MissionJourneyStage {...props} /> : repairing ? <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div> : constructionOpen ? <ConstructionStage {...props} /> : session.fueling?.opened ? <FuelStage {...props} /> : session.science?.opened ? <ScienceStage {...props} /> :
           <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div>}
       </Paged>

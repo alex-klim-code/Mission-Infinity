@@ -14,6 +14,7 @@ export function Paged({ children, className, innerClassName, label = 'Content', 
 }) {
   const view = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
+  const controls = useRef<HTMLElement>(null);
   const [offsets, setOffsets] = useState<number[]>([0]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -47,7 +48,10 @@ export function Paged({ children, className, innerClassName, label = 'Content', 
       boxes.push({ top, bottom, hard, soft: !hard && r.height <= Math.min(200, H * 0.45) });
     });
     contentEnd = Math.min(T, Math.ceil(contentEnd + 12));
-    if (!H || contentEnd <= H + 2) { setOffsets((o) => (o.length === 1 ? o : [0])); return; }
+    // The pager itself consumes height. After cards shrink, check the space
+    // reclaimed by removing it, otherwise an unnecessary second page persists.
+    const singlePageHeight = H + (controls.current?.offsetHeight ?? 0);
+    if (!H || contentEnd <= singlePageHeight + 2) { setOffsets((o) => (o.length === 1 ? o : [0])); return; }
     const candidates = [...new Set(boxes.map((b) => b.top))].sort((a, b) => a - b);
     // A break is safe when no atomic block that fits on a page straddles it.
     const straddles = (b: number, useSoft: boolean) =>
@@ -133,7 +137,7 @@ export function Paged({ children, className, innerClassName, label = 'Content', 
         </div>
       </div>
       {pages > 1 && (
-        <nav className="relative z-10 flex shrink-0 items-center justify-center gap-3 border-t border-white/10 bg-void/80 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest backdrop-blur" aria-label={`${label} pages`}>
+        <nav ref={controls} className="relative z-10 flex shrink-0 items-center justify-center gap-3 border-t border-white/10 bg-void/80 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest backdrop-blur" aria-label={`${label} pages`}>
           <button type="button" onClick={() => go(p - 1)} disabled={p === 0} className="inline-flex min-h-8 items-center gap-1 rounded border border-white/15 px-2.5 hover:border-ion hover:text-ion disabled:opacity-40" data-testid={`${testid ?? 'paged'}-prev`}>
             <ChevronUp className="h-3.5 w-3.5" /> Prev
           </button>
