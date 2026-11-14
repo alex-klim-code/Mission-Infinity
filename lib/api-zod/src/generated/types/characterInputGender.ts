@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CharacterInputGender = typeof CharacterInputGender[keyof typeof CharacterInputGender];
-
+export type CharacterInputGender =
+  (typeof CharacterInputGender)[keyof typeof CharacterInputGender];
 
 export const CharacterInputGender = {
-  female: 'female',
-  male: 'male',
-  unspecified: 'unspecified',
+  female: "female",
+  male: "male",
+  unspecified: "unspecified",
 } as const;

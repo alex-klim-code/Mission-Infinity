@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CharacterAppearanceBase = typeof CharacterAppearanceBase[keyof typeof CharacterAppearanceBase];
-
+export type CharacterAppearanceBase =
+  (typeof CharacterAppearanceBase)[keyof typeof CharacterAppearanceBase];
 
 export const CharacterAppearanceBase = {
-  female: 'female',
-  male: 'male',
+  female: "female",
+  male: "male",
 } as const;

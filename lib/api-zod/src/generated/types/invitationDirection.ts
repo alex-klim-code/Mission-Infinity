@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type InvitationDirection = typeof InvitationDirection[keyof typeof InvitationDirection];
-
+export type InvitationDirection =
+  (typeof InvitationDirection)[keyof typeof InvitationDirection];
 
 export const InvitationDirection = {
-  incoming: 'incoming',
-  outgoing: 'outgoing',
+  incoming: "incoming",
+  outgoing: "outgoing",
 } as const;

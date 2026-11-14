@@ -15,6 +15,13 @@
       "when": 1794652510349,
       "tag": "0001_character-appearance",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794655899223,
+      "tag": "0002_avaturn-pilot",
+      "breakpoints": true
     }
   ]
 }

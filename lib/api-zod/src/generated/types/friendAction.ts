@@ -5,7 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { FriendActionAction } from './friendActionAction';
+import type { FriendActionAction } from "./friendActionAction";
 
 export interface FriendAction {
   action: FriendActionAction;

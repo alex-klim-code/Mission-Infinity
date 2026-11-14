@@ -9,6 +9,9 @@ import { createSession, sessionState, updateSession, reconcilePresence } from ".
 import { inviteToSession, respondToInvite } from "./invitations";
 import { markConnected, markDisconnected } from "./presence";
 import { pool } from "@workspace/db";
+import { completeAvatarUpload, getAvatarAsset, requestAvatarUpload } from "./avatars";
+import { ObjectStorageService } from "../lib/objectStorage";
+import { avatarFixture } from "./testing/avatar";
 
 // Domain/integration tests use disposable identities, never bypass browser auth.
 test("Mission Infinity server-authoritative game rules", async t => {
@@ -102,6 +105,44 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await assert.rejects(savePlayer(a, { ...input, appearance: { ...appearance, face: "unsupported" as "focused" } }));
       await assert.rejects(savePlayer(a, { ...input, appearance: { ...appearance, hairstyle: "unsupported" as "theCaesar" } }));
       assert.deepEqual((await getAccount(a)).character!.appearance, appearance);
+    });
+    await t.test("3D uploads validate ownership, freeze their bytes, persist and preserve legacy data", async () => {
+      const [a, b] = await players(2);
+      const before = (await getAccount(a)).character!;
+      const bytes = avatarFixture();
+      const upload = await requestAvatarUpload(a, { kind: "model", size: bytes.length });
+      const storage = new ObjectStorageService();
+      try {
+        await assert.rejects(completeAvatarUpload(b, upload.id));
+        const put = await fetch(upload.uploadUrl, { method: "PUT", headers: { "Content-Type": upload.contentType }, body: bytes });
+        assert.equal(put.status, 200);
+        const asset = await completeAvatarUpload(a, upload.id).catch((error: Error) => {
+          throw new Error(`${error.name}: ${error.message}`);
+        });
+        assert.equal(asset.kind, "model");
+        assert.deepEqual(await completeAvatarUpload(a, upload.id), asset);
+        const input = { modelUploadId: upload.id, avatarId: "integration-fixture", bodyId: "test-body",
+          gender: "male" as const, avatarSupportsFaceAnimations: false };
+        await assert.rejects(savePlayer(b, { name: `Other ${b.slice(0, 8)}`, age: 20, gender: "male", avatar3d: input }));
+        await assert.rejects(savePlayer(a, { name: before.name, age: 20, gender: "female", avatar3d: input }));
+        const saved = await savePlayer(a, { name: before.name, age: 20, gender: "male", avatar3d: input });
+        assert.equal(saved!.avatar3d!.modelUrl, asset.url);
+        assert.equal(saved!.presetId, before.presetId);
+        assert.equal(saved!.appearance, before.appearance);
+        const renamed = await savePlayer(a, { name: before.name, age: 21, gender: "male" });
+        assert.deepEqual(renamed!.avatar3d, saved!.avatar3d);
+        const tamper = await fetch(upload.uploadUrl, { method: "PUT", headers: { "Content-Type": upload.contentType }, body: Buffer.alloc(bytes.length) });
+        assert.equal(tamper.status, 200);
+        const stored = await getAvatarAsset(upload.id);
+        assert.deepEqual((await stored.file.download())[0], bytes);
+        await savePlayer(a, { name: before.name, age: 20, gender: "male", avatar3d: null });
+        assert.equal((await getAccount(a)).character!.avatar3d, null);
+      } finally {
+        const record = await gameDb.selectFrom("avatar_uploads").selectAll().where("id", "=", upload.id).executeTakeFirstOrThrow();
+        for (const path of [record.asset_path, record.upload_path]) if (path) {
+          try { await (await storage.getObjectEntityFile(path)).delete({ ignoreNotFound: true }); } catch { /* fixture-only cleanup */ }
+        }
+      }
     });
     await t.test("saved custom appearances reach friends, invitations and both multiplayer clients unchanged", async () => {
       const [a, b] = await players(2);

@@ -5,7 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { GameSession } from './gameSession';
+import type { GameSession } from "./gameSession";
 
 export interface SessionResult {
   session: GameSession | null;

@@ -6,18 +6,18 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CharacterAppearanceHairstyle = typeof CharacterAppearanceHairstyle[keyof typeof CharacterAppearanceHairstyle];
-
+export type CharacterAppearanceHairstyle =
+  (typeof CharacterAppearanceHairstyle)[keyof typeof CharacterAppearanceHairstyle];
 
 export const CharacterAppearanceHairstyle = {
-  shortFlat: 'shortFlat',
-  shortCurly: 'shortCurly',
-  theCaesar: 'theCaesar',
-  bob: 'bob',
-  bun: 'bun',
-  curly: 'curly',
-  straight01: 'straight01',
-  fro: 'fro',
-  shavedSides: 'shavedSides',
-  longButNotTooLong: 'longButNotTooLong',
+  shortFlat: "shortFlat",
+  shortCurly: "shortCurly",
+  theCaesar: "theCaesar",
+  bob: "bob",
+  bun: "bun",
+  curly: "curly",
+  straight01: "straight01",
+  fro: "fro",
+  shavedSides: "shavedSides",
+  longButNotTooLong: "longButNotTooLong",
 } as const;

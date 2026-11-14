@@ -3,6 +3,8 @@ import { Loader2, RotateCw, TriangleAlert } from 'lucide-react';
 import type { Player } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
 import { CharacterAvatar } from '@/components/character-avatar';
+import { Avatar3DPlaceholder, Avatar3DStage } from '@/components/avatar3d';
+import { avatarFileUrl } from '@/lib/avatar3d';
 import { imgUrl, portraitFor } from '@/lib/game';
 import { usePrefs } from '@/lib/prefs';
 
@@ -51,7 +53,7 @@ export function Portrait({
   className,
   ring = 'ion',
 }: {
-  player?: Pick<Player, 'presetId' | 'name' | 'appearance'> | null;
+  player?: Pick<Player, 'presetId' | 'name' | 'appearance' | 'avatar3d'> | null;
   presetId?: string;
   name?: string;
   size?: number;
@@ -68,7 +70,13 @@ export function Portrait({
           ring === 'burn' && 'ring-2 ring-burn/70',
         )}
       >
-        {player?.appearance ? (
+        {player?.avatar3d ? (
+          player.avatar3d.portraitUrl ? (
+            <img src={avatarFileUrl(player.avatar3d.portraitUrl) ?? ''} alt={player.name} className="h-full w-full object-cover" loading="lazy" />
+          ) : (
+            <Avatar3DPlaceholder name={player.name} compact />
+          )
+        ) : player?.appearance ? (
           <CharacterAvatar appearance={player.appearance} title={player.name} />
         ) : (player?.presetId ?? presetId) ? (
           <img src={imgUrl(portraitFor(player?.presetId ?? presetId))} alt={player?.name ?? name ?? 'Engineer portrait'} className="h-full w-full object-cover" loading="lazy" />
@@ -131,8 +139,11 @@ export function EmptyState({ icon, title, text, action }: { icon: ReactNode; tit
   );
 }
 
-/** Large portrait: saved custom look, or the legacy preset image. */
-export function PlayerPortrait({ player, className }: { player: Pick<Player, 'presetId' | 'name' | 'appearance'>; className?: string }) {
+/** Large portrait: saved 3D model (live, only while visible), else custom look, else legacy preset image. */
+export function PlayerPortrait({ player, className }: { player: Pick<Player, 'presetId' | 'name' | 'appearance' | 'avatar3d'>; className?: string }) {
+  const model = avatarFileUrl(player.avatar3d?.modelUrl);
+  if (player.avatar3d && model)
+    return <Avatar3DStage modelUrl={model} posterUrl={avatarFileUrl(player.avatar3d.portraitUrl)} name={player.name} className={cn('aspect-[4/5] w-full', className)} />;
   return player.appearance ? (
     <div className={cn('aspect-[4/5] w-full overflow-hidden bg-[#081322]', className)}>
       <CharacterAvatar appearance={player.appearance} title={player.name} className="h-full w-full" />

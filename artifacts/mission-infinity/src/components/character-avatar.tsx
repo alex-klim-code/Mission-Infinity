@@ -1,7 +1,9 @@
 import { useId, useMemo } from 'react';
 import type { CharacterAppearance } from '@workspace/api-client-react';
 import { avatarDataUri, countryName, employeeIdFor, flagUrl, UNIFORM_NAVY } from '@/lib/avatar';
-import { imgUrl } from '@/lib/game';
+import { imgUrl, portraitFor } from '@/lib/game';
+import { avatarFileUrl } from '@/lib/avatar3d';
+import { Avatar3DPlaceholder } from '@/components/avatar3d';
 import { cn } from '@/lib/utils';
 
 /** Generated head + fixed Asterion uniform overlay + flag patch, all in one SVG. */
@@ -59,17 +61,35 @@ export function CharacterAvatar({
   );
 }
 
+/**
+ * Personnel badge. Photo source priority: 3D snapshot (or honest 3D placeholder) when the player
+ * has a 3D model; otherwise the illustrated look; otherwise the legacy preset portrait.
+ * The country flag always lives here on the badge, never on the 3D model.
+ */
 export function EmployeeBadge({
   appearance,
+  avatar3d,
+  portraitSrc,
+  presetId,
+  countryCode,
   name,
   idSource,
   className,
 }: {
-  appearance: CharacterAppearance;
+  appearance?: CharacterAppearance | null;
+  /** true / object when the badge represents a 3D avatar */
+  avatar3d?: { portraitUrl: string | null } | boolean | null;
+  /** explicit snapshot (e.g. local draft) */
+  portraitSrc?: string | null;
+  presetId?: string;
+  countryCode?: string | null;
   name: string;
   idSource: string;
   className?: string;
 }) {
+  const cc = countryCode ?? appearance?.countryCode ?? null;
+  const is3d = !!avatar3d;
+  const snap = portraitSrc ?? (avatar3d && typeof avatar3d === 'object' ? avatarFileUrl(avatar3d.portraitUrl) : null);
   return (
     <div
       className={cn('relative w-full max-w-[340px] overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(160deg,hsl(214_55%_14%),hsl(224_52%_6%))] shadow-[0_30px_60px_-30px_hsl(186_92%_40%/.5)]', className)}
@@ -87,7 +107,16 @@ export function EmployeeBadge({
       </div>
       <div className="flex gap-4 p-4">
         <div className="w-[120px] shrink-0 overflow-hidden rounded-md ring-1 ring-ion/40">
-          <CharacterAvatar appearance={appearance} title={`${name} badge portrait`} />
+          <div className="relative aspect-square">
+            {is3d ? (
+              snap ? <img src={snap} alt={`${name} badge snapshot`} className="h-full w-full bg-[radial-gradient(circle_at_50%_35%,hsl(196_60%_22%),hsl(222_55%_7%))] object-cover" data-testid="img-badge-3d" /> : <Avatar3DPlaceholder name={name} />
+            ) : appearance ? (
+              <CharacterAvatar appearance={appearance} title={`${name} badge portrait`} />
+            ) : (
+              <img src={imgUrl(portraitFor(presetId))} alt={`${name} badge portrait`} className="h-full w-full object-cover" />
+            )}
+            {is3d && <span className="absolute bottom-1 left-1 rounded-sm bg-void/80 px-1 font-mono text-[7px] uppercase tracking-[.2em] text-ion">3D</span>}
+          </div>
         </div>
         <div className="min-w-0 flex-1 space-y-2.5">
           <div>
@@ -101,8 +130,8 @@ export function EmployeeBadge({
           <div>
             <div className="font-mono text-[8px] uppercase tracking-[.25em] text-muted-foreground">Home</div>
             <div className="flex items-center gap-1.5 text-xs">
-              <img src={flagUrl(appearance.countryCode)} alt="" className="h-3 w-[18px] rounded-[2px] object-cover" />
-              <span className="truncate" data-testid="text-badge-country">{countryName(appearance.countryCode)}</span>
+              <img src={flagUrl(cc)} alt="" className="h-3 w-[18px] rounded-[2px] object-cover" />
+              <span className="truncate" data-testid="text-badge-country">{countryName(cc)}</span>
             </div>
           </div>
         </div>
@@ -116,7 +145,7 @@ export function EmployeeBadge({
         </div>
       </div>
       <div className="h-1 bg-gradient-to-r from-burn via-burn/60 to-ion/60" />
-      <p className="px-4 pb-2 pt-1.5 font-mono text-[7px] uppercase tracking-[.2em] text-muted-foreground/70">Fictional game credential / Mission: Infinity</p>
+      <p className="px-4 pb-2 pt-1.5 font-mono text-[7px] uppercase tracking-[.2em] text-muted-foreground/70">Fictional game credential / Mission: Infinity{is3d ? ' / 3D via Avaturn, standard outfit' : ''}</p>
     </div>
   );
 }

@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type SessionInputMode = typeof SessionInputMode[keyof typeof SessionInputMode];
-
+export type SessionInputMode =
+  (typeof SessionInputMode)[keyof typeof SessionInputMode];
 
 export const SessionInputMode = {
-  solo: 'solo',
-  crew: 'crew',
+  solo: "solo",
+  crew: "crew",
 } as const;

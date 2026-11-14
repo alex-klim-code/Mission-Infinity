@@ -4,6 +4,20 @@ A cinematic, cooperative browser game about becoming a mission leader at the fic
 
 ## Custom characters
 
+### Avaturn free pilot
+
+The realistic-character pilot uses the official `@avaturn/sdk` standard embedded editor and React Three Fiber/Three.js for exported GLB previews. Set the **public, non-secret** `AVATURN_PROJECT_URL` to an HTTPS project origin such as `https://your-project.avaturn.dev`. The application deliberately does not fall back to Avaturn's demo project. Missing configuration is shown explicitly.
+
+The free pilot does **not** include custom Asterion garments, a sewn flag on the 3D garment, paid SDK appearance controls or paid session/user APIs. Appearance is edited inside Avaturn; it may require its own sign-in. The selected country remains part of the personnel file/badge. The existing application login is unchanged. Avaturn receives photos supplied in its editor; the game stores the exported model, not the source photos.
+
+The model export and its supported metadata (avatar/body identifiers, gender and face-animation capability) are stored with the profile. The GLB itself is the appearance snapshot; no unsupported face/skin/hair parameter API is invented. GLBs and optional PNG posters are uploaded directly to App Storage, then validated and copied to immutable server-owned object keys. PostgreSQL contains upload ownership, asset references and configuration, never GLB/base64 bytes or signed export links.
+
+Limits: 20 MiB per GLB, 1 MiB per poster, bounded model metadata/geometry, self-contained resources only, and 40 asset upload authorizations per player per day. Draft assets are owner-only; saved character assets are visible to signed-in players. Replacing an upload through its temporary PUT URL cannot change an already verified model. The additive schema retains all legacy data; only an explicit successful 3D save activates the new model, and older clients omitting `avatar3d` preserve it.
+
+The server's App Storage client uses pinned, sidecar-compatible Google libraries. Test real direct upload, finalization and model download before upgrading their major versions.
+
+### Legacy appearance compatibility
+
 Onboarding uses Identity, Age, Country and Character Customization, followed by a saved-badge confirmation. Ages are 14–60 (default 20); the initial country is Poland. A searchable ISO 3166-1 country selector controls both the personnel file and the flag sewn into the shared Asterion uniform.
 
 Appearance configuration is stored in PostgreSQL, including its version, identity base, expression, skin tone, hairstyle, hair color, country and stable seed. SVGs are generated locally using **DiceBear Core 10.7.0** and the **Avataaars definition from DiceBear Styles 10.6.0**; these versions are pinned deliberately so an ordinary reinstall does not change saved characters. The modern DiceBear v10 `Style`/`Avatar` API differs from older `createAvatar` tutorials.

@@ -5,12 +5,12 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { CharacterAppearanceBase } from './characterAppearanceBase';
-import type { CharacterAppearanceFace } from './characterAppearanceFace';
-import type { CharacterAppearanceHairColor } from './characterAppearanceHairColor';
-import type { CharacterAppearanceHairstyle } from './characterAppearanceHairstyle';
-import type { CharacterAppearanceSkinTone } from './characterAppearanceSkinTone';
-import type { CharacterAppearanceVersion } from './characterAppearanceVersion';
+import type { CharacterAppearanceBase } from "./characterAppearanceBase";
+import type { CharacterAppearanceFace } from "./characterAppearanceFace";
+import type { CharacterAppearanceHairColor } from "./characterAppearanceHairColor";
+import type { CharacterAppearanceHairstyle } from "./characterAppearanceHairstyle";
+import type { CharacterAppearanceSkinTone } from "./characterAppearanceSkinTone";
+import type { CharacterAppearanceVersion } from "./characterAppearanceVersion";
 
 export interface CharacterAppearance {
   version: CharacterAppearanceVersion;
@@ -22,9 +22,9 @@ export interface CharacterAppearance {
   /** @pattern ^[A-Z]{2}$ */
   countryCode: string;
   /**
-     * @minLength 1
-     * @maxLength 100
-     * @pattern ^[A-Za-z0-9:_-]+$
-     */
+   * @minLength 1
+   * @maxLength 100
+   * @pattern ^[A-Za-z0-9:_-]+$
+   */
   avatarSeed: string;
 }

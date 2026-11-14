@@ -5,7 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { InvitationResponseAction } from './invitationResponseAction';
+import type { InvitationResponseAction } from "./invitationResponseAction";
 
 export interface InvitationResponse {
   action: InvitationResponseAction;

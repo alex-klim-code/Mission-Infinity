@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect, type Generated, type ColumnType, type Transaction } from "kysely";
 import { pool } from "@workspace/db";
-import type { CharacterAppearance } from "@workspace/api-zod";
+import type { CharacterAppearance, Avatar3D } from "@workspace/api-zod";
 
 type Time = ColumnType<Date, Date | string | undefined, Date | string>;
 interface Users {
@@ -17,6 +17,7 @@ interface Characters {
   preset_id: string;
   country_code: string | null;
   appearance: CharacterAppearance | null;
+  avatar_3d: Avatar3D | null;
   updated_at: Time;
 }
 interface Sessions {
@@ -57,6 +58,15 @@ interface Invites {
   created_at: Time;
 }
 export interface GameDatabase {
+  avatar_uploads: {
+    id: Generated<string>;
+    user_id: string;
+    kind: "model" | "portrait";
+    size: number;
+    upload_path: string;
+    asset_path: string | null;
+    created_at: Time;
+  };
   users: Users;
   user_characters: Characters;
   character_presets: { id: string; label: string; image: string };

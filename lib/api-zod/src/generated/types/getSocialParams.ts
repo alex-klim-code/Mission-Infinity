@@ -7,8 +7,8 @@
  */
 
 export type GetSocialParams = {
-/**
- * @maxLength 40
- */
-q?: string;
+  /**
+   * @maxLength 40
+   */
+  q?: string;
 };

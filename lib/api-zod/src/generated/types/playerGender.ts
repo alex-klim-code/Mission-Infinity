@@ -6,11 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PlayerGender = typeof PlayerGender[keyof typeof PlayerGender];
-
+export type PlayerGender = (typeof PlayerGender)[keyof typeof PlayerGender];
 
 export const PlayerGender = {
-  female: 'female',
-  male: 'male',
-  unspecified: 'unspecified',
+  female: "female",
+  male: "male",
+  unspecified: "unspecified",
 } as const;

@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CharacterAppearanceFace = typeof CharacterAppearanceFace[keyof typeof CharacterAppearanceFace];
-
+export type CharacterAppearanceFace =
+  (typeof CharacterAppearanceFace)[keyof typeof CharacterAppearanceFace];
 
 export const CharacterAppearanceFace = {
-  calm: 'calm',
-  focused: 'focused',
-  bright: 'bright',
-  confident: 'confident',
+  calm: "calm",
+  focused: "focused",
+  bright: "bright",
+  confident: "confident",
 } as const;

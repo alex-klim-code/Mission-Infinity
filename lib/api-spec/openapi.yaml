@@ -47,6 +47,51 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Player' }
+  /game/avatar-config:
+    get:
+      operationId: getAvatarConfig
+      responses:
+        '200':
+          description: Free Avaturn pilot configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AvatarConfig' }
+  /game/avatar-uploads:
+    post:
+      operationId: requestAvatarUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AvatarUploadInput' }
+      responses:
+        '201':
+          description: Direct upload authorization
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AvatarUpload' }
+  /game/avatar-uploads/{id}/complete:
+    post:
+      operationId: completeAvatarUpload
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Validated immutable avatar asset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AvatarAsset' }
+  /game/avatar-files/{id}:
+    get:
+      operationId: getAvatarFile
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Saved GLB or PNG asset, visible to signed-in players
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
   /game/social:
     get:
       operationId: getSocial
@@ -182,6 +227,55 @@ components:
         hairColor: { type: string, enum: ['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1'] }
         countryCode: { type: string, pattern: '^[A-Z]{2}$' }
         avatarSeed: { type: string, minLength: 1, maxLength: 100, pattern: '^[A-Za-z0-9:_-]+$' }
+    AvatarConfig:
+      type: object
+      required: [configured, editorUrl, maxModelBytes, maxPortraitBytes, customUniformSupported]
+      properties:
+        configured: { type: boolean }
+        editorUrl: { type: [string, 'null'] }
+        maxModelBytes: { type: integer }
+        maxPortraitBytes: { type: integer }
+        customUniformSupported: { type: boolean, enum: [false] }
+    AvatarUploadInput:
+      type: object
+      required: [kind, size]
+      properties:
+        kind: { type: string, enum: [model, portrait] }
+        size: { type: integer, minimum: 20, maximum: 20971520 }
+    AvatarUpload:
+      type: object
+      required: [id, uploadUrl, contentType]
+      properties:
+        id: { type: string, format: uuid }
+        uploadUrl: { type: string }
+        contentType: { type: string, enum: [model/gltf-binary, image/png] }
+    AvatarAsset:
+      type: object
+      required: [id, url, kind]
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        kind: { type: string, enum: [model, portrait] }
+    Avatar3DInput:
+      type: object
+      required: [modelUploadId, avatarId, bodyId, gender, avatarSupportsFaceAnimations]
+      properties:
+        modelUploadId: { type: string, format: uuid }
+        portraitUploadId: { type: string, format: uuid }
+        avatarId: { type: string, minLength: 1, maxLength: 128 }
+        bodyId: { type: string, minLength: 1, maxLength: 128 }
+        gender: { type: string, enum: [female, male] }
+        avatarSupportsFaceAnimations: { type: boolean }
+    Avatar3D:
+      allOf:
+        - { $ref: '#/components/schemas/Avatar3DInput' }
+        - type: object
+          required: [version, provider, modelUrl, portraitUrl]
+          properties:
+            version: { type: integer, enum: [1] }
+            provider: { type: string, enum: [avaturn] }
+            modelUrl: { type: string }
+            portraitUrl: { type: [string, 'null'] }
     CharacterInput:
       type: object
       required: [name, age, gender]
@@ -194,6 +288,10 @@ components:
         appearance:
           anyOf:
             - { $ref: '#/components/schemas/CharacterAppearance' }
+            - { type: 'null' }
+        avatar3d:
+          anyOf:
+            - { $ref: '#/components/schemas/Avatar3DInput' }
             - { type: 'null' }
     Player:
       type: object
@@ -208,6 +306,10 @@ components:
         appearance:
           anyOf:
             - { $ref: '#/components/schemas/CharacterAppearance' }
+            - { type: 'null' }
+        avatar3d:
+          anyOf:
+            - { $ref: '#/components/schemas/Avatar3D' }
             - { type: 'null' }
         online: { type: boolean }
     PlayerAccount:

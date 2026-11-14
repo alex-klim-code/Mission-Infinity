@@ -5,8 +5,8 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { InvitationDirection } from './invitationDirection';
-import type { Player } from './player';
+import type { InvitationDirection } from "./invitationDirection";
+import type { Player } from "./player";
 
 export interface Invitation {
   id: string;

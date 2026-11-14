@@ -6,15 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type SessionActionAction = typeof SessionActionAction[keyof typeof SessionActionAction];
-
+export type SessionActionAction =
+  (typeof SessionActionAction)[keyof typeof SessionActionAction];
 
 export const SessionActionAction = {
-  ready: 'ready',
-  start: 'start',
-  next: 'next',
-  accept: 'accept',
-  initiate: 'initiate',
-  leave: 'leave',
-  'continue-ready': 'continue-ready',
+  ready: "ready",
+  start: "start",
+  next: "next",
+  accept: "accept",
+  initiate: "initiate",
+  leave: "leave",
+  "continue-ready": "continue-ready",
 } as const;

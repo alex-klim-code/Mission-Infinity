@@ -8,6 +8,8 @@ import {
   CreateGameSessionBody, CreateGameSessionResponse, GetGameSessionResponse,
   UpdateGameSessionBody, UpdateGameSessionResponse, InvitePlayerBody, InvitePlayerResponse,
   RespondToInvitationBody, RespondToInvitationResponse, GetCareerResponse,
+  GetAvatarConfigResponse, RequestAvatarUploadBody, RequestAvatarUploadResponse,
+  CompleteAvatarUploadParams, CompleteAvatarUploadResponse, GetAvatarFileParams,
 } from "@workspace/api-zod";
 import { getCatalog } from "../game/content";
 import { getAccount, getCareer, resolveUser, savePlayer } from "../game/players";
@@ -18,6 +20,7 @@ import { GameError, requireCondition } from "../game/database";
 import { logger } from "../lib/logger";
 import { notifyUsers } from "../game/presence";
 import { getClerkProxyHost } from "../middlewares/clerkProxyMiddleware";
+import { getAvatarConfig, requestAvatarUpload, completeAvatarUpload, getAvatarAsset } from "../game/avatars";
 
 declare module "fastify" {
   interface FastifyRequest { playerId: string; }
@@ -75,6 +78,23 @@ gameApi.setErrorHandler((error, _req, reply) => {
 gameApi.get("/api/healthz", async () => ({ status: "ok" }));
 gameApi.get("/api/game/catalog", async () => GetGameCatalogResponse.parse(await getCatalog()));
 gameApi.get("/api/game/me", async req => GetPlayerResponse.parse(await getAccount(req.playerId)));
+gameApi.get("/api/game/avatar-config", async () => GetAvatarConfigResponse.parse(getAvatarConfig()));
+gameApi.post("/api/game/avatar-uploads", async (req, reply) => {
+  const result = await requestAvatarUpload(req.playerId, RequestAvatarUploadBody.parse(req.body));
+  return reply.code(201).send(RequestAvatarUploadResponse.parse(result));
+});
+gameApi.post("/api/game/avatar-uploads/:id/complete", async req => {
+  const { id } = CompleteAvatarUploadParams.parse(req.params);
+  return CompleteAvatarUploadResponse.parse(await completeAvatarUpload(req.playerId, id));
+});
+gameApi.get("/api/game/avatar-files/:id", async (req, reply) => {
+  const { id } = GetAvatarFileParams.parse(req.params);
+  const { row, file, referenced } = await getAvatarAsset(id);
+  requireCondition(referenced || row.user_id === req.playerId, 404, "Avatar asset not found.");
+  reply.header("Cache-Control", "private, max-age=86400, immutable").header("X-Content-Type-Options", "nosniff");
+  reply.type(row.kind === "model" ? "model/gltf-binary" : "image/png");
+  return reply.send(file.createReadStream());
+});
 gameApi.put("/api/game/character", async req => {
   const player = await savePlayer(req.playerId, SaveCharacterBody.parse(req.body));
   notifyUsers([req.playerId], "social:changed");

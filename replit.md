@@ -16,6 +16,8 @@ A browser-based cooperative space mission story for 1–4 players.
 - Monthly missions are a goal, not an established release schedule. Never invent advisers, credentials or NASA involvement.
 - Character onboarding now targets ages 14–60 (default 20), Female/Male bases, and a searchable country selector defaulting to Poland. Preserve legacy profiles and their portraits until their owner explicitly customizes them.
 - Custom characters use deterministic DiceBear avatars with the same Asterion Aerospace uniform and an integrated country flag. Save appearance configuration, not generated images.
+- The user approved the **free Avaturn pilot**, not Pro: use only standard SDK embedding/export with an owned project. Paid API sessions, programmatic appearance controls and custom 3D uniforms require renewed approval. The existing DiceBear uniform/flag describes legacy portraits only; do not imply the free 3D pilot enforces that outfit.
+- Preserve all legacy character data during 3D upgrades. Activate an uploaded GLB only after validation and successful profile save; keep app authentication, age, country and multiplayer behavior unchanged.
 
 ## Run and verify
 

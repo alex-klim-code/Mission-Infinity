@@ -24,10 +24,25 @@ export const userCharacters = pgTable("user_characters", {
   presetId: text("preset_id").notNull().references(() => characterPresets.id),
   countryCode: text("country_code"),
   appearance: jsonb("appearance"),
+  avatar3d: jsonb("avatar_3d"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => [
   check("character_age_range", sql`${t.age} >= 14 and ${t.age} <= 60`),
   check("character_gender", sql`${t.gender} in ('female','male','unspecified')`),
+]);
+
+export const avatarUploads = pgTable("avatar_uploads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  size: integer("size").notNull(),
+  uploadPath: text("upload_path").notNull(),
+  assetPath: text("asset_path"),
+  createdAt: created(),
+}, t => [
+  index("avatar_uploads_owner_idx").on(t.userId, t.createdAt),
+  check("avatar_upload_kind", sql`${t.kind} in ('model','portrait')`),
+  check("avatar_upload_size", sql`${t.size} >= 20 and ${t.size} <= 20971520`),
 ]);
 
 export const missions = pgTable("missions", {

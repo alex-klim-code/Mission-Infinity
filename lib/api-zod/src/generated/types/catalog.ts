@@ -5,9 +5,9 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { CharacterPreset } from './characterPreset';
-import type { Mission } from './mission';
-import type { StoryScene } from './storyScene';
+import type { CharacterPreset } from "./characterPreset";
+import type { Mission } from "./mission";
+import type { StoryScene } from "./storyScene";
 
 export interface Catalog {
   missions: Mission[];

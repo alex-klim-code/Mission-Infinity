@@ -6,15 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type GameSessionStatus = typeof GameSessionStatus[keyof typeof GameSessionStatus];
-
+export type GameSessionStatus =
+  (typeof GameSessionStatus)[keyof typeof GameSessionStatus];
 
 export const GameSessionStatus = {
-  LOBBY: 'LOBBY',
-  STORY: 'STORY',
-  MISSION_BRIEFING: 'MISSION_BRIEFING',
-  MISSION_ACCEPTANCE: 'MISSION_ACCEPTANCE',
-  READY_TO_START: 'READY_TO_START',
-  MISSION_STARTED: 'MISSION_STARTED',
-  CLOSED: 'CLOSED',
+  LOBBY: "LOBBY",
+  STORY: "STORY",
+  MISSION_BRIEFING: "MISSION_BRIEFING",
+  MISSION_ACCEPTANCE: "MISSION_ACCEPTANCE",
+  READY_TO_START: "READY_TO_START",
+  MISSION_STARTED: "MISSION_STARTED",
+  CLOSED: "CLOSED",
 } as const;

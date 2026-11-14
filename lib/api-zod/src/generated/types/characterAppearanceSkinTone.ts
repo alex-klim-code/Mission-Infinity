@@ -6,13 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CharacterAppearanceSkinTone = typeof CharacterAppearanceSkinTone[keyof typeof CharacterAppearanceSkinTone];
-
+export type CharacterAppearanceSkinTone =
+  (typeof CharacterAppearanceSkinTone)[keyof typeof CharacterAppearanceSkinTone];
 
 export const CharacterAppearanceSkinTone = {
-  NUMBER_614335: '614335',
-  d08b5b: 'd08b5b',
-  ae5d29: 'ae5d29',
-  edb98a: 'edb98a',
-  ffdbb4: 'ffdbb4',
+  NUMBER_614335: "614335",
+  d08b5b: "d08b5b",
+  ae5d29: "ae5d29",
+  edb98a: "edb98a",
+  ffdbb4: "ffdbb4",
 } as const;

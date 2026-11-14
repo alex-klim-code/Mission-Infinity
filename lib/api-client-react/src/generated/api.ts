@@ -5,10 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -21,11 +18,15 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
   ActionResult,
+  AvatarAsset,
+  AvatarConfig,
+  AvatarUpload,
+  AvatarUploadInput,
   Career,
   Catalog,
   CharacterInput,
@@ -40,27 +41,27 @@ import type {
   SessionAction,
   SessionInput,
   SessionResult,
-  Social
-} from './api.schemas';
+  Social,
+} from "./api.schemas";
 
-import { customFetch } from '../custom-fetch';
-import type { ErrorType , BodyType } from '../custom-fetch';
+import { customFetch } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
-      type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
+type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-
-
-const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+const withQueryKey = <T extends object, K>(
+  query: T,
+  queryKey: K,
+): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === 'queryKey') continue;
+    if (key === "queryKey") continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -71,1074 +72,1982 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export const getHealthCheckUrl = () => {
+  return `/api/healthz`;
+};
 
-
-
-
-  return `/api/healthz`
-}
-
-export const healthCheck = async ( options?: Parameters<typeof customFetch>[1]): Promise<HealthStatus> => {
-
-  return customFetch<HealthStatus>(getHealthCheckUrl(),
-  {
+export const healthCheck = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<HealthStatus> => {
+  return customFetch<HealthStatus>(getHealthCheckUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getHealthCheckQueryKey = () => {
-    return [
-    `/api/healthz`
-    ] as const;
-    }
+  return [`/api/healthz`] as const;
+};
 
+export const getHealthCheckQueryOptions = <
+  TData = Awaited<ReturnType<typeof healthCheck>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
-) => {
+  const queryKey = queryOptions?.queryKey ?? getHealthCheckQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({
+    signal,
+  }) => healthCheck({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getHealthCheckQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof healthCheck>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type HealthCheckQueryResult = NonNullable<
+  Awaited<ReturnType<typeof healthCheck>>
+>;
+export type HealthCheckQueryError = ErrorType<unknown>;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({ signal }) => healthCheck({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>
-export type HealthCheckQueryError = ErrorType<unknown>
-
-
-export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>> & Pick<
+export function useHealthCheck<
+  TData = Awaited<ReturnType<typeof healthCheck>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthCheck>>,
           TError,
           Awaited<ReturnType<typeof healthCheck>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHealthCheck<
+  TData = Awaited<ReturnType<typeof healthCheck>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthCheck>>,
           TError,
           Awaited<ReturnType<typeof healthCheck>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHealthCheck<
+  TData = Awaited<ReturnType<typeof healthCheck>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useHealthCheck<
+  TData = Awaited<ReturnType<typeof healthCheck>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getHealthCheckQueryOptions(options);
 
-  const queryOptions = getHealthCheckQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-
 
 export const getGetGameCatalogUrl = () => {
+  return `/api/game/catalog`;
+};
 
-
-
-
-  return `/api/game/catalog`
-}
-
-export const getGameCatalog = async ( options?: Parameters<typeof customFetch>[1]): Promise<Catalog> => {
-
-  return customFetch<Catalog>(getGetGameCatalogUrl(),
-  {
+export const getGameCatalog = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<Catalog> => {
+  return customFetch<Catalog>(getGetGameCatalogUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getGetGameCatalogQueryKey = () => {
-    return [
-    `/api/game/catalog`
-    ] as const;
-    }
+  return [`/api/game/catalog`] as const;
+};
 
+export const getGetGameCatalogQueryOptions = <
+  TData = Awaited<ReturnType<typeof getGameCatalog>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getGetGameCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getGameCatalog>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
-) => {
+  const queryKey = queryOptions?.queryKey ?? getGetGameCatalogQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGameCatalog>>> = ({
+    signal,
+  }) => getGameCatalog({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getGetGameCatalogQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGameCatalog>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type GetGameCatalogQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getGameCatalog>>
+>;
+export type GetGameCatalogQueryError = ErrorType<unknown>;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGameCatalog>>> = ({ signal }) => getGameCatalog({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetGameCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getGameCatalog>>>
-export type GetGameCatalogQueryError = ErrorType<unknown>
-
-
-export function useGetGameCatalog<TData = Awaited<ReturnType<typeof getGameCatalog>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>> & Pick<
+export function useGetGameCatalog<
+  TData = Awaited<ReturnType<typeof getGameCatalog>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getGameCatalog>>,
           TError,
           Awaited<ReturnType<typeof getGameCatalog>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetGameCatalog<TData = Awaited<ReturnType<typeof getGameCatalog>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGameCatalog<
+  TData = Awaited<ReturnType<typeof getGameCatalog>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getGameCatalog>>,
           TError,
           Awaited<ReturnType<typeof getGameCatalog>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetGameCatalog<TData = Awaited<ReturnType<typeof getGameCatalog>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGameCatalog<
+  TData = Awaited<ReturnType<typeof getGameCatalog>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useGetGameCatalog<TData = Awaited<ReturnType<typeof getGameCatalog>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetGameCatalog<
+  TData = Awaited<ReturnType<typeof getGameCatalog>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameCatalog>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetGameCatalogQueryOptions(options);
 
-  const queryOptions = getGetGameCatalogQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-
 
 export const getGetPlayerUrl = () => {
+  return `/api/game/me`;
+};
 
-
-
-
-  return `/api/game/me`
-}
-
-export const getPlayer = async ( options?: Parameters<typeof customFetch>[1]): Promise<PlayerAccount> => {
-
-  return customFetch<PlayerAccount>(getGetPlayerUrl(),
-  {
+export const getPlayer = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PlayerAccount> => {
+  return customFetch<PlayerAccount>(getGetPlayerUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getGetPlayerQueryKey = () => {
-    return [
-    `/api/game/me`
-    ] as const;
-    }
+  return [`/api/game/me`] as const;
+};
 
+export const getGetPlayerQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPlayer>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getGetPlayerQueryOptions = <TData = Awaited<ReturnType<typeof getPlayer>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
-) => {
+  const queryKey = queryOptions?.queryKey ?? getGetPlayerQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlayer>>> = ({
+    signal,
+  }) => getPlayer({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getGetPlayerQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPlayer>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type GetPlayerQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPlayer>>
+>;
+export type GetPlayerQueryError = ErrorType<unknown>;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlayer>>> = ({ signal }) => getPlayer({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetPlayerQueryResult = NonNullable<Awaited<ReturnType<typeof getPlayer>>>
-export type GetPlayerQueryError = ErrorType<unknown>
-
-
-export function useGetPlayer<TData = Awaited<ReturnType<typeof getPlayer>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>> & Pick<
+export function useGetPlayer<
+  TData = Awaited<ReturnType<typeof getPlayer>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlayer>>,
           TError,
           Awaited<ReturnType<typeof getPlayer>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlayer<TData = Awaited<ReturnType<typeof getPlayer>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPlayer<
+  TData = Awaited<ReturnType<typeof getPlayer>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlayer>>,
           TError,
           Awaited<ReturnType<typeof getPlayer>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlayer<TData = Awaited<ReturnType<typeof getPlayer>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPlayer<
+  TData = Awaited<ReturnType<typeof getPlayer>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useGetPlayer<TData = Awaited<ReturnType<typeof getPlayer>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetPlayer<
+  TData = Awaited<ReturnType<typeof getPlayer>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPlayer>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPlayerQueryOptions(options);
 
-  const queryOptions = getGetPlayerQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
-
 export const getSaveCharacterUrl = () => {
+  return `/api/game/character`;
+};
 
-
-
-
-  return `/api/game/character`
-}
-
-export const saveCharacter = async (characterInput: CharacterInput, options?: Parameters<typeof customFetch>[1]): Promise<Player> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const saveCharacter = async (
+  characterInput: CharacterInput,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<Player> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
       if (value !== undefined) headers[name] = value;
     }
     return headers;
   };
-return customFetch<Player>(getSaveCharacterUrl(),
-  {
+  return customFetch<Player>(getSaveCharacterUrl(), {
     ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(characterInput)
-  }
-);}
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(characterInput),
+  });
+};
 
+export const getSaveCharacterMutationKey = () => ["saveCharacter"] as const;
 
+export const getSaveCharacterMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveCharacter>>,
+    TError,
+    SaveCharacterMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveCharacter>>,
+  TError,
+  SaveCharacterMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSaveCharacterMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveCharacter>>,
+    SaveCharacterMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return saveCharacter(data, requestOptions);
+  };
 
-export const getSaveCharacterMutationKey = () => ['saveCharacter'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getSaveCharacterMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCharacter>>, TError,SaveCharacterMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof saveCharacter>>, TError,SaveCharacterMutationVariables, TContext> => {
+export type SaveCharacterMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveCharacter>>
+>;
+export type SaveCharacterMutationBody = BodyType<CharacterInput>;
+export type SaveCharacterMutationError = ErrorType<unknown>;
+export type SaveCharacterMutationVariables = { data: BodyType<CharacterInput> };
 
-const mutationKey = getSaveCharacterMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export const useSaveCharacter = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof saveCharacter>>,
+      TError,
+      SaveCharacterMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof saveCharacter>>,
+  TError,
+  SaveCharacterMutationVariables,
+  TContext
+> => {
+  return useMutation(getSaveCharacterMutationOptions(options), queryClient);
+};
 
+export const getGetAvatarConfigUrl = () => {
+  return `/api/game/avatar-config`;
+};
 
+export const getAvatarConfig = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<AvatarConfig> => {
+  return customFetch<AvatarConfig>(getGetAvatarConfigUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
 
+export const getGetAvatarConfigQueryKey = () => {
+  return [`/api/game/avatar-config`] as const;
+};
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveCharacter>>, SaveCharacterMutationVariables> = (props) => {
-          const {data} = props ?? {};
+export const getGetAvatarConfigQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAvatarConfig>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof getAvatarConfig>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-          return  saveCharacter(data,requestOptions)
-        }
+  const queryKey = queryOptions?.queryKey ?? getGetAvatarConfigQueryKey();
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAvatarConfig>>> = ({
+    signal,
+  }) => getAvatarConfig({ signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAvatarConfig>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type GetAvatarConfigQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAvatarConfig>>
+>;
+export type GetAvatarConfigQueryError = ErrorType<unknown>;
 
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SaveCharacterMutationResult = NonNullable<Awaited<ReturnType<typeof saveCharacter>>>
-    export type SaveCharacterMutationBody = BodyType<CharacterInput>
-    export type SaveCharacterMutationError = ErrorType<unknown>
-    export type SaveCharacterMutationVariables = {data: BodyType<CharacterInput>}
-
-    export const useSaveCharacter = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCharacter>>, TError,SaveCharacterMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof saveCharacter>>,
+export function useGetAvatarConfig<
+  TData = Awaited<ReturnType<typeof getAvatarConfig>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAvatarConfig>>,
         TError,
-        SaveCharacterMutationVariables,
-        TContext
-      > => {
-      return useMutation(getSaveCharacterMutationOptions(options), queryClient);
-    }
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAvatarConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getAvatarConfig>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAvatarConfig<
+  TData = Awaited<ReturnType<typeof getAvatarConfig>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAvatarConfig>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAvatarConfig>>,
+          TError,
+          Awaited<ReturnType<typeof getAvatarConfig>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAvatarConfig<
+  TData = Awaited<ReturnType<typeof getAvatarConfig>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAvatarConfig>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export const getGetSocialUrl = (params?: GetSocialParams,) => {
+export function useGetAvatarConfig<
+  TData = Awaited<ReturnType<typeof getAvatarConfig>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAvatarConfig>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAvatarConfigQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getRequestAvatarUploadUrl = () => {
+  return `/api/game/avatar-uploads`;
+};
+
+export const requestAvatarUpload = async (
+  avatarUploadInput: AvatarUploadInput,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<AvatarUpload> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<AvatarUpload>(getRequestAvatarUploadUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(avatarUploadInput),
+  });
+};
+
+export const getRequestAvatarUploadMutationKey = () =>
+  ["requestAvatarUpload"] as const;
+
+export const getRequestAvatarUploadMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestAvatarUpload>>,
+    TError,
+    RequestAvatarUploadMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestAvatarUpload>>,
+  TError,
+  RequestAvatarUploadMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRequestAvatarUploadMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestAvatarUpload>>,
+    RequestAvatarUploadMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestAvatarUpload(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestAvatarUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestAvatarUpload>>
+>;
+export type RequestAvatarUploadMutationBody = BodyType<AvatarUploadInput>;
+export type RequestAvatarUploadMutationError = ErrorType<unknown>;
+export type RequestAvatarUploadMutationVariables = {
+  data: BodyType<AvatarUploadInput>;
+};
+
+export const useRequestAvatarUpload = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof requestAvatarUpload>>,
+      TError,
+      RequestAvatarUploadMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof requestAvatarUpload>>,
+  TError,
+  RequestAvatarUploadMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getRequestAvatarUploadMutationOptions(options),
+    queryClient,
+  );
+};
+
+export const getCompleteAvatarUploadUrl = (id: string) => {
+  return `/api/game/avatar-uploads/${id}/complete`;
+};
+
+export const completeAvatarUpload = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<AvatarAsset> => {
+  return customFetch<AvatarAsset>(getCompleteAvatarUploadUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCompleteAvatarUploadMutationKey = () =>
+  ["completeAvatarUpload"] as const;
+
+export const getCompleteAvatarUploadMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeAvatarUpload>>,
+    TError,
+    CompleteAvatarUploadMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof completeAvatarUpload>>,
+  TError,
+  CompleteAvatarUploadMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCompleteAvatarUploadMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof completeAvatarUpload>>,
+    CompleteAvatarUploadMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return completeAvatarUpload(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CompleteAvatarUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof completeAvatarUpload>>
+>;
+
+export type CompleteAvatarUploadMutationError = ErrorType<unknown>;
+export type CompleteAvatarUploadMutationVariables = { id: string };
+
+export const useCompleteAvatarUpload = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof completeAvatarUpload>>,
+      TError,
+      CompleteAvatarUploadMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof completeAvatarUpload>>,
+  TError,
+  CompleteAvatarUploadMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getCompleteAvatarUploadMutationOptions(options),
+    queryClient,
+  );
+};
+
+export const getGetAvatarFileUrl = (id: string) => {
+  return `/api/game/avatar-files/${id}`;
+};
+
+export const getAvatarFile = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<Blob> => {
+  return customFetch<Blob>(getGetAvatarFileUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAvatarFileQueryKey = (id: string) => {
+  return [`/api/game/avatar-files/${id}`] as const;
+};
+
+export const getGetAvatarFileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAvatarFile>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAvatarFile>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAvatarFileQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAvatarFile>>> = ({
+    signal,
+  }) => getAvatarFile(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAvatarFile>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAvatarFileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAvatarFile>>
+>;
+export type GetAvatarFileQueryError = ErrorType<unknown>;
+
+export function useGetAvatarFile<
+  TData = Awaited<ReturnType<typeof getAvatarFile>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAvatarFile>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAvatarFile>>,
+          TError,
+          Awaited<ReturnType<typeof getAvatarFile>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAvatarFile<
+  TData = Awaited<ReturnType<typeof getAvatarFile>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAvatarFile>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAvatarFile>>,
+          TError,
+          Awaited<ReturnType<typeof getAvatarFile>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAvatarFile<
+  TData = Awaited<ReturnType<typeof getAvatarFile>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAvatarFile>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetAvatarFile<
+  TData = Awaited<ReturnType<typeof getAvatarFile>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAvatarFile>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAvatarFileQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetSocialUrl = (params?: GetSocialParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? "null" : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/game/social?${stringifiedParams}` : `/api/game/social`
-}
+  return stringifiedParams.length > 0
+    ? `/api/game/social?${stringifiedParams}`
+    : `/api/game/social`;
+};
 
-export const getSocial = async (params?: GetSocialParams, options?: Parameters<typeof customFetch>[1]): Promise<Social> => {
-
-  return customFetch<Social>(getGetSocialUrl(params),
-  {
+export const getSocial = async (
+  params?: GetSocialParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<Social> => {
+  return customFetch<Social>(getGetSocialUrl(params), {
     ...options,
-    method: 'GET'
+    method: "GET",
+  });
+};
 
+export const getGetSocialQueryKey = (params?: GetSocialParams) => {
+  return [`/api/game/social`, ...(params ? [params] : [])] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getGetSocialQueryKey = (params?: GetSocialParams,) => {
-    return [
-    `/api/game/social`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetSocialQueryOptions = <TData = Awaited<ReturnType<typeof getSocial>>, TError = ErrorType<unknown>>(params?: GetSocialParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetSocialQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSocial>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetSocialParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetSocialQueryKey(params);
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSocialQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSocial>>> = ({
+    signal,
+  }) => getSocial(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSocial>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type GetSocialQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSocial>>
+>;
+export type GetSocialQueryError = ErrorType<unknown>;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSocial>>> = ({ signal }) => getSocial(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetSocialQueryResult = NonNullable<Awaited<ReturnType<typeof getSocial>>>
-export type GetSocialQueryError = ErrorType<unknown>
-
-
-export function useGetSocial<TData = Awaited<ReturnType<typeof getSocial>>, TError = ErrorType<unknown>>(
- params: undefined |  GetSocialParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>> & Pick<
+export function useGetSocial<
+  TData = Awaited<ReturnType<typeof getSocial>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | GetSocialParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSocial>>,
           TError,
           Awaited<ReturnType<typeof getSocial>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSocial<TData = Awaited<ReturnType<typeof getSocial>>, TError = ErrorType<unknown>>(
- params?: GetSocialParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSocial<
+  TData = Awaited<ReturnType<typeof getSocial>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetSocialParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSocial>>,
           TError,
           Awaited<ReturnType<typeof getSocial>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSocial<TData = Awaited<ReturnType<typeof getSocial>>, TError = ErrorType<unknown>>(
- params?: GetSocialParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSocial<
+  TData = Awaited<ReturnType<typeof getSocial>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetSocialParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useGetSocial<TData = Awaited<ReturnType<typeof getSocial>>, TError = ErrorType<unknown>>(
- params?: GetSocialParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetSocial<
+  TData = Awaited<ReturnType<typeof getSocial>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetSocialParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getSocial>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetSocialQueryOptions(params, options);
 
-  const queryOptions = getGetSocialQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-
 
 export const getUpdateFriendshipUrl = () => {
+  return `/api/game/friend-actions`;
+};
 
-
-
-
-  return `/api/game/friend-actions`
-}
-
-export const updateFriendship = async (friendAction: FriendAction, options?: Parameters<typeof customFetch>[1]): Promise<ActionResult> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const updateFriendship = async (
+  friendAction: FriendAction,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ActionResult> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
       if (value !== undefined) headers[name] = value;
     }
     return headers;
   };
-return customFetch<ActionResult>(getUpdateFriendshipUrl(),
-  {
+  return customFetch<ActionResult>(getUpdateFriendshipUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(friendAction)
-  }
-);}
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(friendAction),
+  });
+};
 
+export const getUpdateFriendshipMutationKey = () =>
+  ["updateFriendship"] as const;
 
+export const getUpdateFriendshipMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateFriendship>>,
+    TError,
+    UpdateFriendshipMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateFriendship>>,
+  TError,
+  UpdateFriendshipMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateFriendshipMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateFriendship>>,
+    UpdateFriendshipMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return updateFriendship(data, requestOptions);
+  };
 
-export const getUpdateFriendshipMutationKey = () => ['updateFriendship'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getUpdateFriendshipMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFriendship>>, TError,UpdateFriendshipMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateFriendship>>, TError,UpdateFriendshipMutationVariables, TContext> => {
+export type UpdateFriendshipMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateFriendship>>
+>;
+export type UpdateFriendshipMutationBody = BodyType<FriendAction>;
+export type UpdateFriendshipMutationError = ErrorType<unknown>;
+export type UpdateFriendshipMutationVariables = {
+  data: BodyType<FriendAction>;
+};
 
-const mutationKey = getUpdateFriendshipMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateFriendship>>, UpdateFriendshipMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  updateFriendship(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateFriendshipMutationResult = NonNullable<Awaited<ReturnType<typeof updateFriendship>>>
-    export type UpdateFriendshipMutationBody = BodyType<FriendAction>
-    export type UpdateFriendshipMutationError = ErrorType<unknown>
-    export type UpdateFriendshipMutationVariables = {data: BodyType<FriendAction>}
-
-    export const useUpdateFriendship = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFriendship>>, TError,UpdateFriendshipMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateFriendship>>,
-        TError,
-        UpdateFriendshipMutationVariables,
-        TContext
-      > => {
-      return useMutation(getUpdateFriendshipMutationOptions(options), queryClient);
-    }
+export const useUpdateFriendship = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateFriendship>>,
+      TError,
+      UpdateFriendshipMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateFriendship>>,
+  TError,
+  UpdateFriendshipMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateFriendshipMutationOptions(options), queryClient);
+};
 
 export const getCreateGameSessionUrl = () => {
+  return `/api/game/sessions`;
+};
 
-
-
-
-  return `/api/game/sessions`
-}
-
-export const createGameSession = async (sessionInput: SessionInput, options?: Parameters<typeof customFetch>[1]): Promise<GameSession> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const createGameSession = async (
+  sessionInput: SessionInput,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<GameSession> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
       if (value !== undefined) headers[name] = value;
     }
     return headers;
   };
-return customFetch<GameSession>(getCreateGameSessionUrl(),
-  {
+  return customFetch<GameSession>(getCreateGameSessionUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(sessionInput)
-  }
-);}
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(sessionInput),
+  });
+};
 
+export const getCreateGameSessionMutationKey = () =>
+  ["createGameSession"] as const;
 
+export const getCreateGameSessionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGameSession>>,
+    TError,
+    CreateGameSessionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createGameSession>>,
+  TError,
+  CreateGameSessionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateGameSessionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createGameSession>>,
+    CreateGameSessionMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return createGameSession(data, requestOptions);
+  };
 
-export const getCreateGameSessionMutationKey = () => ['createGameSession'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getCreateGameSessionMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGameSession>>, TError,CreateGameSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createGameSession>>, TError,CreateGameSessionMutationVariables, TContext> => {
+export type CreateGameSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createGameSession>>
+>;
+export type CreateGameSessionMutationBody = BodyType<SessionInput>;
+export type CreateGameSessionMutationError = ErrorType<unknown>;
+export type CreateGameSessionMutationVariables = {
+  data: BodyType<SessionInput>;
+};
 
-const mutationKey = getCreateGameSessionMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export const useCreateGameSession = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createGameSession>>,
+      TError,
+      CreateGameSessionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createGameSession>>,
+  TError,
+  CreateGameSessionMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateGameSessionMutationOptions(options), queryClient);
+};
 
+export const getGetGameSessionUrl = (id: string) => {
+  return `/api/game/sessions/${id}`;
+};
 
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGameSession>>, CreateGameSessionMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  createGameSession(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateGameSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createGameSession>>>
-    export type CreateGameSessionMutationBody = BodyType<SessionInput>
-    export type CreateGameSessionMutationError = ErrorType<unknown>
-    export type CreateGameSessionMutationVariables = {data: BodyType<SessionInput>}
-
-    export const useCreateGameSession = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGameSession>>, TError,CreateGameSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createGameSession>>,
-        TError,
-        CreateGameSessionMutationVariables,
-        TContext
-      > => {
-      return useMutation(getCreateGameSessionMutationOptions(options), queryClient);
-    }
-
-export const getGetGameSessionUrl = (id: string,) => {
-
-
-
-
-  return `/api/game/sessions/${id}`
-}
-
-export const getGameSession = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<GameSession> => {
-
-  return customFetch<GameSession>(getGetGameSessionUrl(id),
-  {
+export const getGameSession = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<GameSession> => {
+  return customFetch<GameSession>(getGetGameSessionUrl(id), {
     ...options,
-    method: 'GET'
+    method: "GET",
+  });
+};
 
+export const getGetGameSessionQueryKey = (id: string) => {
+  return [`/api/game/sessions/${id}`] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getGetGameSessionQueryKey = (id: string,) => {
-    return [
-    `/api/game/sessions/${id}`
-    ] as const;
-    }
-
-
-export const getGetGameSessionQueryOptions = <TData = Awaited<ReturnType<typeof getGameSession>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetGameSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getGameSession>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetGameSessionQueryKey(id);
 
-  const queryKey =  queryOptions?.queryKey ?? getGetGameSessionQueryKey(id);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGameSession>>> = ({
+    signal,
+  }) => getGameSession(id, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGameSession>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type GetGameSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getGameSession>>
+>;
+export type GetGameSessionQueryError = ErrorType<unknown>;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGameSession>>> = ({ signal }) => getGameSession(id, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetGameSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getGameSession>>>
-export type GetGameSessionQueryError = ErrorType<unknown>
-
-
-export function useGetGameSession<TData = Awaited<ReturnType<typeof getGameSession>>, TError = ErrorType<unknown>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>> & Pick<
+export function useGetGameSession<
+  TData = Awaited<ReturnType<typeof getGameSession>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getGameSession>>,
           TError,
           Awaited<ReturnType<typeof getGameSession>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetGameSession<TData = Awaited<ReturnType<typeof getGameSession>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGameSession<
+  TData = Awaited<ReturnType<typeof getGameSession>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getGameSession>>,
           TError,
           Awaited<ReturnType<typeof getGameSession>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetGameSession<TData = Awaited<ReturnType<typeof getGameSession>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGameSession<
+  TData = Awaited<ReturnType<typeof getGameSession>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useGetGameSession<TData = Awaited<ReturnType<typeof getGameSession>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetGameSession<
+  TData = Awaited<ReturnType<typeof getGameSession>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGameSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetGameSessionQueryOptions(id, options);
 
-  const queryOptions = getGetGameSessionQueryOptions(id,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getUpdateGameSessionUrl = (id: string) => {
+  return `/api/game/sessions/${id}/actions`;
+};
 
-
-
-
-
-
-export const getUpdateGameSessionUrl = (id: string,) => {
-
-
-
-
-  return `/api/game/sessions/${id}/actions`
-}
-
-export const updateGameSession = async (id: string,
-    sessionAction: SessionAction, options?: Parameters<typeof customFetch>[1]): Promise<SessionResult> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const updateGameSession = async (
+  id: string,
+  sessionAction: SessionAction,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<SessionResult> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
       if (value !== undefined) headers[name] = value;
     }
     return headers;
   };
-return customFetch<SessionResult>(getUpdateGameSessionUrl(id),
-  {
+  return customFetch<SessionResult>(getUpdateGameSessionUrl(id), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(sessionAction)
-  }
-);}
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(sessionAction),
+  });
+};
 
+export const getUpdateGameSessionMutationKey = () =>
+  ["updateGameSession"] as const;
 
+export const getUpdateGameSessionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateGameSession>>,
+    TError,
+    UpdateGameSessionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateGameSession>>,
+  TError,
+  UpdateGameSessionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateGameSessionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateGameSession>>,
+    UpdateGameSessionMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return updateGameSession(id, data, requestOptions);
+  };
 
-export const getUpdateGameSessionMutationKey = () => ['updateGameSession'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getUpdateGameSessionMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGameSession>>, TError,UpdateGameSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateGameSession>>, TError,UpdateGameSessionMutationVariables, TContext> => {
+export type UpdateGameSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateGameSession>>
+>;
+export type UpdateGameSessionMutationBody = BodyType<SessionAction>;
+export type UpdateGameSessionMutationError = ErrorType<unknown>;
+export type UpdateGameSessionMutationVariables = {
+  id: string;
+  data: BodyType<SessionAction>;
+};
 
-const mutationKey = getUpdateGameSessionMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export const useUpdateGameSession = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateGameSession>>,
+      TError,
+      UpdateGameSessionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateGameSession>>,
+  TError,
+  UpdateGameSessionMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateGameSessionMutationOptions(options), queryClient);
+};
 
+export const getInvitePlayerUrl = (id: string) => {
+  return `/api/game/sessions/${id}/invitations`;
+};
 
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateGameSession>>, UpdateGameSessionMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  updateGameSession(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateGameSessionMutationResult = NonNullable<Awaited<ReturnType<typeof updateGameSession>>>
-    export type UpdateGameSessionMutationBody = BodyType<SessionAction>
-    export type UpdateGameSessionMutationError = ErrorType<unknown>
-    export type UpdateGameSessionMutationVariables = {id: string;data: BodyType<SessionAction>}
-
-    export const useUpdateGameSession = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGameSession>>, TError,UpdateGameSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateGameSession>>,
-        TError,
-        UpdateGameSessionMutationVariables,
-        TContext
-      > => {
-      return useMutation(getUpdateGameSessionMutationOptions(options), queryClient);
-    }
-
-export const getInvitePlayerUrl = (id: string,) => {
-
-
-
-
-  return `/api/game/sessions/${id}/invitations`
-}
-
-export const invitePlayer = async (id: string,
-    invitationInput: InvitationInput, options?: Parameters<typeof customFetch>[1]): Promise<ActionResult> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const invitePlayer = async (
+  id: string,
+  invitationInput: InvitationInput,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ActionResult> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
       if (value !== undefined) headers[name] = value;
     }
     return headers;
   };
-return customFetch<ActionResult>(getInvitePlayerUrl(id),
-  {
+  return customFetch<ActionResult>(getInvitePlayerUrl(id), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(invitationInput)
-  }
-);}
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(invitationInput),
+  });
+};
 
+export const getInvitePlayerMutationKey = () => ["invitePlayer"] as const;
 
+export const getInvitePlayerMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof invitePlayer>>,
+    TError,
+    InvitePlayerMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof invitePlayer>>,
+  TError,
+  InvitePlayerMutationVariables,
+  TContext
+> => {
+  const mutationKey = getInvitePlayerMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof invitePlayer>>,
+    InvitePlayerMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return invitePlayer(id, data, requestOptions);
+  };
 
-export const getInvitePlayerMutationKey = () => ['invitePlayer'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getInvitePlayerMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlayer>>, TError,InvitePlayerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof invitePlayer>>, TError,InvitePlayerMutationVariables, TContext> => {
+export type InvitePlayerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof invitePlayer>>
+>;
+export type InvitePlayerMutationBody = BodyType<InvitationInput>;
+export type InvitePlayerMutationError = ErrorType<unknown>;
+export type InvitePlayerMutationVariables = {
+  id: string;
+  data: BodyType<InvitationInput>;
+};
 
-const mutationKey = getInvitePlayerMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export const useInvitePlayer = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof invitePlayer>>,
+      TError,
+      InvitePlayerMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof invitePlayer>>,
+  TError,
+  InvitePlayerMutationVariables,
+  TContext
+> => {
+  return useMutation(getInvitePlayerMutationOptions(options), queryClient);
+};
 
+export const getRespondToInvitationUrl = (id: string) => {
+  return `/api/game/invitations/${id}`;
+};
 
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof invitePlayer>>, InvitePlayerMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  invitePlayer(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type InvitePlayerMutationResult = NonNullable<Awaited<ReturnType<typeof invitePlayer>>>
-    export type InvitePlayerMutationBody = BodyType<InvitationInput>
-    export type InvitePlayerMutationError = ErrorType<unknown>
-    export type InvitePlayerMutationVariables = {id: string;data: BodyType<InvitationInput>}
-
-    export const useInvitePlayer = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof invitePlayer>>, TError,InvitePlayerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof invitePlayer>>,
-        TError,
-        InvitePlayerMutationVariables,
-        TContext
-      > => {
-      return useMutation(getInvitePlayerMutationOptions(options), queryClient);
-    }
-
-export const getRespondToInvitationUrl = (id: string,) => {
-
-
-
-
-  return `/api/game/invitations/${id}`
-}
-
-export const respondToInvitation = async (id: string,
-    invitationResponse: InvitationResponse, options?: Parameters<typeof customFetch>[1]): Promise<SessionResult> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const respondToInvitation = async (
+  id: string,
+  invitationResponse: InvitationResponse,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<SessionResult> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
       if (value !== undefined) headers[name] = value;
     }
     return headers;
   };
-return customFetch<SessionResult>(getRespondToInvitationUrl(id),
-  {
+  return customFetch<SessionResult>(getRespondToInvitationUrl(id), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(invitationResponse)
-  }
-);}
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(invitationResponse),
+  });
+};
 
+export const getRespondToInvitationMutationKey = () =>
+  ["respondToInvitation"] as const;
 
+export const getRespondToInvitationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof respondToInvitation>>,
+    TError,
+    RespondToInvitationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof respondToInvitation>>,
+  TError,
+  RespondToInvitationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRespondToInvitationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof respondToInvitation>>,
+    RespondToInvitationMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return respondToInvitation(id, data, requestOptions);
+  };
 
-export const getRespondToInvitationMutationKey = () => ['respondToInvitation'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getRespondToInvitationMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToInvitation>>, TError,RespondToInvitationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof respondToInvitation>>, TError,RespondToInvitationMutationVariables, TContext> => {
+export type RespondToInvitationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof respondToInvitation>>
+>;
+export type RespondToInvitationMutationBody = BodyType<InvitationResponse>;
+export type RespondToInvitationMutationError = ErrorType<unknown>;
+export type RespondToInvitationMutationVariables = {
+  id: string;
+  data: BodyType<InvitationResponse>;
+};
 
-const mutationKey = getRespondToInvitationMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof respondToInvitation>>, RespondToInvitationMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  respondToInvitation(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RespondToInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof respondToInvitation>>>
-    export type RespondToInvitationMutationBody = BodyType<InvitationResponse>
-    export type RespondToInvitationMutationError = ErrorType<unknown>
-    export type RespondToInvitationMutationVariables = {id: string;data: BodyType<InvitationResponse>}
-
-    export const useRespondToInvitation = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToInvitation>>, TError,RespondToInvitationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof respondToInvitation>>,
-        TError,
-        RespondToInvitationMutationVariables,
-        TContext
-      > => {
-      return useMutation(getRespondToInvitationMutationOptions(options), queryClient);
-    }
+export const useRespondToInvitation = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof respondToInvitation>>,
+      TError,
+      RespondToInvitationMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof respondToInvitation>>,
+  TError,
+  RespondToInvitationMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getRespondToInvitationMutationOptions(options),
+    queryClient,
+  );
+};
 
 export const getGetCareerUrl = () => {
+  return `/api/game/career`;
+};
 
-
-
-
-  return `/api/game/career`
-}
-
-export const getCareer = async ( options?: Parameters<typeof customFetch>[1]): Promise<Career> => {
-
-  return customFetch<Career>(getGetCareerUrl(),
-  {
+export const getCareer = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<Career> => {
+  return customFetch<Career>(getGetCareerUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: "GET",
+  });
+};
 
 export const getGetCareerQueryKey = () => {
-    return [
-    `/api/game/career`
-    ] as const;
-    }
+  return [`/api/game/career`] as const;
+};
 
+export const getGetCareerQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCareer>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getGetCareerQueryOptions = <TData = Awaited<ReturnType<typeof getCareer>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
-) => {
+  const queryKey = queryOptions?.queryKey ?? getGetCareerQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCareer>>> = ({
+    signal,
+  }) => getCareer({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getGetCareerQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCareer>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type GetCareerQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCareer>>
+>;
+export type GetCareerQueryError = ErrorType<unknown>;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCareer>>> = ({ signal }) => getCareer({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetCareerQueryResult = NonNullable<Awaited<ReturnType<typeof getCareer>>>
-export type GetCareerQueryError = ErrorType<unknown>
-
-
-export function useGetCareer<TData = Awaited<ReturnType<typeof getCareer>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>> & Pick<
+export function useGetCareer<
+  TData = Awaited<ReturnType<typeof getCareer>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCareer>>,
           TError,
           Awaited<ReturnType<typeof getCareer>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCareer<TData = Awaited<ReturnType<typeof getCareer>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCareer<
+  TData = Awaited<ReturnType<typeof getCareer>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCareer>>,
           TError,
           Awaited<ReturnType<typeof getCareer>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCareer<TData = Awaited<ReturnType<typeof getCareer>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCareer<
+  TData = Awaited<ReturnType<typeof getCareer>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useGetCareer<TData = Awaited<ReturnType<typeof getCareer>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetCareer<
+  TData = Awaited<ReturnType<typeof getCareer>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getCareer>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetCareerQueryOptions(options);
 
-  const queryOptions = getGetCareerQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-
-

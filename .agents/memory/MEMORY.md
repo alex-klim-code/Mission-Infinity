@@ -1,2 +1,3 @@
 - [Avatar identity defaults](avatar-identity.md) — distinguish correct starting defaults from restrictions on deliberately customized hairstyles.
 - [Validation scope](validation-scope.md) — passing runtime tests do not cover TypeScript errors in files excluded from the compiler project.
+- [App Storage compatibility](app-storage-compatibility.md) — major Google client upgrades require a real sidecar upload/read test, not just type checking.

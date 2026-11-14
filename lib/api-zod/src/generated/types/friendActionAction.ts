@@ -6,13 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type FriendActionAction = typeof FriendActionAction[keyof typeof FriendActionAction];
-
+export type FriendActionAction =
+  (typeof FriendActionAction)[keyof typeof FriendActionAction];
 
 export const FriendActionAction = {
-  send: 'send',
-  accept: 'accept',
-  reject: 'reject',
-  cancel: 'cancel',
-  remove: 'remove',
+  send: "send",
+  accept: "accept",
+  reject: "reject",
+  cancel: "cancel",
+  remove: "remove",
 } as const;

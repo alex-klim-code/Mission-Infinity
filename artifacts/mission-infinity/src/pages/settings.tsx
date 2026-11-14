@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Sparkles } from 'lucide-react';
+import { Box, Palette, Sparkles } from 'lucide-react';
 import { useSaveCharacter, type CharacterAppearance, type CharacterInput, type PlayerAccount } from '@workspace/api-client-react';
 import { Switch } from '@/components/ui/switch';
 import { AppShell, LinkStatusPill, PageHeader, RequireCharacter } from '@/components/shell';
@@ -11,6 +11,10 @@ import { HudButton, Panel, PlayerPortrait } from '@/components/ui-kit';
 import { defaultAppearance, randomAppearance, sameAppearance, withBase } from '@/lib/avatar';
 import { errMsg, invalidateGame } from '@/lib/game';
 import { usePrefs } from '@/lib/prefs';
+import { Avatar3DStudio } from '@/components/avatar3d-studio';
+import { useAvatar3DDraft } from '@/hooks/use-avatar3d-draft';
+import { avatarFileUrl } from '@/lib/avatar3d';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 function SettingsInner({ account }: { account: PlayerAccount }) {
@@ -27,12 +31,29 @@ function SettingsInner({ account }: { account: PlayerAccount }) {
   const { toast } = useToast();
   const prefs = usePrefs();
   const nErr = nameError(name);
+  const saved3d = c.avatar3d ?? null;
+  const [mode, setMode] = useState<'3d' | 'legacy'>(saved3d ? '3d' : 'legacy');
+  const [restoreLegacy, setRestoreLegacy] = useState(false);
+  const draftApi = useAvatar3DDraft();
+  const draft = draftApi.draft;
 
   const base = gender === 'unspecified' ? null : gender;
   const live = app && base ? { ...withBase(app, base), countryCode: country } : null;
   const appDirty = !sameAppearance(live, c.appearance ?? null);
   const needsBase = !!app && !base;
-  const dirty = name.trim() !== c.name || age !== c.age || gender !== c.gender || country !== savedCountry || appDirty;
+  const send3d = mode === '3d' && !!draft;
+  const avatarDirty = send3d || restoreLegacy;
+  const dirty = name.trim() !== c.name || age !== c.age || gender !== c.gender || country !== savedCountry || appDirty || avatarDirty;
+  const block3d = send3d
+    ? draft!.status !== 'ready' || !draft!.input
+      ? 'Your new 3D model is still transferring.'
+      : draft!.meta.gender !== gender
+        ? 'Your new Avaturn body does not match your identity.'
+        : null
+    : saved3d && !restoreLegacy && gender !== saved3d.gender
+      ? 'Your saved 3D model has a different body. Export a matching model or restore the illustrated look to switch identity.'
+      : null;
+  const show3dBadge = send3d || (!!saved3d && !restoreLegacy);
 
   const startCustom = () => setApp(defaultAppearance(account.id, base ?? 'female', country));
   const resetLook = () => {
@@ -40,6 +61,9 @@ function SettingsInner({ account }: { account: PlayerAccount }) {
     setApp(c.appearance ? withBase(c.appearance, b) : defaultAppearance(account.id, b, country));
   };
   const revert = () => {
+    draftApi.discard();
+    setRestoreLegacy(false);
+    setMode(saved3d ? '3d' : 'legacy');
     setName(c.name);
     setAge(c.age);
     setGender(c.gender);
@@ -48,15 +72,22 @@ function SettingsInner({ account }: { account: PlayerAccount }) {
   };
 
   const submit = () => {
-    if (inFlight.current || save.isPending || nErr || needsBase) return;
+    if (inFlight.current || save.isPending || nErr || (needsBase && !show3dBadge) || block3d) return;
     const data: CharacterInput = { name: name.trim(), age, gender, presetId: c.presetId, countryCode: country };
     if (appDirty) data.appearance = live;
+    if (send3d && draft?.input) data.avatar3d = draft.input;
+    else if (restoreLegacy) data.avatar3d = null;
     inFlight.current = true;
     save.mutate(
       { data },
       {
-        onSuccess: async () => {
+        onSuccess: async (p) => {
           await invalidateGame(qc);
+          if (send3d) {
+            if (p.avatar3d) draftApi.discard();
+            setMode(p.avatar3d ? '3d' : 'legacy');
+          }
+          if (restoreLegacy) setRestoreLegacy(false);
           toast({ title: 'Personnel file updated' });
         },
         onError: (e) => toast({ title: 'Save failed', description: `${errMsg(e)} Your edits are kept.`, variant: 'destructive' }),
@@ -80,7 +111,8 @@ function SettingsInner({ account }: { account: PlayerAccount }) {
           <section>
             <div className="kicker mb-3">Identity</div>
             <GenderPicker value={gender} onChange={setGender} allowUnspecified={c.gender === 'unspecified'} />
-            {needsBase && <p className="mt-2 text-sm text-burn">Choose Female or Male to save a custom look, or switch back to the classic portrait.</p>}
+            {block3d && <p className="mt-2 text-sm text-burn" data-testid="text-settings-3d-block">{block3d}</p>}
+            {needsBase && !show3dBadge && <p className="mt-2 text-sm text-burn">Choose Female or Male to save a custom look, or switch back to the classic portrait.</p>}
           </section>
           <section>
             <div className="kicker mb-3">Age</div>
@@ -92,24 +124,48 @@ function SettingsInner({ account }: { account: PlayerAccount }) {
           </section>
           <section>
             <div className="kicker mb-3">Appearance</div>
-            {live ? (
-              <AppearanceEditor value={live} onChange={setApp} onRandomize={() => setApp(randomAppearance(live))} onReset={resetLook} />
+            <div className="mb-5 inline-flex rounded-md border border-white/10 bg-white/[.02] p-1" role="radiogroup" aria-label="Avatar type">
+              {([
+                ['3d', '3D avatar', Box],
+                ['legacy', 'Illustrated look', Palette],
+              ] as const).map(([k, label, Icon]) => (
+                <button key={k} type="button" role="radio" aria-checked={mode === k} onClick={() => { setMode(k); if (k === '3d') setRestoreLegacy(false); }} className={cn('inline-flex min-h-10 items-center gap-2 rounded px-3 font-display text-xs font-semibold uppercase tracking-[.14em] transition-colors', mode === k ? 'bg-ion text-void' : 'text-muted-foreground hover:text-foreground')} data-testid={`button-settings-mode-${k}`}>
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ))}
+            </div>
+            {mode === '3d' ? (
+              <Avatar3DStudio api={draftApi} gender={base} saved={saved3d} name={name} />
             ) : (
-              <div className="flex flex-col items-start gap-5 rounded-lg border border-dashed border-white/10 p-5 sm:flex-row sm:items-center">
-                <div className="w-28 shrink-0 overflow-hidden rounded-md">
-                  <PlayerPortrait player={{ ...c, appearance: null }} />
-                </div>
-                <div className="flex-1">
-                  <div className="font-display text-lg font-semibold uppercase tracking-wider">Classic portrait</div>
-                  <p className="mt-1 text-sm text-muted-foreground">Your original badge photo stays until you build a custom look in the Asterion uniform.</p>
-                  {app && !base ? (
-                    <HudButton variant="ghost" className="mt-4" onClick={() => setApp(null)} data-testid="button-keep-classic">Keep classic portrait</HudButton>
-                  ) : (
-                    <HudButton variant="ghost" className="mt-4" onClick={startCustom} disabled={!base} data-testid="button-start-custom">
-                      <Sparkles className="h-4 w-4" /> Create custom look
+              <div className="space-y-5">
+                {saved3d && (
+                  <div className="flex flex-col gap-3 rounded-md border border-burn/30 bg-burn/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-muted-foreground">{restoreLegacy ? 'On save, your badge returns to the illustrated look. The 3D model stays on record.' : 'Your 3D model is your active look. Edits here are kept as your illustrated backup.'}</p>
+                    <HudButton variant="ghost" onClick={() => setRestoreLegacy((v) => !v)} data-testid="button-restore-legacy">
+                      {restoreLegacy ? 'Keep 3D active' : 'Use illustrated look'}
                     </HudButton>
-                  )}
+                  </div>
+                )}
+              {live ? (
+                <AppearanceEditor value={live} onChange={setApp} onRandomize={() => setApp(randomAppearance(live))} onReset={resetLook} />
+              ) : (
+                <div className="flex flex-col items-start gap-5 rounded-lg border border-dashed border-white/10 p-5 sm:flex-row sm:items-center">
+                  <div className="w-28 shrink-0 overflow-hidden rounded-md">
+                    <PlayerPortrait player={{ ...c, appearance: null, avatar3d: null }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-display text-lg font-semibold uppercase tracking-wider">Classic portrait</div>
+                    <p className="mt-1 text-sm text-muted-foreground">Your original badge photo stays until you build a custom look in the Asterion uniform.</p>
+                    {app && !base ? (
+                      <HudButton variant="ghost" className="mt-4" onClick={() => setApp(null)} data-testid="button-keep-classic">Keep classic portrait</HudButton>
+                    ) : (
+                      <HudButton variant="ghost" className="mt-4" onClick={startCustom} disabled={!base} data-testid="button-start-custom">
+                        <Sparkles className="h-4 w-4" /> Create custom look
+                      </HudButton>
+                    )}
+                  </div>
                 </div>
+              )}
               </div>
             )}
           </section>
@@ -117,13 +173,17 @@ function SettingsInner({ account }: { account: PlayerAccount }) {
             <HudButton variant="ghost" disabled={!dirty || save.isPending} onClick={revert} data-testid="button-reset-character">
               Revert
             </HudButton>
-            <HudButton variant="burn" disabled={!dirty || !!nErr || needsBase} loading={save.isPending} onClick={submit} data-testid="button-save-settings">
+            <HudButton variant="burn" disabled={!dirty || !!nErr || (needsBase && !show3dBadge) || !!block3d} loading={save.isPending} onClick={submit} data-testid="button-save-settings">
               Save changes
             </HudButton>
           </div>
         </Panel>
         <div className="space-y-4">
-          {live && <EmployeeBadge appearance={live} name={name} idSource={account.id} className="mx-auto lg:sticky lg:top-24" />}
+          {show3dBadge ? (
+            <EmployeeBadge avatar3d countryCode={country} portraitSrc={send3d ? draft?.posterSrc : avatarFileUrl(saved3d?.portraitUrl)} name={name} idSource={account.id} className="mx-auto lg:sticky lg:top-24" />
+          ) : live ? (
+            <EmployeeBadge appearance={live} name={name} idSource={account.id} className="mx-auto lg:sticky lg:top-24" />
+          ) : null}
           <Panel className="p-6">
             <div className="kicker mb-5">This device</div>
             {[

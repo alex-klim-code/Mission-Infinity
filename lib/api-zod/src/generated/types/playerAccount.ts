@@ -5,7 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { Player } from './player';
+import type { Player } from "./player";
 
 export interface PlayerAccount {
   id: string;

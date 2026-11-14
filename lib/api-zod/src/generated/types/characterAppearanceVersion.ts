@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CharacterAppearanceVersion = typeof CharacterAppearanceVersion[keyof typeof CharacterAppearanceVersion];
-
+export type CharacterAppearanceVersion =
+  (typeof CharacterAppearanceVersion)[keyof typeof CharacterAppearanceVersion];
 
 export const CharacterAppearanceVersion = {
   NUMBER_1: 1,

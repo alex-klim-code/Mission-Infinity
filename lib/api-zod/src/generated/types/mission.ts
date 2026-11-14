@@ -5,7 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
-import type { BriefingSection } from './briefingSection';
+import type { BriefingSection } from "./briefingSection";
 
 export interface Mission {
   id: string;

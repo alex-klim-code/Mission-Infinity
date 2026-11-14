@@ -14,70 +14,70 @@ export interface ActionResult {
   message: string;
 }
 
-export type CharacterAppearanceVersion = typeof CharacterAppearanceVersion[keyof typeof CharacterAppearanceVersion];
-
+export type CharacterAppearanceVersion =
+  (typeof CharacterAppearanceVersion)[keyof typeof CharacterAppearanceVersion];
 
 export const CharacterAppearanceVersion = {
   NUMBER_1: 1,
 } as const;
 
-export type CharacterAppearanceBase = typeof CharacterAppearanceBase[keyof typeof CharacterAppearanceBase];
-
+export type CharacterAppearanceBase =
+  (typeof CharacterAppearanceBase)[keyof typeof CharacterAppearanceBase];
 
 export const CharacterAppearanceBase = {
-  female: 'female',
-  male: 'male',
+  female: "female",
+  male: "male",
 } as const;
 
-export type CharacterAppearanceFace = typeof CharacterAppearanceFace[keyof typeof CharacterAppearanceFace];
-
+export type CharacterAppearanceFace =
+  (typeof CharacterAppearanceFace)[keyof typeof CharacterAppearanceFace];
 
 export const CharacterAppearanceFace = {
-  calm: 'calm',
-  focused: 'focused',
-  bright: 'bright',
-  confident: 'confident',
+  calm: "calm",
+  focused: "focused",
+  bright: "bright",
+  confident: "confident",
 } as const;
 
-export type CharacterAppearanceSkinTone = typeof CharacterAppearanceSkinTone[keyof typeof CharacterAppearanceSkinTone];
-
+export type CharacterAppearanceSkinTone =
+  (typeof CharacterAppearanceSkinTone)[keyof typeof CharacterAppearanceSkinTone];
 
 export const CharacterAppearanceSkinTone = {
-  NUMBER_614335: '614335',
-  d08b5b: 'd08b5b',
-  ae5d29: 'ae5d29',
-  edb98a: 'edb98a',
-  ffdbb4: 'ffdbb4',
+  NUMBER_614335: "614335",
+  d08b5b: "d08b5b",
+  ae5d29: "ae5d29",
+  edb98a: "edb98a",
+  ffdbb4: "ffdbb4",
 } as const;
 
-export type CharacterAppearanceHairstyle = typeof CharacterAppearanceHairstyle[keyof typeof CharacterAppearanceHairstyle];
-
+export type CharacterAppearanceHairstyle =
+  (typeof CharacterAppearanceHairstyle)[keyof typeof CharacterAppearanceHairstyle];
 
 export const CharacterAppearanceHairstyle = {
-  shortFlat: 'shortFlat',
-  shortCurly: 'shortCurly',
-  theCaesar: 'theCaesar',
-  bob: 'bob',
-  bun: 'bun',
-  curly: 'curly',
-  straight01: 'straight01',
-  fro: 'fro',
-  shavedSides: 'shavedSides',
-  longButNotTooLong: 'longButNotTooLong',
+  shortFlat: "shortFlat",
+  shortCurly: "shortCurly",
+  theCaesar: "theCaesar",
+  bob: "bob",
+  bun: "bun",
+  curly: "curly",
+  straight01: "straight01",
+  fro: "fro",
+  shavedSides: "shavedSides",
+  longButNotTooLong: "longButNotTooLong",
 } as const;
 
-export type CharacterAppearanceHairColor = typeof CharacterAppearanceHairColor[keyof typeof CharacterAppearanceHairColor];
-
+export type CharacterAppearanceHairColor =
+  (typeof CharacterAppearanceHairColor)[keyof typeof CharacterAppearanceHairColor];
 
 export const CharacterAppearanceHairColor = {
-  '2c1b18': '2c1b18',
-  '4a312c': '4a312c',
-  NUMBER_724133: '724133',
-  a55728: 'a55728',
-  b58143: 'b58143',
-  d6b370: 'd6b370',
-  ecdcbf: 'ecdcbf',
-  e8e1e1: 'e8e1e1',
+  "2c1b18": "2c1b18",
+  "4a312c": "4a312c",
+  NUMBER_724133: "724133",
+  a55728: "a55728",
+  b58143: "b58143",
+  d6b370: "d6b370",
+  ecdcbf: "ecdcbf",
+  e8e1e1: "e8e1e1",
 } as const;
 
 export interface CharacterAppearance {
@@ -90,47 +90,148 @@ export interface CharacterAppearance {
   /** @pattern ^[A-Z]{2}$ */
   countryCode: string;
   /**
-     * @minLength 1
-     * @maxLength 100
-     * @pattern ^[A-Za-z0-9:_-]+$
-     */
+   * @minLength 1
+   * @maxLength 100
+   * @pattern ^[A-Za-z0-9:_-]+$
+   */
   avatarSeed: string;
 }
 
-export type CharacterInputGender = typeof CharacterInputGender[keyof typeof CharacterInputGender];
+export interface AvatarConfig {
+  configured: boolean;
+  /** @nullable */
+  editorUrl: string | null;
+  maxModelBytes: number;
+  maxPortraitBytes: number;
+  customUniformSupported: false;
+}
 
+export type AvatarUploadInputKind =
+  (typeof AvatarUploadInputKind)[keyof typeof AvatarUploadInputKind];
+
+export const AvatarUploadInputKind = {
+  model: "model",
+  portrait: "portrait",
+} as const;
+
+export interface AvatarUploadInput {
+  kind: AvatarUploadInputKind;
+  /**
+   * @minimum 20
+   * @maximum 20971520
+   */
+  size: number;
+}
+
+export type AvatarUploadContentType =
+  (typeof AvatarUploadContentType)[keyof typeof AvatarUploadContentType];
+
+export const AvatarUploadContentType = {
+  "model/gltf-binary": "model/gltf-binary",
+  "image/png": "image/png",
+} as const;
+
+export interface AvatarUpload {
+  id: string;
+  uploadUrl: string;
+  contentType: AvatarUploadContentType;
+}
+
+export type AvatarAssetKind =
+  (typeof AvatarAssetKind)[keyof typeof AvatarAssetKind];
+
+export const AvatarAssetKind = {
+  model: "model",
+  portrait: "portrait",
+} as const;
+
+export interface AvatarAsset {
+  id: string;
+  url: string;
+  kind: AvatarAssetKind;
+}
+
+export type Avatar3DInputGender =
+  (typeof Avatar3DInputGender)[keyof typeof Avatar3DInputGender];
+
+export const Avatar3DInputGender = {
+  female: "female",
+  male: "male",
+} as const;
+
+export interface Avatar3DInput {
+  modelUploadId: string;
+  portraitUploadId?: string;
+  /**
+   * @minLength 1
+   * @maxLength 128
+   */
+  avatarId: string;
+  /**
+   * @minLength 1
+   * @maxLength 128
+   */
+  bodyId: string;
+  gender: Avatar3DInputGender;
+  avatarSupportsFaceAnimations: boolean;
+}
+
+export type Avatar3DVersion =
+  (typeof Avatar3DVersion)[keyof typeof Avatar3DVersion];
+
+export const Avatar3DVersion = {
+  NUMBER_1: 1,
+} as const;
+
+export type Avatar3DProvider =
+  (typeof Avatar3DProvider)[keyof typeof Avatar3DProvider];
+
+export const Avatar3DProvider = {
+  avaturn: "avaturn",
+} as const;
+
+export type Avatar3D = Avatar3DInput & {
+  version: Avatar3DVersion;
+  provider: Avatar3DProvider;
+  modelUrl: string;
+  /** @nullable */
+  portraitUrl: string | null;
+};
+
+export type CharacterInputGender =
+  (typeof CharacterInputGender)[keyof typeof CharacterInputGender];
 
 export const CharacterInputGender = {
-  female: 'female',
-  male: 'male',
-  unspecified: 'unspecified',
+  female: "female",
+  male: "male",
+  unspecified: "unspecified",
 } as const;
 
 export interface CharacterInput {
   /**
-     * @minLength 3
-     * @maxLength 24
-     */
+   * @minLength 3
+   * @maxLength 24
+   */
   name: string;
   /**
-     * @minimum 14
-     * @maximum 60
-     */
+   * @minimum 14
+   * @maximum 60
+   */
   age: number;
   gender: CharacterInputGender;
   presetId?: string;
   /** @pattern ^[A-Z]{2}$ */
   countryCode?: string;
   appearance?: CharacterAppearance | null;
+  avatar3d?: Avatar3DInput | null;
 }
 
-export type PlayerGender = typeof PlayerGender[keyof typeof PlayerGender];
-
+export type PlayerGender = (typeof PlayerGender)[keyof typeof PlayerGender];
 
 export const PlayerGender = {
-  female: 'female',
-  male: 'male',
-  unspecified: 'unspecified',
+  female: "female",
+  male: "male",
+  unspecified: "unspecified",
 } as const;
 
 export interface Player {
@@ -142,6 +243,7 @@ export interface Player {
   /** @nullable */
   countryCode?: string | null;
   appearance?: CharacterAppearance | null;
+  avatar3d?: Avatar3D | null;
   online: boolean;
 }
 
@@ -197,12 +299,12 @@ export interface Catalog {
   scenes: StoryScene[];
 }
 
-export type InvitationDirection = typeof InvitationDirection[keyof typeof InvitationDirection];
-
+export type InvitationDirection =
+  (typeof InvitationDirection)[keyof typeof InvitationDirection];
 
 export const InvitationDirection = {
-  incoming: 'incoming',
-  outgoing: 'outgoing',
+  incoming: "incoming",
+  outgoing: "outgoing",
 } as const;
 
 export interface Invitation {
@@ -224,15 +326,15 @@ export interface Social {
   invitations: Invitation[];
 }
 
-export type FriendActionAction = typeof FriendActionAction[keyof typeof FriendActionAction];
-
+export type FriendActionAction =
+  (typeof FriendActionAction)[keyof typeof FriendActionAction];
 
 export const FriendActionAction = {
-  send: 'send',
-  accept: 'accept',
-  reject: 'reject',
-  cancel: 'cancel',
-  remove: 'remove',
+  send: "send",
+  accept: "accept",
+  reject: "reject",
+  cancel: "cancel",
+  remove: "remove",
 } as const;
 
 export interface FriendAction {
@@ -240,12 +342,12 @@ export interface FriendAction {
   targetId: string;
 }
 
-export type SessionInputMode = typeof SessionInputMode[keyof typeof SessionInputMode];
-
+export type SessionInputMode =
+  (typeof SessionInputMode)[keyof typeof SessionInputMode];
 
 export const SessionInputMode = {
-  solo: 'solo',
-  crew: 'crew',
+  solo: "solo",
+  crew: "crew",
 } as const;
 
 export interface SessionInput {
@@ -261,17 +363,17 @@ export interface SessionPlayer {
   connected: boolean;
 }
 
-export type GameSessionStatus = typeof GameSessionStatus[keyof typeof GameSessionStatus];
-
+export type GameSessionStatus =
+  (typeof GameSessionStatus)[keyof typeof GameSessionStatus];
 
 export const GameSessionStatus = {
-  LOBBY: 'LOBBY',
-  STORY: 'STORY',
-  MISSION_BRIEFING: 'MISSION_BRIEFING',
-  MISSION_ACCEPTANCE: 'MISSION_ACCEPTANCE',
-  READY_TO_START: 'READY_TO_START',
-  MISSION_STARTED: 'MISSION_STARTED',
-  CLOSED: 'CLOSED',
+  LOBBY: "LOBBY",
+  STORY: "STORY",
+  MISSION_BRIEFING: "MISSION_BRIEFING",
+  MISSION_ACCEPTANCE: "MISSION_ACCEPTANCE",
+  READY_TO_START: "READY_TO_START",
+  MISSION_STARTED: "MISSION_STARTED",
+  CLOSED: "CLOSED",
 } as const;
 
 export interface GameSession {
@@ -286,17 +388,17 @@ export interface GameSession {
   createdAt: string;
 }
 
-export type SessionActionAction = typeof SessionActionAction[keyof typeof SessionActionAction];
-
+export type SessionActionAction =
+  (typeof SessionActionAction)[keyof typeof SessionActionAction];
 
 export const SessionActionAction = {
-  ready: 'ready',
-  start: 'start',
-  next: 'next',
-  accept: 'accept',
-  initiate: 'initiate',
-  leave: 'leave',
-  'continue-ready': 'continue-ready',
+  ready: "ready",
+  start: "start",
+  next: "next",
+  accept: "accept",
+  initiate: "initiate",
+  leave: "leave",
+  "continue-ready": "continue-ready",
 } as const;
 
 export interface SessionAction {
@@ -313,12 +415,12 @@ export interface InvitationInput {
   userId: string;
 }
 
-export type InvitationResponseAction = typeof InvitationResponseAction[keyof typeof InvitationResponseAction];
-
+export type InvitationResponseAction =
+  (typeof InvitationResponseAction)[keyof typeof InvitationResponseAction];
 
 export const InvitationResponseAction = {
-  accept: 'accept',
-  decline: 'decline',
+  accept: "accept",
+  decline: "decline",
 } as const;
 
 export interface InvitationResponse {
@@ -333,9 +435,8 @@ export interface Career {
 }
 
 export type GetSocialParams = {
-/**
- * @maxLength 40
- */
-q?: string;
+  /**
+   * @maxLength 40
+   */
+  q?: string;
 };
-
