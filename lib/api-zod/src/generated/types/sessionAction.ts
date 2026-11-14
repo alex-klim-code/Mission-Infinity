@@ -6,9 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { SessionActionAction } from "./sessionActionAction";
+import type { SessionActionHullId } from "./sessionActionHullId";
 
 export interface SessionAction {
   action: SessionActionAction;
+  hullId?: SessionActionHullId;
   ready?: boolean;
   expectedScene?: number;
 }

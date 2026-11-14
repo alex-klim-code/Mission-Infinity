@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { MessageNotifications } from '@/components/session/message-notifications';
 import { BadgeDialog, SessionTopBar, useSessionAct } from '@/components/session/session-shared';
+import { MissionFacts, MissionSummary, missionDuration } from '@/components/session/mission-summary';
+import { RocketBuildView, hullById } from '@/components/session/rocket-build';
 import { CrewBar, type CrewFlag } from '@/components/session/crew-bar';
 import { Link, useParams } from 'wouter';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -240,14 +242,6 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
     </HudButton>
   );
 
-  const facts: [string, string][] = mission
-    ? [
-        ['Budget', formatBudget(mission.budget)],
-        ['Development', `${mission.developmentMonths} months`],
-        ['Operations', `${mission.operationalYears} years`],
-        ['Destination', mission.destination],
-      ]
-    : [];
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
@@ -271,14 +265,7 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
             <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass hud-corners w-full max-w-md rounded-lg p-4 text-center" data-testid="panel-mission-card">
               <div className="kicker">Mission {mission.number}</div>
               <div className="mt-1 break-words font-display text-2xl font-bold uppercase leading-tight sm:text-3xl" data-testid="text-crew-mission-title">{mission.title}</div>
-              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
-                {facts.map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{k}</dt>
-                    <dd className="break-words font-display text-base font-semibold text-ion">{v}</dd>
-                  </div>
-                ))}
-              </dl>
+              <MissionFacts mission={mission} className="mt-3 text-left" />
             </motion.section>
           </div>
         )}
@@ -313,9 +300,9 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
                 </div>
               )}
               {kind === 'message' && (
-                <div className="scroll-thin max-h-[26dvh] overflow-y-auto px-3 py-3" data-testid="panel-scene-text">
+                <div className="scroll-thin max-h-[40dvh] overflow-y-auto px-3 py-3" data-testid="panel-scene-text">
                   <div className="font-mono text-[10px] uppercase tracking-[.22em] text-burn">From: Asterion Mission Directorate</div>
-                  <p className="mt-1.5 font-display text-base font-semibold leading-snug text-foreground md:text-xl" data-testid="text-mission-description">{mission?.description}</p>
+                  {mission && <div className="mt-2" data-testid="text-mission-description"><div className="mb-3 font-display text-lg font-semibold uppercase">{mission.title}</div><MissionSummary mission={mission} /></div>}
                 </div>
               )}
               {kind === 'crew' && (
@@ -325,7 +312,7 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
               )}
               {kind === 'launch' && (
                 <div className="px-3 py-2.5 text-sm text-foreground/85" data-testid="panel-scene-text">
-                  {mission ? `${mission.title}: ${formatBudget(mission.budget)}, ${mission.developmentMonths} months to build, ${mission.operationalYears} years in operation.` : 'Final launch authority.'}{' '}
+                  {mission ? `${mission.title}: ${formatBudget(mission.budget)}, ${mission.developmentMonths} months preparation, ${missionDuration(mission)} mission.` : 'Final launch authority.'}{' '}
                   {isHost ? 'Only you, as Leader, can launch.' : 'Crew signal readiness; the Leader launches.'}
                 </div>
               )}
@@ -343,50 +330,30 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
   );
 }
 
-/* ---------------- FINALE ---------------- */
+/* ---------------- ROCKET BUILD (MISSION_STARTED) ---------------- */
 
-function Finale({ session, mission, me, openBadge }: StageProps) {
+function Build({ session, mission, me, isHost, openBadge }: StageProps) {
   const { act, pending, pendingAction } = useSessionAct(session.id);
   const mine = session.players.find((p) => p.player.id === me);
-  const words = ['MISSION', 'INITIATED'];
+  const screen = session.build?.screen ?? 'INTRO';
+  const votes = session.build?.votes ?? [];
+  const flag: CrewFlag = (sp, leader) => {
+    if (screen === 'HULL_SELECTION') {
+      const h = hullById(votes.find((v) => v.playerId === sp.player.id)?.hullId);
+      return { on: !!h, label: h ? h.name : 'Deciding' };
+    }
+    return { on: leader || screen === 'HULL_CONFIRMED', label: leader ? 'Leader' : screen === 'HULL_CONFIRMED' ? 'Aboard' : 'Waiting' };
+  };
   return (
     <div className="grain flex h-[100dvh] flex-col overflow-hidden bg-background">
       <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
-      <main className="relative min-h-0 flex-1 overflow-y-auto">
-        <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
-        <Starfield density={1.2} />
-        <div className="relative z-10 flex min-h-full flex-col items-center justify-center px-5 py-8 text-center">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="kicker mb-5">Mission {mission?.number} / {mission?.title}</motion.div>
-          <h1 className="flex flex-wrap justify-center gap-x-4 font-display text-4xl font-bold uppercase tracking-wide sm:text-6xl md:text-8xl" data-testid="text-mission-initiated">
-            {words.map((w, wi) => (
-              <span key={w} className="whitespace-nowrap">
-                {w.split('').map((ch, i) => (
-                  <motion.span key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + (wi * 8 + i) * 0.05 }} className="inline-block">
-                    {ch}
-                  </motion.span>
-                ))}
-              </span>
-            ))}
-          </h1>
-          <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.4, duration: 0.8 }} className="mx-auto mt-6 h-px w-56 bg-gradient-to-r from-transparent via-burn to-transparent" />
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2, duration: 1.2 }} className="mt-6 font-mono text-sm uppercase tracking-[.4em] text-burn" data-testid="text-to-be-continued">
-            To be continued...
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.6 }} className="mt-8 flex flex-col items-center gap-6">
-            <p className="max-w-md text-muted-foreground">Earth Observer's development phase begins in the next chapter of Mission: Infinity. Your crew's decision has been logged to your career.</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/profile" className="inline-flex min-h-11 items-center rounded-md border border-white/15 px-5 font-display text-sm font-semibold uppercase tracking-[.14em] hover:border-ion" data-testid="link-finale-career">
-                Career
-              </Link>
-              <HudButton loading={pendingAction === 'leave'} onClick={() => act({ action: 'leave' })} data-testid="button-finale-archive">
-                Archive and return to board <ArrowRight className="h-4 w-4" />
-              </HudButton>
-            </div>
-          </motion.div>
-        </div>
+      <main className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden" data-testid={`panel-build-${screen.toLowerCase()}`}>
+        <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns pointer-events-none fixed inset-0 h-full w-full object-cover opacity-25" />
+        <div className="pointer-events-none fixed inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
+        <Starfield density={0.8} />
+        <RocketBuildView session={session} mission={mission} me={me} isHost={isHost} act={act} pending={pending} pendingAction={pendingAction} />
       </main>
-      <CrewBar session={session} flag={launchFlag} meId={me} onOpenBadge={openBadge} />
+      <CrewBar session={session} flag={flag} meId={me} onOpenBadge={openBadge} />
     </div>
   );
 }
@@ -437,7 +404,7 @@ function SessionInner({ account, id }: { account: PlayerAccount; id: string }) {
   const badgeMember = session.players.find((p) => p.player.id === badgeId) ?? null;
   return (
     <>
-      {session.status === 'MISSION_STARTED' ? <Finale {...props} /> : session.status === 'LOBBY' ? <Lobby {...props} /> : <Story {...props} scenes={scenes} />}
+      {session.status === 'MISSION_STARTED' ? <Build {...props} /> : session.status === 'LOBBY' ? <Lobby {...props} /> : <Story {...props} scenes={scenes} />}
       <MessageNotifications key={`${session.id}:${meId}`} session={session} meId={meId} />
       <BadgeDialog member={badgeMember} isLeader={badgeMember?.player.id === session.hostId} isSelf={badgeMember?.player.id === meId} onOpenChange={(o) => !o && setBadgeId(null)} />
     </>

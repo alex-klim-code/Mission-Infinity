@@ -15,7 +15,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [graduation-warsaw.webp, nasa-internship.webp, nasa-engineering.webp]
+            enum: [graduation-warsaw.webp, nasa-internship.webp, nasa-engineering.webp, falcon-shadow.webp, titan-explorer.webp, nova-prime.webp]
       responses:
         '200':
           description: Optimized mission story illustration
@@ -386,6 +386,7 @@ components:
         budget: { type: number }
         developmentMonths: { type: integer }
         operationalYears: { type: integer }
+        operationalWeeks: { type: integer }
         destination: { type: string }
         objectives: { type: array, items: { type: string } }
         requirements: { type: array, items: { type: string } }
@@ -501,12 +502,29 @@ components:
         revision: { type: integer }
         players: { type: array, items: { $ref: '#/components/schemas/SessionPlayer' } }
         chat: { $ref: '#/components/schemas/SessionChatPage' }
+        build: { $ref: '#/components/schemas/RocketBuild' }
         createdAt: { type: string }
+    RocketBuild:
+      type: object
+      required: [screen, selectedHullId, spent, elapsedMonths, votes]
+      properties:
+        screen: { type: string, enum: [INTRO, HULL_SELECTION, HULL_CONFIRMED] }
+        selectedHullId: { type: [string, 'null'] }
+        spent: { type: integer }
+        elapsedMonths: { type: integer }
+        votes: { type: array, items: { $ref: '#/components/schemas/HullVote' } }
+    HullVote:
+      type: object
+      required: [playerId, hullId]
+      properties:
+        playerId: { type: string }
+        hullId: { type: string }
     SessionAction:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready] }
+        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull] }
+        hullId: { type: string, enum: [falcon-shadow, titan-explorer, nova-prime] }
         ready: { type: boolean }
         expectedScene: { type: integer }
     SessionResult:

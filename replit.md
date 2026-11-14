@@ -5,10 +5,12 @@ A browser-based cooperative space mission story for 1–4 players.
 ## Product scope
 
 - The user's title is **Mission: Infinity**, overriding the title in the original attached brief.
-- Phase 1 stops at **MISSION INITIATED / TO BE CONTINUED**, with the session persisted as `MISSION_STARTED`.
+- `MISSION_STARTED` now continues into **Etap 1 — Budowa Rakiety**, with a Leader-controlled introduction, individual crew hull choices and one Leader-confirmed purchase. It remains an active, resumable mission until explicitly left.
 - Do not add spacecraft engineering, rocket selection, orbital calculations or mission simulation in this phase.
 - All game text is initially English; keep content outside UI components.
-- Earth Observer is the only enabled mission. Its $150M budget, 24-month development and 3-year lifetime are fictional educational parameters, not NASA specifications.
+- LUNA — Lunar Sample Return is the only enabled mission: $400M, Easy, 36 months of preparation, four weeks of spaceflight. Keep the legacy internal mission ID so existing rooms and chat history survive.
+- Hull prices are literal amounts deducted from mission funds: Falcon Shadow 500, Titan Explorer 1200, Nova Prime 2500. Do not apply a coin conversion or multiply prices.
+- Preparation time advances only after completing full stages, never with real time. A hull choice alone does not finish the 12-month design stage; the counter remains 0/36 at this point.
 - No chat or direct messages. Friends and game invitations are distinct.
 - No guest authentication, seeded fake players, or nonfunctional primary actions.
 - Product requirement: a single shared sign-in/sign-up entry screen with Google and Apple only; no email field or separate Sign Up link. Preserve OAuth callbacks and account completion. Hiding email/password UI does not disable that method in the authentication service.

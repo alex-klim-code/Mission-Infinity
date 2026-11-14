@@ -19,3 +19,4 @@
 
 export * from "./game";
 export * from "./session-messages";
+export * from "./rocket-builds";

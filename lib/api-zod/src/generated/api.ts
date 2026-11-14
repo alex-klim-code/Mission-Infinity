@@ -12,6 +12,9 @@ export const GetStoryImageParams = zod.object({
     "graduation-warsaw.webp",
     "nasa-internship.webp",
     "nasa-engineering.webp",
+    "falcon-shadow.webp",
+    "titan-explorer.webp",
+    "nova-prime.webp",
   ]),
 });
 
@@ -34,6 +37,7 @@ export const GetGameCatalogResponse = zod.object({
       budget: zod.number(),
       developmentMonths: zod.number().int(),
       operationalYears: zod.number().int(),
+      operationalWeeks: zod.number().int().optional(),
       destination: zod.string(),
       objectives: zod.array(zod.string()),
       requirements: zod.array(zod.string()),
@@ -1190,6 +1194,20 @@ export const CreateGameSessionResponse = zod.object({
       hasMore: zod.boolean(),
     })
     .optional(),
+  build: zod
+    .object({
+      screen: zod.enum(["INTRO", "HULL_SELECTION", "HULL_CONFIRMED"]),
+      selectedHullId: zod.string().nullable(),
+      spent: zod.number().int(),
+      elapsedMonths: zod.number().int(),
+      votes: zod.array(
+        zod.object({
+          playerId: zod.string(),
+          hullId: zod.string(),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1356,6 +1374,20 @@ export const GetGameSessionResponse = zod.object({
       hasMore: zod.boolean(),
     })
     .optional(),
+  build: zod
+    .object({
+      screen: zod.enum(["INTRO", "HULL_SELECTION", "HULL_CONFIRMED"]),
+      selectedHullId: zod.string().nullable(),
+      spent: zod.number().int(),
+      elapsedMonths: zod.number().int(),
+      votes: zod.array(
+        zod.object({
+          playerId: zod.string(),
+          hullId: zod.string(),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1372,7 +1404,13 @@ export const UpdateGameSessionBody = zod.object({
     "initiate",
     "leave",
     "continue-ready",
+    "build-next",
+    "choose-hull",
+    "confirm-hull",
   ]),
+  hullId: zod
+    .enum(["falcon-shadow", "titan-explorer", "nova-prime"])
+    .optional(),
   ready: zod.boolean().optional(),
   expectedScene: zod.number().int().optional(),
 });
@@ -1536,6 +1574,20 @@ export const UpdateGameSessionResponse = zod.object({
               ),
           ),
           hasMore: zod.boolean(),
+        })
+        .optional(),
+      build: zod
+        .object({
+          screen: zod.enum(["INTRO", "HULL_SELECTION", "HULL_CONFIRMED"]),
+          selectedHullId: zod.string().nullable(),
+          spent: zod.number().int(),
+          elapsedMonths: zod.number().int(),
+          votes: zod.array(
+            zod.object({
+              playerId: zod.string(),
+              hullId: zod.string(),
+            }),
+          ),
         })
         .optional(),
       createdAt: zod.string(),
@@ -1740,6 +1792,20 @@ export const SendSessionMessageResponse = zod.object({
       hasMore: zod.boolean(),
     })
     .optional(),
+  build: zod
+    .object({
+      screen: zod.enum(["INTRO", "HULL_SELECTION", "HULL_CONFIRMED"]),
+      selectedHullId: zod.string().nullable(),
+      spent: zod.number().int(),
+      elapsedMonths: zod.number().int(),
+      votes: zod.array(
+        zod.object({
+          playerId: zod.string(),
+          hullId: zod.string(),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1923,6 +1989,20 @@ export const RespondToInvitationResponse = zod.object({
               ),
           ),
           hasMore: zod.boolean(),
+        })
+        .optional(),
+      build: zod
+        .object({
+          screen: zod.enum(["INTRO", "HULL_SELECTION", "HULL_CONFIRMED"]),
+          selectedHullId: zod.string().nullable(),
+          spent: zod.number().int(),
+          elapsedMonths: zod.number().int(),
+          votes: zod.array(
+            zod.object({
+              playerId: zod.string(),
+              hullId: zod.string(),
+            }),
+          ),
         })
         .optional(),
       createdAt: zod.string(),

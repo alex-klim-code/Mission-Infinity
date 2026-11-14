@@ -149,6 +149,11 @@ gameApi.get("/api/game/story-images/:name", async (req, reply) => {
   const { name } = GetStoryImageParams.parse(req.params);
   const file = await new ObjectStorageService().searchPublicObject(`mission-story/v1/${name}`);
   requireCondition(file, 404, "Story illustration not found.");
+  // These six allowlisted, optimized illustrations are small. Buffer them before
+  // replying: aborting a browser request must not destroy the GCS 8 response
+  // stream during its handshake (which can throw outside Fastify's handler).
+  const [image] = await file.download();
+  if (reply.raw.destroyed) return reply;
   reply.header("Cache-Control", "private, max-age=31536000, immutable").header("X-Content-Type-Options", "nosniff");
-  return reply.type("image/webp").send(file.createReadStream());
+  return reply.type("image/webp").send(image);
 });

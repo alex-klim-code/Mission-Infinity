@@ -59,6 +59,14 @@ interface Invites {
   created_at: Time;
 }
 export interface GameDatabase {
+  game_session_builds: {
+    session_id: string;
+    screen: Generated<string>;
+    selected_hull_id: string | null;
+    spent: Generated<number>;
+    elapsed_months: Generated<number>;
+    votes: Generated<Record<string, string>>;
+  };
   game_session_messages: {
     id: string;
     session_id: string;

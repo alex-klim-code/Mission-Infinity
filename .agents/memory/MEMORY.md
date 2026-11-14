@@ -1,6 +1,6 @@
 - [Avatar identity defaults](avatar-identity.md) — distinguish correct starting defaults from restrictions on deliberately customized hairstyles.
 - [Validation scope](validation-scope.md) — passing runtime tests do not cover TypeScript errors in files excluded from the compiler project.
-- [App Storage compatibility](app-storage-compatibility.md) — major Google client upgrades require a real sidecar upload/read test, not just type checking.
+- [App Storage compatibility](app-storage-compatibility.md) — verify sidecar reads after SDK upgrades; buffer small images to avoid request-abort crashes.
 - [Publish check constraints](publish-check-constraints.md) — changing a CHECK expression under the same name can be invisible to Publish; verify the actual production constraint.
 - [Build/test resource contention](build-test-resources.md) — finish builds and workspace TypeScript checks before browser recording; concurrent compilers can stop services.
 - [Account cache identity](account-cache-identity.md) — direct account writes must use the current user's scoped key; the generated base key is only a prefix.

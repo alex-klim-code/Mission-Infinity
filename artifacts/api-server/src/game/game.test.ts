@@ -52,11 +52,76 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.deepEqual(catalog.scenes.slice(3).map(s => s.title), ["Get a Message", "Meet Your Crew", "Start Mission"]);
       assert.ok(catalog.scenes.slice(0, 3).every(s => s.image.startsWith("/api/game/story-images/") && s.image.endsWith(".webp")));
       const mission = catalog.missions.find(m => m.enabled)!;
-      assert.equal(mission.budget, 150000000);
-      assert.equal(mission.developmentMonths, 24);
-      assert.equal(mission.operationalYears, 3);
-      assert.equal(mission.requirements.length, 10);
-      assert.equal(mission.briefing.length, 10);
+      assert.equal(mission.title, "LUNA — Lunar Sample Return");
+      assert.equal(mission.budget, 400000000);
+      assert.equal(mission.developmentMonths, 36);
+      assert.equal("operationalWeeks" in mission ? mission.operationalWeeks : undefined, 4);
+      assert.equal(mission.difficulty, "Easy");
+      assert.equal(mission.requirements.length, 0);
+      assert.equal(mission.briefing.length, 2);
+      assert.match(mission.briefing[0].text, /12 months[\s\S]*12 months[\s\S]*9 months[\s\S]*3 months/);
+      assert.equal(mission.objectives.length, 4);
+      assert.doesNotMatch(mission.description, /Earth Observer|Low Earth Orbit|risk|24 months|3 years/i);
+    });
+    await t.test("rocket hull choices synchronize, only Leader purchases, and retries charge exactly once", async () => {
+      const [leader, crew, outsider] = await players(3);
+      const session = await createSession(leader, "earth-observer", "crew");
+      await respondToInvite(crew, await invite(leader, crew, session.id), "accept");
+      await assert.rejects(updateSession(leader, session.id, { action: "build-next" }));
+      await updateSession(crew, session.id, { action: "ready", ready: true });
+      await updateSession(leader, session.id, { action: "start" });
+      for (let scene = 0; scene < 5; scene++) await updateSession(leader, session.id, { action: "next", expectedScene: scene });
+      await updateSession(crew, session.id, { action: "accept" });
+      const initiated = (await updateSession(leader, session.id, { action: "initiate" })).session!;
+      assert.equal(initiated.build.screen, "INTRO");
+      assert.equal(initiated.build.elapsedMonths, 0);
+      await assert.rejects(updateSession(crew, session.id, { action: "build-next" }));
+      await updateSession(leader, session.id, { action: "build-next" });
+      await updateSession(crew, session.id, { action: "choose-hull", hullId: "nova-prime" });
+      const voted = await sessionState(session.id, leader);
+      assert.deepEqual(voted.build.votes, [{ playerId: crew, hullId: "nova-prime" }]);
+      assert.equal(voted.build.spent, 0);
+      await assert.rejects(updateSession(outsider, session.id, { action: "choose-hull", hullId: "falcon-shadow" }));
+      await assert.rejects(updateSession(crew, session.id, { action: "confirm-hull", hullId: "falcon-shadow" }));
+      await assert.rejects(updateSession(leader, session.id, { action: "confirm-hull", hullId: "invalid" }));
+      await updateSession(leader, session.id, { action: "choose-hull", hullId: "falcon-shadow" });
+      await Promise.all([
+        updateSession(leader, session.id, { action: "confirm-hull", hullId: "falcon-shadow" }),
+        updateSession(leader, session.id, { action: "confirm-hull", hullId: "falcon-shadow" }),
+      ]);
+      const saved = await sessionState(session.id, crew);
+      assert.equal(saved.build.screen, "HULL_CONFIRMED");
+      assert.equal(saved.build.selectedHullId, "falcon-shadow");
+      assert.equal(saved.build.spent, 500);
+      assert.equal(400000000 - saved.build.spent, 399999500);
+      assert.equal(saved.build.elapsedMonths, 0, "A hull choice does not complete 12 months of spacecraft design");
+      await assert.rejects(updateSession(leader, session.id, { action: "confirm-hull", hullId: "nova-prime" }));
+      await assert.rejects(createSession(leader, "earth-observer", "solo"), "Started build must remain resumable until explicitly left");
+      assert.equal((await getAccount(leader)).activeSessionId, session.id);
+      assert.equal((await getCareer(leader)).missionsInitiated, 1);
+      await updateSession(leader, session.id, { action: "leave" });
+      const transferred = await sessionState(session.id, crew);
+      assert.equal(transferred.hostId, crew);
+      assert.equal(transferred.build.spent, 500);
+      assert.equal(transferred.build.votes.length, 1, "Departed members no longer count as voters");
+    });
+    await t.test("every hull price is deducted literally and an insufficient budget never purchases", async () => {
+      for (const [hullId, price] of [["titan-explorer", 1200], ["nova-prime", 2500]] as const) {
+        const [player] = await players(1);
+        const session = await createSession(player, "earth-observer", "solo");
+        assert.equal(session.status, "STORY");
+        for (let scene = 0; scene < 5; scene++) await updateSession(player, session.id, { action: "next", expectedScene: scene });
+        await updateSession(player, session.id, { action: "initiate" });
+        await updateSession(player, session.id, { action: "build-next" });
+        await gameDb.updateTable("game_session_builds").set({ spent: 399999999 })
+          .where("session_id", "=", session.id).execute();
+        await assert.rejects(updateSession(player, session.id, { action: "confirm-hull", hullId }));
+        assert.equal((await sessionState(session.id, player)).build.screen, "HULL_SELECTION");
+        await gameDb.updateTable("game_session_builds").set({ spent: 0 }).where("session_id", "=", session.id).execute();
+        const purchased = (await updateSession(player, session.id, { action: "confirm-hull", hullId })).session!;
+        assert.equal(purchased.build.spent, price);
+        assert.equal(purchased.build.selectedHullId, hullId);
+      }
     });
     await t.test("crew messages persist privately after notification expiry and successive sends", async () => {
       const [leader, crew, outsider] = await players(3);

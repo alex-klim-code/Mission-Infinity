@@ -4,6 +4,7 @@ import { activeMembership, getPlayer, requireCharacter } from "./players";
 import { isOnline, joinSessionRoom, leaveSessionRoom, notifyUsers } from "./presence";
 import { getMissionStory } from "./content";
 import { sessionHistory } from "./session-history";
+import { rocketBuildState, updateRocketBuild } from "./rocket-builds";
 
 export async function sessionMembers(id: string, db: GameConnection = gameDb) {
   return db.selectFrom("game_session_players").selectAll()
@@ -27,6 +28,7 @@ export async function sessionState(id: string, userId: string, db: GameConnectio
     id: session.id, roomCode: session.room_code, hostId: session.host_id, missionId: session.mission_id,
     status: session.status, scene: session.scene, revision: session.revision,
     createdAt: session.created_at.toISOString(), players, chat: await sessionHistory(id, db),
+    build: await rocketBuildState(id, db, members.map(m => m.user_id)),
   };
 }
 export async function notifySession(id: string, extraIds: string[] = []) {
@@ -40,14 +42,14 @@ export async function notifySessionInvites(id: string) {
   notifyUsers(invites.flatMap(i => [i.to_id, i.from_id]), "social:changed");
 }
 
-// Call with the user's row already locked. A completed mission can be archived,
-// but an active lobby/prologue must be explicitly left first.
+// Call with the user's row already locked. Started missions now contain active
+// rocket construction, so they must also be explicitly left before joining another.
 export async function ensureAvailable(userId: string, tx: GameConnection) {
   const membership = await activeMembership(userId, tx);
   if (!membership) return;
   const session = await tx.selectFrom("game_sessions").select("status")
     .where("id", "=", membership.session_id).executeTakeFirstOrThrow();
-  requireCondition(["MISSION_STARTED", "CLOSED"].includes(session.status), 409,
+  requireCondition(session.status === "CLOSED", 409,
     "You already have an active mission. Resume it or leave before joining another.");
   await tx.updateTable("game_session_players").set({ active: false })
     .where("id", "=", membership.id).execute();
@@ -90,7 +92,7 @@ export async function maybeCompleteAcceptance(id: string, tx: GameConnection) {
   }
 }
 
-export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number }) {
+export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number; hullId?: string }) {
   await gameDb.transaction().execute(async tx => {
     const session = await tx.selectFrom("game_sessions").selectAll().where("id", "=", id).forUpdate().executeTakeFirst();
     requireCondition(session, 404, "Mission session not found.");
@@ -113,6 +115,8 @@ export async function updateSession(userId: string, id: string, input: { action:
         await tx.updateTable("game_sessions").set({ host_id: successor.user_id }).where("id", "=", id).execute();
       }
       await maybeCompleteAcceptance(id, tx);
+    } else if (["build-next", "choose-hull", "confirm-hull"].includes(input.action)) {
+      await updateRocketBuild(tx, session, userId, input.action, input.hullId);
     } else if (input.action === "ready") {
       requireCondition(session.status === "LOBBY", 409, "Ready status can only change in the lobby.");
       await requireCharacter(userId, tx);
@@ -169,7 +173,7 @@ export async function reconcilePresence(userId: string, transferHost = false) {
   await gameDb.transaction().execute(async tx => {
     const session = await tx.selectFrom("game_sessions").selectAll()
       .where("id", "=", membership.session_id).forUpdate().executeTakeFirst();
-    if (!session || ["CLOSED", "MISSION_STARTED"].includes(session.status)) return;
+    if (!session || session.status === "CLOSED") return;
     const members = await sessionMembers(session.id, tx);
     if (transferHost || !isOnline(session.host_id)) {
       const successor = members.find(m => isOnline(m.user_id));

@@ -276,6 +276,7 @@ export interface Mission {
   budget: number;
   developmentMonths: number;
   operationalYears: number;
+  operationalWeeks?: number;
   destination: string;
   objectives: string[];
   requirements: string[];
@@ -402,6 +403,29 @@ export const GameSessionStatus = {
   CLOSED: "CLOSED",
 } as const;
 
+export type RocketBuildScreen =
+  (typeof RocketBuildScreen)[keyof typeof RocketBuildScreen];
+
+export const RocketBuildScreen = {
+  INTRO: "INTRO",
+  HULL_SELECTION: "HULL_SELECTION",
+  HULL_CONFIRMED: "HULL_CONFIRMED",
+} as const;
+
+export interface HullVote {
+  playerId: string;
+  hullId: string;
+}
+
+export interface RocketBuild {
+  screen: RocketBuildScreen;
+  /** @nullable */
+  selectedHullId: string | null;
+  spent: number;
+  elapsedMonths: number;
+  votes: HullVote[];
+}
+
 export interface GameSession {
   id: string;
   roomCode: string;
@@ -412,6 +436,7 @@ export interface GameSession {
   revision: number;
   players: SessionPlayer[];
   chat?: SessionChatPage;
+  build?: RocketBuild;
   createdAt: string;
 }
 
@@ -426,10 +451,23 @@ export const SessionActionAction = {
   initiate: "initiate",
   leave: "leave",
   "continue-ready": "continue-ready",
+  "build-next": "build-next",
+  "choose-hull": "choose-hull",
+  "confirm-hull": "confirm-hull",
+} as const;
+
+export type SessionActionHullId =
+  (typeof SessionActionHullId)[keyof typeof SessionActionHullId];
+
+export const SessionActionHullId = {
+  "falcon-shadow": "falcon-shadow",
+  "titan-explorer": "titan-explorer",
+  "nova-prime": "nova-prime",
 } as const;
 
 export interface SessionAction {
   action: SessionActionAction;
+  hullId?: SessionActionHullId;
   ready?: boolean;
   expectedScene?: number;
 }

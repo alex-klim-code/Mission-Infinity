@@ -1,6 +1,8 @@
 # Mission: Infinity
 
-A cinematic, cooperative browser game about becoming a mission leader at the fictional **Asterion Aerospace**. Phase 1 covers sign-in, character creation, friends, invitations, a 1–4-player lobby, six introductory scenes, a mission briefing and synchronized acceptance. It ends at **MISSION INITIATED — TO BE CONTINUED**.
+A cinematic, cooperative browser game about becoming a mission leader at the fictional **Asterion Aerospace**. Players create characters, form a 1–4-player crew, follow six introductory scenes and begin **LUNA — Lunar Sample Return**. Mission start now continues into **Etap 1 — Budowa Rakiety** and a saved rocket-hull choice.
+
+LUNA has a $400M budget, Easy difficulty, 36 months of preparation and four weeks of spaceflight. Its description contains only the supplied facts, four preparation phases (12/12/9/3 months) and four-week journey. Each crew member can propose a hull; the Leader confirms exactly one purchase. Prices are deducted literally: Falcon Shadow 500, Titan Explorer 1200, Nova Prime 2500. Confirmation is transactional and retries cannot charge twice. The top bar shows the exact remaining balance and months completed out of 36. Choosing a hull alone does not complete the full design stage, so elapsed preparation remains zero.
 
 ## Mission crew
 
@@ -141,4 +143,4 @@ The project is prepared for publication; publishing itself is a separate user ac
 
 ## Educational notice
 
-Earth Observer's **$150,000,000** budget, **24-month** development deadline, **3-year** lifetime and low Earth orbit destination are fictional game parameters. Asterion Aerospace and Aurora Institute of Aerospace Engineering are fictional. The game is not an official NASA mission specification or an assertion of NASA endorsement.
+LUNA's **$400,000,000** budget, **36-month** preparation schedule and **four-week** mission duration are fictional game parameters. Asterion Aerospace and Aurora Institute of Aerospace Engineering are fictional. The supplied rocket illustrations do not imply NASA or manufacturer endorsement.

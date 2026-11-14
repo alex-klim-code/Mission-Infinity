@@ -1,38 +1,37 @@
 import { gameDb, requireCondition, type GameConnection } from "./database";
 
-const requirements = [
-  "Design a spacecraft capable of operating in the selected orbit.",
-  "Select suitable Earth observation instruments.",
-  "Remain within the approved budget.",
-  "Maintain sufficient electrical power.",
-  "Ensure reliable communication with ground stations.",
-  "Select a compatible launch vehicle.",
-  "Complete engineering verification and testing.",
-  "Launch and deploy the satellite.",
-  "Collect and transmit scientific data.",
-  "Achieve the required mission objectives.",
+const preparationSchedule = [
+  "Rocket & Spacecraft Design — 12 months",
+  "Manufacturing & Assembly — 12 months",
+  "Testing & Certification — 9 months",
+  "Launch Preparation — 3 months",
 ];
+const lunarJourney = [
+  "Launch and journey to the Moon",
+  "Lunar orbit, landing, and sample collection",
+  "Departure from the Moon and return journey",
+  "Earth re-entry and sample recovery",
+];
+const lunaDescription = [
+  "LUNA — Lunar Sample Return", "Total Budget", "$400M", "Difficulty", "Easy",
+  "Preparation Time", "36 months", "Mission Duration", "4 weeks", "",
+  "Proponowany harmonogram", ...preparationSchedule, "", "4-week space mission",
+  ...lunarJourney.map((text, i) => `${i + 1}. ${text}`),
+].join("\n");
 
 export const missionDefinitions = [
   {
-    id: "earth-observer", number: "001", title: "Earth Observer",
-    subtitle: "Design and launch humanity's next Earth observation satellite.",
-    description: "You have been selected to lead your first independent space mission. Your objective is to develop an Earth observation satellite capable of collecting valuable environmental data from orbit.",
-    difficulty: "Beginner", enabled: true, budget: 150000000, developmentMonths: 24,
-    operationalYears: 3, destination: "Low Earth Orbit", image: "/images/earth-orbit.png",
-    objectives: ["Collect environmental data from low Earth orbit.", "Monitor our changing planet.", "Transmit reliable scientific observations to Earth."],
-    requirements,
+    // Preserve the existing ID so saved rooms, memberships and history keep working.
+    id: "earth-observer", number: "001", title: "LUNA — Lunar Sample Return",
+    subtitle: "Lunar Sample Return",
+    description: lunaDescription,
+    difficulty: "Easy", enabled: true, budget: 400000000, developmentMonths: 36,
+    operationalYears: 0, operationalWeeks: 4, destination: "The Moon", image: "/images/lunar.png",
+    objectives: lunarJourney,
+    requirements: [] as string[],
     briefing: [
-      { title: "Mission background", text: "ASTERION AEROSPACE · MISSION DIRECTORATE · MISSION ASSIGNMENT 001\nProject: EARTH OBSERVER\nEarth's environment is changing. Reliable observations from orbit help scientists understand land use, vegetation, water and the atmosphere. Asterion Aerospace has appointed your team to lead a new uncrewed Earth observation satellite mission." },
-      { title: "Mission objective", text: "Design, launch, and operate an Earth observation satellite capable of collecting environmental data from low Earth orbit." },
-      { title: "Scientific objectives", text: "Acquire useful, repeatable environmental observations. Support long-term monitoring of vegetation, water and changing land cover. Return documented, scientifically interpretable data to ground stations." },
-      { title: "Engineering requirements", text: requirements.map((text, i) => `${i + 1}. ${text}`).join("\n") },
-      { title: "Financial constraints", text: "Approved mission budget: $150,000,000. All future spacecraft systems, scientific instruments, launch services, testing and operations must fit within this ceiling. Trade-offs and contingency reserves will matter in the next development phase." },
-      { title: "Timeline", text: "Development deadline: 24 months from mission initiation. Planned operational lifetime: 3 years. Future planning will cover design reviews, integration, environmental testing, launch readiness and orbital commissioning." },
-      { title: "Operational requirements", text: "Destination: Low Earth Orbit. Maintain sufficient electrical power throughout operations and reliable communication with ground stations. Establish procedures for commissioning, routine observation, data downlink and safe shutdown." },
-      { title: "Risk considerations", text: "Consider mass and power margins, instrument compatibility, schedule delays, budget overruns, communication interruptions, environmental hazards and launch compatibility. Engineering and risk simulation are reserved for the next phase." },
-      { title: "Success criteria", text: "Safely deploy the satellite into its intended orbit, demonstrate reliable power and communications, collect usable environmental observations, and return scientific data over the planned mission lifetime within the approved constraints." },
-      { title: "Fictional simulation notice", text: "These are fictional educational game parameters, not actual NASA mission specifications. Asterion Aerospace and Aurora Institute are fictional. Phase 1 ends when the mission is initiated; spacecraft design and simulation are not included." },
+      { title: "Proponowany harmonogram", text: preparationSchedule.join("\n") },
+      { title: "4-week space mission", text: lunarJourney.map((text, i) => `${i + 1}. ${text}`).join("\n") },
     ],
   },
   ...[
@@ -86,22 +85,14 @@ export const sceneDefinitions = [
     missionDefinitions[0].description,
   ], "director-office"),
   scene(4, "Meet Your Crew", "MISSION ASSIGNMENT 001", "Director Elena Voss", [
-    "Your first assignment is Project Earth Observer.",
-    "You will be responsible for planning, designing, preparing, and ultimately launching an Earth observation satellite.",
-    "Your decisions will determine whether this mission succeeds or fails.",
+    lunaDescription,
   ], [
-    "Your first assignment is Project Earth Observer.",
-    "You will be responsible for planning, designing, preparing, and ultimately launching an Earth observation satellite.",
-    "Your decisions will determine whether this mission succeeds or fails.",
+    lunaDescription,
   ], "briefing-room"),
   scene(5, "Start Mission", "AWAITING LEADER AUTHORIZATION", "Director Elena Voss", [
-    "The mission will not be easy.",
-    "You will face engineering challenges, strict budgets, deadlines, and difficult decisions.",
-    "But we believe you are ready.",
+    "LUNA — Lunar Sample Return",
   ], [
-    "The mission will not be easy.",
-    "You will face engineering challenges, strict budgets, deadlines, and difficult decisions.",
-    "But we believe you are ready.",
+    "LUNA — Lunar Sample Return",
   ], "mission-control"),
 ];
 

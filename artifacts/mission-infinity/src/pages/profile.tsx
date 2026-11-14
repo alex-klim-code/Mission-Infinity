@@ -59,7 +59,7 @@ function ProfileInner({ account }: { account: PlayerAccount }) {
               </div>
               {data.missionsInitiated === 0 && (
                 <p className="rounded-lg border border-dashed border-white/10 p-5 text-sm text-muted-foreground">
-                  No missions initiated yet. <Link href="/play" className="text-ion hover:underline">Head to the mission board</Link> and take Earth Observer to launch.
+                  No missions initiated yet. <Link href="/play" className="text-ion hover:underline">Head to the mission board</Link> and begin LUNA — Lunar Sample Return.
                 </p>
               )}
             </>

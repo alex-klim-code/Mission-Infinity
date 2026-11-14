@@ -6,7 +6,8 @@ import { useGetGameCatalog, type Mission } from '@workspace/api-client-react';
 import { Starfield } from '@/components/starfield';
 import { Wordmark } from '@/components/shell';
 import { ErrorState, SkeletonBlock } from '@/components/ui-kit';
-import { errMsg, formatBudget, imgUrl } from '@/lib/game';
+import { errMsg, imgUrl } from '@/lib/game';
+import { MissionFacts, MissionSchedule } from '@/components/session/mission-summary';
 import { usePrefs } from '@/lib/prefs';
 import { ADVISERS, COOP, CREW_PREVIEW, DISCIPLINES, HERO_FACTS, MISSION_COPY, MONTHLY, STAGES, landingAsset, STEPS, type Availability } from '@/components/landing/content';
 import '@/components/landing/landing.css';
@@ -126,8 +127,8 @@ function Hero() {
               Continue with Google or Apple
             </Link>
             <div className="glass mt-5 rounded-md p-4 text-sm" data-testid="text-availability">
-              <div className="flex flex-wrap items-center gap-2"><StatusTag s="now" /> <span className="text-foreground/85">Mission 001 Earth Observer: story prologue, crew lobby, briefing and mission acceptance.</span></div>
-              <div className="mt-2 flex flex-wrap items-center gap-2"><StatusTag s="planned" /> <span className="text-foreground/70">Spacecraft design, simulation, interactive lessons and more missions.</span></div>
+              <div className="flex flex-wrap items-center gap-2"><StatusTag s="now" /> <span className="text-foreground/85">Mission 001 LUNA: story prologue, crew lobby, briefing, mission start and rocket hull choice.</span></div>
+              <div className="mt-2 flex flex-wrap items-center gap-2"><StatusTag s="planned" /> <span className="text-foreground/70">Full launch simulation, interactive lessons and more missions.</span></div>
             </div>
           </div>
         </div>
@@ -141,7 +142,7 @@ function HowItWorks() {
     <section className="relative mx-auto max-w-7xl px-5 py-28 md:px-10">
       <SectionHead kicker="How it works" title="Learn. Design. Launch." sub="Space exploration is complicated. Learning it doesn't have to be." />
       <ol className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        {STEPS.map((s, i) => (
+        {STEPS.map((s0, i) => { const s = s0.n === '02' ? { ...s0, note: 'Playable now: the LUNA briefing' } : s0; return (
           <Reveal as="li" key={s.n} delay={i * 0.06} className={`h-full ${i === 1 ? 'lg:-translate-y-4' : ''}`}>
             <div className={`lp-card relative flex h-full flex-col rounded-lg border p-6 ${s.status === 'now' ? 'border-ion/50 bg-ion/[.06]' : 'border-white/10 bg-card/60'}`} data-testid={`card-step-${s.n}`}>
               <span className="font-display text-5xl font-bold text-white/15">{s.n}</span>
@@ -150,9 +151,9 @@ function HowItWorks() {
               <div className="mt-5"><StatusTag s={s.status} label={s.note} /></div>
             </div>
           </Reveal>
-        ))}
+        ); })}
       </ol>
-      <p className="mt-6 max-w-2xl font-mono text-xs text-muted-foreground">Today you can play the Earth Observer story, briefing and acceptance with your crew. Steps marked planned describe where the game is heading, not features you can play yet.</p>
+      <p className="mt-6 max-w-2xl font-mono text-xs text-muted-foreground">Today you can play the LUNA story, briefing, mission start and rocket hull choice with your crew. Steps marked planned describe where the game is heading, not features you can play yet.</p>
     </section>
   );
 }
@@ -187,7 +188,7 @@ function Progression() {
 }
 
 function MissionTile({ m, i }: { m: Mission; i: number }) {
-  const copy = MISSION_COPY[m.number];
+  const copy = m.enabled ? undefined : MISSION_COPY[m.number];
   return (
     <Reveal delay={i * 0.06} className={m.enabled ? 'md:col-span-2 md:row-span-3' : ''}>
       <article className={`lp-card group relative h-full overflow-hidden rounded-lg border ${m.enabled ? 'border-ion/50' : 'border-white/10'}`} data-testid={`card-mission-${m.id}`}>
@@ -210,39 +211,20 @@ function MissionTile({ m, i }: { m: Mission; i: number }) {
           <p className={`mt-2 text-foreground/80 ${m.enabled ? 'max-w-xl text-lg' : 'text-sm'}`}>{copy?.blurb ?? m.subtitle}</p>
           <details className="mt-4 rounded-md border border-white/15 bg-void/60 p-3 text-sm" data-testid={`preview-${m.id}`}>
             <summary className="lp-focus cursor-pointer rounded-sm font-display uppercase tracking-wider text-ion">Mission preview</summary>
-            <p className="mt-3 text-foreground/80">Destination: {m.destination}</p>
-            {m.enabled && m.objectives.length > 0 ? (
-              <>
-                <p className="mt-3 font-semibold">Your briefing's scientific objectives</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-foreground/75">
-                  {m.objectives.map((objective) => <li key={objective}>{objective}</li>)}
-                </ul>
-                <p className="mt-3 text-foreground/70">Read the briefing in the current prologue. Designing and operating the satellite are planned for a future phase.</p>
-              </>
+            {m.enabled ? (
+              <div className="mt-3"><MissionSchedule mission={m} /></div>
             ) : (
-              <p className="mt-3 text-foreground/70">This mission is planned and not yet playable. Start with the Earth Observer story and briefing while this scenario is in development.</p>
+              <p className="mt-3 text-foreground/70">This mission is planned and not yet playable. Start with the LUNA story and briefing while this scenario is in development.</p>
             )}
           </details>
           {m.enabled && (
             <>
-              <dl className="mt-6 grid max-w-xl grid-cols-2 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 sm:grid-cols-4">
-                {[
-                  ['Budget', formatBudget(m.budget)],
-                  ['Build', `${m.developmentMonths} mo`],
-                  ['Ops', `${m.operationalYears} yr`],
-                  ['Orbit', m.destination],
-                ].map(([k, v]) => (
-                  <div key={k} className="bg-void/80 p-3">
-                    <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{k}</dt>
-                    <dd className="mt-1 font-display text-lg font-semibold text-ion">{v}</dd>
-                  </div>
-                ))}
-              </dl>
+              <MissionFacts mission={m} className="mt-6 max-w-xl sm:grid-cols-4" />
               <p className="mt-5 max-w-xl text-sm text-foreground/70">
-                <span className="text-ion">Playable now:</span> story prologue, crew lobby, mission briefing and acceptance. <span className="text-burn">Planned:</span> spacecraft design and launch simulation.
+                <span className="text-ion">Playable now:</span> story prologue, crew lobby, briefing, mission start and a choice of three rocket hulls. <span className="text-burn">Planned:</span> full launch simulation.
               </p>
               <Link href="/sign-in" className={`${primaryCta} mt-6 self-start`} data-testid="link-cta-mission-start">
-                Start Earth Observer <ArrowRight className="h-4 w-4" />
+                Start LUNA <ArrowRight className="h-4 w-4" />
               </Link>
             </>
           )}
@@ -448,7 +430,7 @@ export default function Landing() {
       <footer className="border-t border-white/[.06] px-5 py-10 md:px-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm text-muted-foreground md:flex-row">
           <Wordmark small />
-          <span className="text-center font-mono text-xs">Asterion Aerospace is a fictional company. Available now: Earth Observer story, briefing and acceptance.</span>
+          <span className="text-center font-mono text-xs">Asterion Aerospace is a fictional company. Available now: LUNA story, briefing, mission start and rocket hull choice.</span>
         </div>
       </footer>
     </div>

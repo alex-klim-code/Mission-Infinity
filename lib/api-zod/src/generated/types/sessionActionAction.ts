@@ -17,4 +17,7 @@ export const SessionActionAction = {
   initiate: "initiate",
   leave: "leave",
   "continue-ready": "continue-ready",
+  "build-next": "build-next",
+  "choose-hull": "choose-hull",
+  "confirm-hull": "confirm-hull",
 } as const;

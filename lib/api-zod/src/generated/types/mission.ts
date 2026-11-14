@@ -18,6 +18,7 @@ export interface Mission {
   budget: number;
   developmentMonths: number;
   operationalYears: number;
+  operationalWeeks?: number;
   destination: string;
   objectives: string[];
   requirements: string[];

@@ -76,14 +76,24 @@ const withQueryKey = <T extends object, K>(
 
 export const getGetStoryImageUrl = (
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
 ) => {
   return `/api/game/story-images/${name}`;
 };
 
 export const getStoryImage = async (
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
   options?: Parameters<typeof customFetch>[1],
 ): Promise<Blob> => {
   return customFetch<Blob>(getGetStoryImageUrl(name), {
@@ -94,7 +104,12 @@ export const getStoryImage = async (
 
 export const getGetStoryImageQueryKey = (
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
 ) => {
   return [`/api/game/story-images/${name}`] as const;
 };
@@ -104,7 +119,12 @@ export const getGetStoryImageQueryOptions = <
   TError = ErrorType<unknown>,
 >(
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
@@ -142,7 +162,12 @@ export function useGetStoryImage<
   TError = ErrorType<unknown>,
 >(
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
@@ -166,7 +191,12 @@ export function useGetStoryImage<
   TError = ErrorType<unknown>,
 >(
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
@@ -190,7 +220,12 @@ export function useGetStoryImage<
   TError = ErrorType<unknown>,
 >(
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
@@ -207,7 +242,12 @@ export function useGetStoryImage<
   TError = ErrorType<unknown>,
 >(
   name:
-    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+    | "graduation-warsaw.webp"
+    | "nasa-internship.webp"
+    | "nasa-engineering.webp"
+    | "falcon-shadow.webp"
+    | "titan-explorer.webp"
+    | "nova-prime.webp",
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>

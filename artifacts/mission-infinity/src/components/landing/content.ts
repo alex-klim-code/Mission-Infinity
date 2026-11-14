@@ -4,7 +4,7 @@ export const HERO_FACTS = ['Ages 14+', 'No prior experience required', 'Solo or 
 
 export const STEPS: { n: string; t: string; d: string; status: Availability; note: string }[] = [
   { n: '01', t: 'Learn', d: 'Discover the foundations of spacecraft engineering, orbital mechanics, mission planning, and space science through interactive explanations.', status: 'planned', note: 'Interactive lessons planned' },
-  { n: '02', t: 'Plan', d: 'Understand mission objectives, budgets, timelines, engineering requirements, and scientific goals.', status: 'now', note: 'Playable now: the Earth Observer briefing' },
+  { n: '02', t: 'Plan', d: 'Understand mission objectives, budgets, timelines, engineering requirements, and scientific goals.', status: 'now', note: 'Playable now: the LUNA briefing' },
   { n: '03', t: 'Design', d: 'Choose spacecraft systems, scientific instruments, power supplies, communications equipment, and launch options.', status: 'planned', note: 'Spacecraft design planned' },
   { n: '04', t: 'Decide', d: "Face realistic tradeoffs. Every decision affects your spacecraft's capabilities, cost, mass, power, and mission risk.", status: 'planned', note: 'Engineering tradeoffs planned' },
   { n: '05', t: 'Launch & Improve', d: 'Simulate your mission, analyze the results, understand what worked, and apply your knowledge to the next challenge.', status: 'planned', note: 'Mission simulation planned' },

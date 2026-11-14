@@ -18,20 +18,20 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { AppShell, PageHeader, PageSkeleton, RequireCharacter } from '@/components/shell';
 import { InvitationRow } from '@/components/invitations';
 import { ErrorState, HudButton, Panel } from '@/components/ui-kit';
-import { SCENE_STATUS_LABEL, errMsg, formatBudget, imgUrl, invalidateGame } from '@/lib/game';
+import { SCENE_STATUS_LABEL, errMsg, imgUrl, invalidateGame } from '@/lib/game';
+import { MissionFacts, MissionSchedule } from '@/components/session/mission-summary';
 
 function ResumeBanner({ id, data }: { id: string; data?: GameSession }) {
-  const done = data?.status === 'MISSION_STARTED';
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
       <Panel className="mb-8 flex flex-col gap-4 border-ion/40 p-5 sm:flex-row sm:items-center">
         <span className="h-2 w-2 rounded-full bg-ion pulse-dot" />
         <div className="flex-1">
           <div className="kicker">Active session {data ? `/ Room ${data.roomCode}` : ''}</div>
-          <div className="mt-1 font-semibold">{data ? SCENE_STATUS_LABEL[data.status] : 'Your crew is waiting.'}{done && ' / Selecting a new mission archives it'} {data && `/ ${data.players.length} aboard`}</div>
+          <div className="mt-1 font-semibold">{data ? (data.status === 'MISSION_STARTED' ? 'Etap 1 — Budowa Rakiety' : SCENE_STATUS_LABEL[data.status]) : 'Your crew is waiting.'} {data && `/ ${data.players.length} aboard`}</div>
         </div>
         <Link href={`/session/${id}`} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ion px-5 font-display text-sm font-bold uppercase tracking-[.14em] text-void" data-testid="link-resume-session">
-          {done ? 'View finale' : 'Resume'} <ArrowRight className="h-4 w-4" />
+          Resume <ArrowRight className="h-4 w-4" />
         </Link>
       </Panel>
     </motion.div>
@@ -104,8 +104,8 @@ function PlayInner({ account }: { account: PlayerAccount }) {
   const [picked, setPicked] = useState<Mission | null>(null);
   const activeId = account.activeSessionId ?? '';
   const active = useGetGameSession(activeId, { query: { enabled: !!activeId, queryKey: getGetGameSessionQueryKey(activeId), refetchInterval: 5000 } });
-  const activeDone = !active.data || active.data.status === 'MISSION_STARTED' || active.data.status === 'CLOSED';
-  const busy = !!account.activeSessionId && !activeDone && !active.isError;
+  const activeDone = !!active.data && active.data.status === 'CLOSED';
+  const busy = !!account.activeSessionId && !activeDone;
   const invites = social.data?.invitations.filter((i) => i.direction === 'incoming') ?? [];
   const missions = data?.missions ?? [];
   const featured = missions.find((m) => m.enabled);
@@ -136,39 +136,19 @@ function PlayInner({ account }: { account: PlayerAccount }) {
               <div className="relative grid gap-8 p-6 md:grid-cols-[1.2fr_1fr] md:p-12">
                 <div>
                   <div className="kicker mb-3">Mission {featured.number} / {featured.difficulty}</div>
-                  <h2 className="font-display text-5xl font-bold uppercase md:text-7xl">{featured.title}</h2>
+                  <h2 className="break-words font-display text-4xl font-bold uppercase md:text-6xl">{featured.title}</h2>
                   <p className="mt-2 text-lg text-foreground/80">{featured.subtitle}</p>
-                  <p className="mt-5 max-w-xl text-foreground/70">{featured.description}</p>
                   <div className="mt-8 flex flex-wrap gap-3">
                     <HudButton variant="burn" onClick={() => setPicked(featured)} data-testid="button-select-mission">
                       <Play className="h-4 w-4" /> Select mission
                     </HudButton>
                   </div>
                 </div>
-                <div className="space-y-4 self-end">
-                  <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10">
-                    {[
-                      ['Budget', formatBudget(featured.budget)],
-                      ['Development', `${featured.developmentMonths} months`],
-                      ['Operations', `${featured.operationalYears} years`],
-                      ['Destination', featured.destination],
-                    ].map(([k, v]) => (
-                      <div key={k} className="bg-void/85 p-4">
-                        <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{k}</dt>
-                        <dd className="mt-1 font-display text-xl font-semibold text-ion">{v}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  {featured.objectives.length > 0 && (
-                    <ul className="space-y-1.5 rounded-md border border-white/10 bg-void/70 p-4 text-sm">
-                      {featured.objectives.slice(0, 4).map((o) => (
-                        <li key={o} className="flex gap-2">
-                          <span className="mt-2 h-1 w-3 shrink-0 bg-burn" />
-                          {o}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                <div className="min-w-0 space-y-4 self-end">
+                  <MissionFacts mission={featured} />
+                  <div className="scroll-thin max-h-80 overflow-y-auto rounded-md border border-white/10 bg-void/75 p-4">
+                    <MissionSchedule mission={featured} />
+                  </div>
                 </div>
               </div>
             </motion.article>

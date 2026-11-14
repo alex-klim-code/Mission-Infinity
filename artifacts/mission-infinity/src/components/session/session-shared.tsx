@@ -27,7 +27,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { LinkStatusPill } from '@/components/shell';
 import { EmployeeBadge } from '@/components/character-avatar';
-import { errMsg, formatBudget, invalidateGame } from '@/lib/game';
+import { errMsg, invalidateGame } from '@/lib/game';
+import { MissionSummary } from './mission-summary';
+import { formatExact } from './rocket-build';
 import { useToast } from '@/hooks/use-toast';
 import { usePlayerAccount } from '@/hooks/use-player-account';
 import { cn } from '@/lib/utils';
@@ -74,49 +76,7 @@ export function useSessionAct(id: string) {
 /* ---------- Briefing ---------- */
 
 export function BriefingBody({ mission }: { mission: Mission }) {
-  return (
-    <div className="space-y-8">
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 sm:grid-cols-4">
-        {[
-          ['Budget', formatBudget(mission.budget)],
-          ['Development', `${mission.developmentMonths} months`],
-          ['Operations', `${mission.operationalYears} years`],
-          ['Destination', mission.destination],
-        ].map(([k, v]) => (
-          <div key={k} className="bg-void p-4">
-            <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{k}</dt>
-            <dd className="mt-1 break-words font-display text-xl font-semibold text-ion">{v}</dd>
-          </div>
-        ))}
-      </dl>
-      {mission.briefing.map((b, i) => (
-        <section key={i}>
-          <h3 className="mb-2 flex items-baseline gap-3 font-display text-lg font-bold uppercase tracking-wider">
-            <span className="font-mono text-xs text-burn">{String(i + 1).padStart(2, '0')}</span>
-            {b.title}
-          </h3>
-          <p className="whitespace-pre-line leading-relaxed text-foreground/80">{b.text}</p>
-        </section>
-      ))}
-      <div className="grid gap-6 sm:grid-cols-2">
-        {([
-          ['Objectives', mission.objectives],
-          ['Requirements', mission.requirements],
-        ] as const).map(([t, list]) => (
-          <section key={t}>
-            <h3 className="kicker mb-3">{t}</h3>
-            <ul className="space-y-2 text-sm">
-              {list.map((o) => (
-                <li key={o} className="flex gap-2">
-                  <span className="mt-2 h-1 w-3 shrink-0 bg-burn" /> {o}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </div>
-  );
+  return <MissionSummary mission={mission} />;
 }
 
 export function BriefingDialog({ mission, open, onOpenChange }: { mission: Mission; open: boolean; onOpenChange: (o: boolean) => void }) {
@@ -125,7 +85,7 @@ export function BriefingDialog({ mission, open, onOpenChange }: { mission: Missi
       <DialogContent className="max-h-[88dvh] w-[calc(100vw-1.5rem)] max-w-3xl overflow-hidden border-white/10 bg-card p-0">
         <div className="border-b border-white/10 p-5 pr-12 sm:p-6">
           <div className="kicker">Classified / Mission {mission.number}</div>
-          <DialogTitle className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">{mission.title} briefing</DialogTitle>
+          <DialogTitle className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">{mission.title}</DialogTitle>
           <DialogDescription className="text-muted-foreground">{mission.subtitle}</DialogDescription>
         </div>
         <div className="scroll-thin max-h-[calc(88dvh-130px)] overflow-y-auto p-5 sm:p-6" data-testid="panel-briefing-dialog">
@@ -211,10 +171,11 @@ export function SessionTopBar({ session, mission, me, act, pending, onOpenBadge 
           <div className="truncate font-display text-base font-bold uppercase tracking-wider md:text-lg" data-testid="text-mission-name">{mission?.title ?? 'Mission'}</div>
         </div>
         {mission && (
-          <dl className="order-3 flex w-full items-center gap-4 font-mono text-[10px] uppercase tracking-widest sm:order-none sm:w-auto">
-            <div><dt className="sr-only">Budget</dt><dd className="text-ion" data-testid="text-top-budget">{formatBudget(mission.budget)}</dd></div>
+          <dl className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-widest sm:order-none sm:w-auto">
+            <div><dt className="sr-only">Budget</dt><dd className="text-ion" data-testid="text-top-budget">{formatExact(mission.budget - (session.build?.spent ?? 0))}</dd></div>
             <span className="h-3 w-px bg-white/15" aria-hidden />
-            <div><dt className="sr-only">Timeline</dt><dd className="text-foreground/80" data-testid="text-top-time">{mission.developmentMonths} mo build / {mission.operationalYears} yr ops</dd></div>
+            <div><dt className="sr-only">Preparation elapsed</dt><dd className="text-foreground/80" data-testid="text-top-months">{session.build?.elapsedMonths ?? 0}/{mission.developmentMonths} months</dd></div>
+            {(mission.operationalWeeks ?? 0) > 0 && (<><span className="hidden h-3 w-px bg-white/15 sm:block" aria-hidden /><div className="hidden sm:block"><dt className="sr-only">Mission duration</dt><dd className="text-foreground/60" data-testid="text-top-time">{mission.operationalWeeks} weeks</dd></div></>)}
             <div className="ml-auto sm:hidden"><LinkStatusPill /></div>
           </dl>
         )}
