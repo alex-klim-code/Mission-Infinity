@@ -1,1 +1,2 @@
 - [Avatar identity defaults](avatar-identity.md) — distinguish correct starting defaults from restrictions on deliberately customized hairstyles.
+- [Validation scope](validation-scope.md) — passing runtime tests do not cover TypeScript errors in files excluded from the compiler project.

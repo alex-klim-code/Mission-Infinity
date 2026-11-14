@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Check, Minus, Plus } from 'lucide-react';
-import type { CharacterPreset } from './_baseline';
-import { cn, imgUrl, usePrefs } from './_baseline';
+import type { CharacterPreset } from './_baseline.tsx';
+import { cn, imgUrl, usePrefs } from './_baseline.tsx';
 
 export type Gender = 'female' | 'male' | 'unspecified';
 export const GENDERS: { id: Gender; label: string; note: string }[] = [

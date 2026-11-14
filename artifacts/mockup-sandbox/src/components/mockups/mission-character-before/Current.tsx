@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Starfield } from './_starfield';
 import { AgeControl, GenderPicker, PresetGrid, nameError, type Gender } from './_fields';
 import { ErrorState, HudButton, Portrait, SkeletonBlock } from './_ui-kit';
-import { useLocation, useQueryClient, useGetGameCatalog, useSaveCharacter, type PlayerAccount, RequireCharacter, Wordmark, errMsg, imgUrl, invalidateGame, portraitFor, cn } from './_baseline';
+import { useLocation, useQueryClient, useGetGameCatalog, useSaveCharacter, type PlayerAccount, RequireCharacter, Wordmark, errMsg, imgUrl, invalidateGame, portraitFor, cn } from './_baseline.tsx';
 
 const STEPS = ['Identity', 'Age', 'Appearance', 'Callsign'];
 

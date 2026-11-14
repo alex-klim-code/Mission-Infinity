@@ -1,4 +1,4 @@
-import { defineConfig, InputTransformerFn } from "orval";
+import { defineConfig, type InputTransformerFn } from "orval";
 import path from "path";
 
 const root = path.resolve(__dirname, "..", "..");
@@ -7,7 +7,9 @@ const apiZodSrc = path.resolve(root, "lib", "api-zod", "src");
 
 // Our exports make assumptions about the title of the API being "Api" (i.e. generated output is `api.ts`).
 const titleTransformer: InputTransformerFn = (config) => {
-  config.info ??= {};
+  if (!config.info) {
+    throw new Error("The OpenAPI specification must define info.title and info.version.");
+  }
   config.info.title = "Api";
 
   return config;
@@ -28,7 +30,7 @@ export default defineConfig({
       mode: "split",
       baseUrl: "/api",
       clean: true,
-      prettier: true,
+      formatter: "prettier",
       override: {
         query: { version: 5 },
         fetch: {
@@ -55,7 +57,7 @@ export default defineConfig({
       schemas: { path: "generated/types", type: "typescript" },
       mode: "split",
       clean: true,
-      prettier: true,
+      formatter: "prettier",
       override: {
         zod: {
           // Orval resolves `auto` from lib/api-spec/package.json, which has no

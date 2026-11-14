@@ -11,7 +11,7 @@ test('saved appearance renders identically in independently-created DiceBear cli
   const look = defaultAppearance('d3e67890-1234-4567-8910-123456789012', 'female', 'PL');
   const options = avatarOptions(look);
   const first = new Avatar(new Style(definition), options).toDataUri();
-  const second = new Avatar(new Style(JSON.parse(JSON.stringify(definition))), options).toDataUri();
+  const second = new Avatar(new Style(structuredClone(definition)), options).toDataUri();
   assert.equal(first, second);
   assert.equal(avatarDataUri(look), first);
   assert.equal(avatarDataUri(JSON.parse(JSON.stringify(look))), first);

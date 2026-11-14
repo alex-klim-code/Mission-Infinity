@@ -1,4 +1,4 @@
-import { Avatar, Style } from '@dicebear/core';
+import { Avatar, Style, type StyleOptions } from '@dicebear/core';
 import definition from '@dicebear/styles/avataaars.json';
 import countries from 'i18n-iso-countries';
 import en from 'i18n-iso-countries/langs/en.json';
@@ -12,7 +12,12 @@ export type SkinTone = CharacterAppearance['skinTone'];
 export type Hairstyle = CharacterAppearance['hairstyle'];
 export type HairColor = CharacterAppearance['hairColor'];
 
-export const FACES: { id: Face; label: string; eyes: string; mouth: string }[] = [
+export const FACES: {
+  id: Face;
+  label: string;
+  eyes: keyof typeof definition.components.eyes.variants;
+  mouth: keyof typeof definition.components.mouth.variants;
+}[] = [
   { id: 'calm', label: 'Calm', eyes: 'default', mouth: 'default' },
   { id: 'focused', label: 'Focused', eyes: 'squint', mouth: 'serious' },
   { id: 'bright', label: 'Bright', eyes: 'happy', mouth: 'smile' },
@@ -51,7 +56,9 @@ const BASE_HAIR: Record<Base, Hairstyle[]> = {
   female: ['bob', 'bun', 'straight01', 'longButNotTooLong', 'curly'],
   male: ['shortFlat', 'theCaesar', 'shortCurly', 'shavedSides', 'fro'],
 };
-const BASE_BROWS: Record<Base, string> = { female: 'raisedExcitedNatural', male: 'defaultNatural' };
+const BASE_BROWS: Record<Base, keyof typeof definition.components.eyebrows.variants> = {
+  female: 'raisedExcitedNatural', male: 'defaultNatural',
+};
 export const UNIFORM_NAVY = '#10243b';
 
 export function hashString(s: string): number {
@@ -115,7 +122,7 @@ export function withBase(a: CharacterAppearance, base: Base): CharacterAppearanc
   return { ...a, base, hairstyle };
 }
 
-export function avatarOptions(a: CharacterAppearance) {
+export function avatarOptions(a: CharacterAppearance): StyleOptions<typeof definition> {
   const face = FACES.find((f) => f.id === a.face) ?? FACES[0];
   return {
     seed: a.avatarSeed,
@@ -134,7 +141,7 @@ export function avatarOptions(a: CharacterAppearance) {
   };
 }
 
-let style: Style | null = null;
+let style: Style<typeof definition> | null = null;
 const cache = new Map<string, string>();
 export function avatarDataUri(a: CharacterAppearance): string {
   const opts = avatarOptions(a);

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { usePrefs } from './_baseline';
+import { usePrefs } from './_baseline.tsx';
 
 export function Starfield({ density = 1, className = '' }: { density?: number; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);

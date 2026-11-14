@@ -1,6 +1,6 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Loader2, RotateCw, TriangleAlert } from 'lucide-react';
-import { cn, imgUrl, portraitFor, usePrefs } from './_baseline';
+import { cn, imgUrl, portraitFor, usePrefs } from './_baseline.tsx';
 
 type Variant = 'ion' | 'burn' | 'ghost' | 'danger';
 export function HudButton({
