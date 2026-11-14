@@ -1,4 +1,3 @@
-import { Paged } from './paged';
 import { Check, Crown, ExternalLink, Send } from 'lucide-react';
 import type { RocketCategory, RocketComponent, SessionActionHullId } from '@workspace/api-client-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -62,7 +61,8 @@ export function OptionDetail({ option, category, props, official, byOption, rema
   ];
 
   return (
-    <div data-testid={`panel-option-${option.id}`}>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden" data-testid={`panel-option-${option.id}`}>
+      <div key={option.id} tabIndex={0} role="region" aria-label={`${option.name} specifications`} className="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ion sm:p-5" data-testid="scroll-option-details">
       {isOfficial && <div className="inline-flex items-center gap-1 rounded-sm bg-burn/20 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-burn"><Check className="h-3 w-3" /> Official choice</div>}
       {demoRecommended && (
         <div className="mt-2 rounded-md border border-[hsl(44_95%_60%)]/40 bg-[hsl(44_95%_60%)]/[.06] p-2.5 text-xs text-foreground/85" data-testid="panel-demo-reason">
@@ -97,7 +97,10 @@ export function OptionDetail({ option, category, props, official, byOption, rema
         ))}
       </ul>
 
-      <div className="glass mt-6 space-y-3 rounded-lg p-4" data-testid="panel-option-actions">
+      {!isHost && !locked && <p className="mt-4 text-[11px] text-muted-foreground">Proposals are free. The Leader confirms purchases.</p>}
+      {isHost && !locked && !isOfficial && <p className="mt-4 text-[11px] text-muted-foreground">Engineers review compatibility first. Nothing is charged until you confirm. A confirmed purchase moves you to the next category.</p>}
+      </div>
+      <div className="shrink-0 space-y-3 border-t border-white/10 bg-card p-4" data-testid="panel-option-actions">
         <div className="text-sm text-muted-foreground" aria-live="polite" data-testid="text-option-status">
           {completed ? 'Rocket is complete. No further changes.'
             : repairLocked ? 'Working part kept during repair. Only failed categories can change.'
@@ -121,8 +124,6 @@ export function OptionDetail({ option, category, props, official, byOption, rema
             )}
           </div>
         )}
-        {!isHost && !locked && <p className="text-[11px] text-muted-foreground">Proposals are free. The Leader confirms purchases.</p>}
-        {isHost && !locked && !isOfficial && <p className="text-[11px] text-muted-foreground">Engineers review compatibility first. Nothing is charged until you confirm. A confirmed purchase moves you to the next category.</p>}
       </div>
     </div>
   );
@@ -141,19 +142,17 @@ export function OptionDialog({ option, category, onClose, onCloseAutoFocus, ...r
           (event.target as HTMLElement).focus();
         }}
         onCloseAutoFocus={onCloseAutoFocus}
-        className="flex max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-2xl flex-col gap-0 overflow-hidden border-white/10 bg-card p-0 [&>button]:z-10 [&>button]:rounded-md [&>button]:border [&>button]:border-white/15 [&>button]:bg-void/80 [&>button]:p-1.5 [&>button]:opacity-100 [&>button:hover]:border-ion [&>button:hover]:text-ion"
+        className="flex h-[90dvh] max-h-[850px] w-[calc(100vw-1.5rem)] max-w-2xl flex-col gap-0 overflow-hidden border-white/10 bg-card p-0 [&>button]:z-10 [&>button]:rounded-md [&>button]:border [&>button]:border-white/15 [&>button]:bg-void/80 [&>button]:p-1.5 [&>button]:opacity-100 [&>button:hover]:border-ion [&>button:hover]:text-ion"
         data-testid="dialog-rocket-option"
       >
         {option && category && (
           <>
-            <div className="border-b border-white/10 p-5 pr-14">
+            <div className="shrink-0 border-b border-white/10 p-5 pr-14">
               <div className="kicker">{category.name}</div>
               <DialogTitle className="mt-1 font-display text-2xl font-bold uppercase leading-tight [overflow-wrap:anywhere] sm:text-3xl" data-testid="text-option-name">{option.name}</DialogTitle>
               <DialogDescription asChild><div className="mt-1"><Price value={option.price} className="text-base text-ion" /></div></DialogDescription>
             </div>
-            <Paged className="min-h-0 flex-1" innerClassName="p-5" label="Details" resetKey={option.id}>
-              <OptionDetail option={option} category={category} {...rest} />
-            </Paged>
+            <OptionDetail option={option} category={category} {...rest} />
           </>
         )}
       </DialogContent>

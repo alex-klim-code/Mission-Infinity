@@ -1,4 +1,4 @@
-import { Paged } from './paged';
+import { ScrollPanel } from './scroll-panel';
 import { FlightDamageAlarm } from './journey/flight-damage-alarm';
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -181,6 +181,7 @@ export function RocketBuildView(props: Props) {
   const flightStatus = !!journey && !['NONE','ROUTE','CALENDAR'].includes(journey.phase);
   const repairing = !!session.engineering?.repairing && !session.assembly?.completed;
   const constructionOpen = !!journey?.construction.opened && !journey.construction.delivered && !session.fueling?.opened;
+  const catalogOpen = !journeyOpen && (repairing || (!constructionOpen && !session.fueling?.opened && !session.science?.opened));
 
   if (catalog.isLoading)
     return (
@@ -207,7 +208,7 @@ export function RocketBuildView(props: Props) {
   const spent = session.build?.spent ?? 0;
   const summary: Summary = { spent, remaining: (mission?.budget ?? 0) - spent, count: cats.filter((c) => official.has(c.id)).length, total: cats.length, dryMass, unknownMass, hullId: session.build?.selectedHullId };
 
-  if (session.assembly?.completed && !session.science?.opened) return <Paged className="relative z-10 h-full" label="Rocket"><Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} /></Paged>;
+  if (session.assembly?.completed && !session.science?.opened) return <ScrollPanel className="relative z-10 h-full" label="Rocket"><Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} /></ScrollPanel>;
 
   return (
     <EngineeringGuardProvider props={props} byOption={byOption}>
@@ -217,10 +218,15 @@ export function RocketBuildView(props: Props) {
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col md:order-1">
       {['FLIGHT','MOON_ARRIVAL','FAILED'].includes(journey?.phase ?? '') && <FlightDamageAlarm alerts={journey?.flightAlerts ?? []} />}
-      <Paged className="rocket-builder-viewport min-h-0 min-w-0 flex-1 overflow-x-hidden" testid="panel-builder-left" label="Stage" resetKey={`${journey?.phase ?? ''}:${session.science?.opened}:${session.fueling?.opened}:${constructionOpen}`}>
-        {journeyOpen ? <MissionJourneyStage {...props} /> : repairing ? <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div> : constructionOpen ? <ConstructionStage {...props} /> : session.fueling?.opened ? <FuelStage {...props} /> : session.science?.opened ? <ScienceStage {...props} /> :
-          <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div>}
-      </Paged>
+      {catalogOpen ? (
+        <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col overflow-hidden px-3 py-4 md:px-6" data-testid="panel-builder-left">
+          <Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} />
+        </div>
+      ) : (
+        <ScrollPanel className="min-h-0 min-w-0 flex-1 overflow-x-hidden" testid="panel-builder-left" label="Stage" resetKey={`${journey?.phase ?? ''}:${session.science?.opened}:${session.fueling?.opened}:${constructionOpen}`}>
+          {journeyOpen ? <MissionJourneyStage {...props} /> : constructionOpen ? <ConstructionStage {...props} /> : session.fueling?.opened ? <FuelStage {...props} /> : <ScienceStage {...props} />}
+        </ScrollPanel>
+      )}
       </div>
     </div>
     </EngineeringGuardProvider>

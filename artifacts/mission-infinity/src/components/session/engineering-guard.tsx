@@ -1,4 +1,4 @@
-import { Paged } from './paged';
+import { ScrollPanel } from './scroll-panel';
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowRight, Loader2, RefreshCw, ShieldAlert, Wrench } from 'lucide-react';
 import { usePreviewEngineering, useGetGameCatalog, type CompatibilityIssue, type EngineeringAdvice, type RocketComponent } from '@workspace/api-client-react';
@@ -95,7 +95,7 @@ export function EngineeringGuardProvider({ props, byOption, children }: { props:
               Candidate: <span className="text-foreground" data-testid="text-engineering-candidate">{candidateName}</span>. Nothing is charged until you decide.
             </DialogDescription>
           </div>
-          <Paged className="min-h-0 flex-1" innerClassName="space-y-3  p-5" label="Review">
+          <ScrollPanel className="min-h-0 flex-1" innerClassName="space-y-3 p-5" label="Review">
             {state.phase === 'checking' && (
               <div className="space-y-2" data-testid="status-engineering-checking">
                 <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-ion"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Engineers comparing interfaces</p>
@@ -160,7 +160,7 @@ export function EngineeringGuardProvider({ props, byOption, children }: { props:
                 <p className="text-sm font-semibold text-burn" data-testid="text-confirm-incompatible-purchase">Are you sure you want to buy this? This configuration will fail the integration check. Replacement parts cost money and extra months.</p>
               </>
             )}
-          </Paged>
+          </ScrollPanel>
           <div className="flex flex-wrap justify-end gap-2 border-t border-white/10 p-4">
             <HudButton variant="ghost" onClick={close} data-testid="button-engineering-cancel">Cancel</HudButton>
             {state.phase === 'error' && (

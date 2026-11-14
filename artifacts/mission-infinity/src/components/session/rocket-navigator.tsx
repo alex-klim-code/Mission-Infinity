@@ -4,7 +4,7 @@ import type { RocketCategory, RocketComponent, RocketSection } from '@workspace/
 import { imgUrl } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import { useEngineeringGuard } from './engineering-guard';
-import { BODY_CATEGORY, categoryIcon, damageRiskOf, fmtKg, fmtRisk, fmtSigned, formatExact, hullById, isRepairLocked, shortDescription, type Props } from './rocket-shared';
+import { BODY_CATEGORY, categoryIcon, damageRiskOf, fmtKg, fmtRisk, fmtSigned, formatExact, hullById, isRepairLocked, type Props } from './rocket-shared';
 import { PartArt, partKind } from '@/components/visual/part-art';
 import { OptionDialog } from './rocket-option-dialog';
 import { useDemoGuide } from '@/hooks/use-demo-guide';
@@ -72,20 +72,21 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
     : [root, { label: 'Configuration review', testId: 'crumb-ready' }];
 
   return (
-    <div className="pb-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 items-start justify-between gap-4">
         <Breadcrumb items={crumbs} />
         <span className="shrink-0 py-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-nav-progress">{doneCount}/{flat.length} categories set</span>
       </div>
       {repair && (
-        <div className="mt-2 rounded-md border border-burn/40 bg-burn/[.07] p-3 text-sm" data-testid="panel-repair-banner">
+        <div className="mt-2 shrink-0 rounded-md border border-burn/40 bg-burn/[.07] p-3 text-sm" data-testid="panel-repair-banner">
           <div className="kicker text-burn">Repair / attempt {repair.attempt}</div>
           <p className="mt-1 text-muted-foreground">Replace the failed parts: <span className="text-foreground" data-testid="text-repair-categories">{flat.filter((x) => repair.failedCategoryIds.includes(x.cat.id)).map((x) => x.cat.name).join(', ') || 'none'}</span>. Working parts and the hull are kept and locked. Replacements are charged at full price; broken parts are not refunded.</p>
         </div>
       )}
-      {demo.enabled && <div className="mt-2"><DemoGuidePanel plan={demo.plan} loading={demo.loading} error={demo.error} refetch={demo.refetch} /></div>}
-      {!hullBought && <p className="mt-1 text-sm text-muted-foreground">Start with the rocket body. Other parts unlock once it is bought.</p>}
+      {demo.enabled && <div className="mt-2 shrink-0"><DemoGuidePanel plan={demo.plan} loading={demo.loading} error={demo.error} refetch={demo.refetch} /></div>}
+      {!hullBought && <p className="mt-1 shrink-0 text-sm text-muted-foreground">Start with the rocket body. Other parts unlock once it is bought.</p>}
 
+      <div key={`${view}:${secId}:${catId}`} className={cn('min-h-0 flex-1', view === 'category' && catId !== READY && cat ? 'flex flex-col overflow-hidden' : 'scroll-thin overflow-y-auto overscroll-contain')}>
       {view === 'root' ? (
         <RootOverview sections={sections} official={official} onSection={openSection} />
       ) : view === 'section' && viewSec ? (
@@ -106,6 +107,7 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
         />
       )}
 
+      </div>
       <OptionDialog
         option={dialogOpt} category={dialogCat} props={props} official={official} byOption={byOption} remaining={remaining}
         demoRecommended={!!dialogOpt && !!demoIds?.includes(dialogOpt.id)}
@@ -133,8 +135,8 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
     : (props.session.assembly?.proposals ?? []).filter((p) => p.categoryId === cat.id && p.playerId === props.me).map((p) => p.optionId);
   const navBtn = 'inline-flex h-9 items-center gap-1.5 rounded-md border border-white/15 bg-void/60 px-3 text-xs uppercase tracking-wider transition-colors hover:border-ion hover:text-ion focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion disabled:opacity-40';
   return (
-    <section className="mt-5" data-testid={`panel-category-${cat.id}`}>
-      <div className="flex flex-wrap items-center gap-3">
+    <section className="mt-5 flex min-h-0 flex-1 flex-col" data-testid={`panel-category-${cat.id}`}>
+      <div className="flex shrink-0 flex-wrap items-center gap-3">
         <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-ion/30 bg-ion/10 text-ion"><Icon className="h-5 w-5" aria-hidden /></span>
         <div className="min-w-0 flex-1">
           <div className="font-mono text-[10px] uppercase tracking-[.22em] text-muted-foreground" data-testid="text-current-section">{secName} / {pos} of {of}</div>
@@ -145,9 +147,9 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
           <button type="button" className={navBtn} onClick={onNext} data-testid="button-next-category">Next <ArrowRight className="h-3.5 w-3.5" /></button>
         </div>
       </div>
-      {!body && !hullBought && <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><Lock className="h-3.5 w-3.5" /> Buy the rocket body first. You can still review every part.</p>}
-      {body && hullBought && <p className="mt-3 text-xs text-muted-foreground">The body is already bought. Review the three hulls freely; it cannot be bought again.</p>}
-      <ul className={cn('mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3', !body && 'rocket-part-options')} data-testid={`grid-options-${cat.id}`}>
+      {!body && !hullBought && <p className="mt-3 flex shrink-0 items-center gap-2 text-xs text-muted-foreground"><Lock className="h-3.5 w-3.5" /> Buy the rocket body first. You can still review every part.</p>}
+      {body && hullBought && <p className="mt-3 shrink-0 text-xs text-muted-foreground">The body is already bought. Review the three hulls freely; it cannot be bought again.</p>}
+      <ul tabIndex={0} aria-label={`${cat.name} options`} className="scroll-thin mt-4 grid min-h-0 flex-1 auto-rows-max grid-cols-1 content-start gap-3 overflow-y-auto overscroll-contain px-1 pb-3 pt-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ion sm:grid-cols-2 lg:grid-cols-3" data-testid={`grid-options-${cat.id}`}>
         {cat.options.map((o) => {
           const sel = official.get(cat.id) === o.id;
           const mine = proposals.includes(o.id);
@@ -159,7 +161,6 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
           const overBudget = price - currentPrice > remaining;
           const purchaseDisabled = !props.isHost || props.pending || locked || sel || overBudget;
           const purchaseReason = repairLocked ? 'Working part kept' : sel ? 'Purchased' : locked ? 'Locked' : !props.isHost ? 'Leader only' : overBudget ? 'Insufficient budget' : undefined;
-          const desc = shortDescription(o);
           const demoPick = !!demoIds?.includes(o.id);
           return (
             <li key={o.id} className="flex min-w-0 flex-col">
@@ -175,7 +176,6 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
                 ) : (
                   <div className="rocket-option-art relative flex h-24 shrink-0 items-center justify-center overflow-hidden border-b border-white/[.04] bg-[radial-gradient(ellipse_at_50%_80%,hsl(186_92%_56%/.10),transparent_70%)]" data-testid={`icon-option-${o.id}`}>
                     <PartArt kind={partKind(cat)} live={sel} className="h-20 w-32" />
-                    <span className="absolute bottom-1 right-2 font-mono text-[8px] uppercase tracking-widest text-muted-foreground/50">Schematic</span>
                   </div>
                 )}
                 <div className="rocket-option-content flex min-w-0 flex-1 flex-col p-3.5">
@@ -183,7 +183,6 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
                     <span className="rocket-option-name min-w-0 flex-1 font-display text-sm font-bold uppercase leading-snug tracking-wide [overflow-wrap:anywhere]" data-testid={`text-option-card-name-${o.id}`}>{o.name}</span>
                     {sel && <CheckCircle2 className="h-4 w-4 shrink-0 text-burn" aria-label="Official choice" />}
                   </div>
-                  {desc && <p className={cn('rocket-option-description mt-1.5 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]', hull ? 'line-clamp-2' : 'line-clamp-3')} data-testid={`text-option-card-desc-${o.id}`}>{desc}</p>}
                   <div className="rocket-option-metrics mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-3">
                     <span className="font-mono text-xs text-ion" data-testid={`text-option-card-price-${o.id}`}>{formatExact(price)}</span>
                     {damageRiskOf(o, cat) != null && <span className="rocket-option-risk w-full font-mono text-[10px] text-[hsl(44_95%_60%)]" title="Game damage risk, rolled once after lunar arrival" data-testid={`text-option-card-risk-${o.id}`}>Game risk {fmtRisk(damageRiskOf(o, cat)!)}{o.quality == null ? ' (est.)' : ''}</span>}

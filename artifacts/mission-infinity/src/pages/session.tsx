@@ -1,4 +1,4 @@
-import { Paged } from '@/components/session/paged';
+import { ScrollPanel } from '@/components/session/scroll-panel';
 import { useState, type ReactNode } from 'react';
 import { MessageNotifications } from '@/components/session/message-notifications';
 import { BadgeDialog, SessionTopBar, useSessionAct } from '@/components/session/session-shared';
@@ -54,7 +54,7 @@ function InvitePanel({ session }: { session: GameSession }) {
           action={<Link href="/friends" className="text-sm text-ion hover:underline" data-testid="link-find-friends">Find engineers</Link>}
         />
       ) : (
-        <Paged className="max-h-72" innerClassName="space-y-2  pr-1" label="Friends">
+        <ScrollPanel className="max-h-72" innerClassName="space-y-2 pr-1" label="Friends">
           {friends.map((f) => {
             const on = aboard.has(f.id);
             const was = pendingOut.has(f.id);
@@ -86,7 +86,7 @@ function InvitePanel({ session }: { session: GameSession }) {
               </div>
             );
           })}
-        </Paged>
+        </ScrollPanel>
       )}
     </div>
   );
@@ -111,7 +111,7 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
       <Starfield density={0.5} />
       <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
-      <Paged className="relative z-10 w-full flex-1" label="Lobby" testid="panel-lobby-paged"><div className="mx-auto max-w-6xl px-4 py-4 md:px-8">
+      <ScrollPanel className="relative z-10 w-full flex-1" label="Lobby" testid="panel-lobby-paged"><div className="mx-auto max-w-6xl px-4 py-4 md:px-8">
         <Link href="/play" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" data-testid="link-back-play">
           <ArrowLeft className="h-4 w-4" /> Mission board
         </Link>
@@ -173,7 +173,7 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
             </div>
           )}
         </div>
-      </div></Paged>
+      </div></ScrollPanel>
       <CrewBar session={session} flag={lobbyFlag} meId={me} onOpenBadge={openBadge} />
     </div>
   );
@@ -290,7 +290,7 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
             </h1>
             <div className="mt-2 rounded-md border border-white/10 bg-void/70 backdrop-blur-md">
               {kind === 'story' && (
-                <Paged className="max-h-[26dvh]" innerClassName="space-y-2  px-3 py-2.5 text-sm leading-relaxed text-foreground/90 md:text-base" label="Scene text" testid="panel-scene-text">
+                <ScrollPanel className="max-h-[26dvh]" innerClassName="space-y-2 px-3 py-2.5 text-sm leading-relaxed text-foreground/90 md:text-base" label="Scene text" testid="panel-scene-text">
                   {scene?.speaker && (
                     <div className="flex items-center gap-2">
                       {director && <img src={imgUrl('/images/director.png')} alt="" className="h-6 w-6 rounded object-cover ring-1 ring-burn/50" />}
@@ -298,13 +298,13 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
                     </div>
                   )}
                   {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
-                </Paged>
+                </ScrollPanel>
               )}
               {kind === 'message' && (
-                <Paged className="max-h-[40dvh]" innerClassName="px-3 py-3" label="Message" testid="panel-scene-text">
+                <ScrollPanel className="max-h-[40dvh]" innerClassName="px-3 py-3" label="Message" testid="panel-scene-text">
                   <div className="font-mono text-[10px] uppercase tracking-[.22em] text-burn">From: Asterion Mission Directorate</div>
                   {mission && <div className="mt-2" data-testid="text-mission-description"><div className="mb-3 font-display text-lg font-semibold uppercase">{mission.title}</div><MissionSummary mission={mission} /></div>}
-                </Paged>
+                </ScrollPanel>
               )}
               {kind === 'crew' && (
                 <p className="px-3 py-2.5 text-sm text-foreground/85" data-testid="panel-scene-text">

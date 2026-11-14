@@ -28,7 +28,7 @@ function Row({ label, value, tone, testid }: { label: string; value: string; ton
 const Disclaimer = () => (
   <p className="flex gap-2 rounded-md border border-white/10 bg-void/60 p-2.5 text-[11px] leading-snug text-muted-foreground" data-testid="text-fuel-disclaimer">
     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ion" />
-    Capacity, price per kilogram and pump speed are gameplay training parameters, not engineering figures or certified propellant chemistry for your chosen tank. Engine and tank compatibility remains as reviewed in Stage 1.
+    Training-game capacity, prices and pump speed—not certified engineering or fuel-chemistry data. Stage 1 compatibility checks still apply.
   </p>
 );
 
@@ -255,7 +255,7 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
           <div>
             <div className="kicker mb-2 flex items-center gap-2"><Check className="h-3.5 w-3.5 text-burn" /> Stage 3 complete</div>
             <h1 className="font-display text-4xl font-bold uppercase leading-tight sm:text-5xl" data-testid="text-fuel-completed">Fuel Load Confirmed</h1>
-            <p className="mt-1 text-sm text-muted-foreground">The Leader sealed the propellant load. The cost was charged during fueling; confirmation added no extra charge.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Fuel load sealed. Fueling was already charged; no confirmation fee.</p>
             <dl className="mt-5 rounded-md border border-white/10 bg-void/70 px-3">
               <Row label="Fuel type" value={f.fuelType} testid="text-fuel-final-type" />
               <Row label="Loaded" value={kg(f.loadedKg)} tone="text-ion" testid="text-fuel-final-loaded" />

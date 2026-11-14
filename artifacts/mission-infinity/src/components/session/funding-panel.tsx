@@ -1,4 +1,4 @@
-import { Paged } from './paged';
+import { ScrollPanel } from './scroll-panel';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, FileText, Landmark, Loader2, RefreshCw, Scale, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -129,7 +129,7 @@ function FundingDialog({ open, onOpenChange, session, isHost, ticker }: {
             A game simulation of a supplementary budget review. It is not real NASA funding, no agency is contacted and no payment is made.
           </DialogDescription>
         </div>
-        <Paged className="min-h-0 flex-1" innerClassName="space-y-4  p-4" label="Funding">
+        <ScrollPanel className="min-h-0 flex-1" innerClassName="space-y-4 p-4" label="Funding">
           <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 text-left">
             <div className="bg-void/85 p-2.5"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Base</dt><dd className="mt-0.5 font-mono text-xs" data-testid="text-funding-base">{formatExact(f?.baseBudget ?? 0)}</dd></div>
             <div className="bg-void/85 p-2.5"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Approved</dt><dd className="mt-0.5 font-mono text-xs text-ion" data-testid="text-funding-approved">+{formatExact(f?.approvedFunding ?? 0)}</dd></div>
@@ -198,7 +198,7 @@ function FundingDialog({ open, onOpenChange, session, isHost, ticker }: {
               </ul>
             )}
           </section>
-        </Paged>
+        </ScrollPanel>
       </DialogContent>
     </Dialog>
   );

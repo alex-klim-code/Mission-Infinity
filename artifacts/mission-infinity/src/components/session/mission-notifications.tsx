@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Bell, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, X } from 'lucide-react';
 import type { GameSession } from '@workspace/api-client-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMissionNotifications } from '@/hooks/use-mission-notifications';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Paged } from './paged';
+import { ScrollPanel } from './scroll-panel';
 import type { MissionNotification } from '@/lib/mission-notifications';
 
 const roundBtn = 'relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion';
@@ -27,14 +26,7 @@ const fmt = (iso: string) => {
 export function MissionNotifications({ session, meId }: { session: GameSession; meId: string }) {
   const { items, unread, markAllRead, storageWarning } = useMissionNotifications(session, meId);
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState(0);
   const [detail,setDetail]=useState<MissionNotification|null>(null);
-  const mobile = useIsMobile();
-  const per = mobile ? 2 : 3;
-  const pages = Math.max(1, Math.ceil(items.length / per));
-  const p = Math.min(page, pages - 1);
-  const rows = useMemo(() => items.slice(p * per, p * per + per), [items, p, per]);
-  useEffect(() => { if (open) setPage(0); }, [open]);
   const badge = unread > 99 ? '99+' : String(unread);
   const titleId = `notif-title-${session.id}-${meId}`;
 
@@ -65,7 +57,7 @@ export function MissionNotifications({ session, meId }: { session: GameSession; 
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain" tabIndex={0} role="region" aria-label="Mission notifications">
           {items.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-4 py-8 text-center" data-testid="empty-notifications">
               <Bell className="h-6 w-6 text-ion/50" />
@@ -74,7 +66,7 @@ export function MissionNotifications({ session, meId }: { session: GameSession; 
             </div>
           ) : (
             <ul className="divide-y divide-white/5" aria-label="Notification list">
-              {rows.map((n) => (
+              {items.map((n) => (
                 <li key={n.id} className={cn('border-l-2 px-3 py-2', tone[n.severity] ?? tone.info, n.read ? 'bg-transparent' : 'bg-ion/[.06]')} data-testid={`row-notification-${n.id}`}>
                   <button type="button" className="block w-full rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion" aria-label={`Read notification: ${n.title}`} onClick={()=>{setOpen(false);setDetail(n);}}>
                   <div className="flex items-start justify-between gap-2">
@@ -96,13 +88,6 @@ export function MissionNotifications({ session, meId }: { session: GameSession; 
             </ul>
           )}
         </div>
-        {pages > 1 && (
-          <nav className="flex shrink-0 items-center justify-center gap-3 border-t border-white/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest" aria-label="Notification pages">
-            <button type="button" onClick={() => setPage(p - 1)} disabled={p === 0} className="inline-flex min-h-8 items-center gap-1 rounded border border-white/15 px-2.5 hover:border-ion hover:text-ion disabled:opacity-40" data-testid="button-notifications-prev"><ChevronLeft className="h-3.5 w-3.5" /> Prev</button>
-            <span aria-live="polite" data-testid="text-notifications-page">Page {p + 1} / {pages}</span>
-            <button type="button" onClick={() => setPage(p + 1)} disabled={p >= pages - 1} className="inline-flex min-h-8 items-center gap-1 rounded border border-white/15 px-2.5 hover:border-ion hover:text-ion disabled:opacity-40" data-testid="button-notifications-next">Next <ChevronRight className="h-3.5 w-3.5" /></button>
-          </nav>
-        )}
         <div className="shrink-0 border-t border-white/10 px-3 py-1.5 text-[10px] text-muted-foreground">
           {storageWarning?<span className="text-burn" role="status" data-testid="text-notifications-storage-warning">History could not be saved on this device; it remains available in this tab.</span>:'History saved on this device.'}
         </div>
@@ -114,9 +99,9 @@ export function MissionNotifications({ session, meId }: { session: GameSession; 
           <DialogTitle className="font-display text-xl uppercase">{detail?.title}</DialogTitle>
           <DialogDescription className="mt-1">{detail?.category} / {detail&&fmt(detail.createdAt)}</DialogDescription>
         </div>
-        <Paged className="min-h-0 flex-1" innerClassName="p-5" label="Notification" resetKey={detail?.id}>
+        <ScrollPanel className="min-h-0 flex-1" innerClassName="p-5" label="Notification" resetKey={detail?.id}>
           <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">{detail?.message}</p>
-        </Paged>
+        </ScrollPanel>
       </DialogContent>
     </Dialog>
     </>

@@ -6,4 +6,4 @@
 - [Account cache identity](account-cache-identity.md) — direct account writes must use the current user's scoped key; the generated base key is only a prefix.
 - [Floating panel focus](portal-focus-safety.md) — overlapping body portals can intercept typing; check DOM counts and namespace sibling panel keys.
 - [Live control request budgets](live-control-budgets.md) — budget combined ticks and player inputs separately from ordinary writes; lost updates do not pause the flight.
-- [Viewport pagination checks](viewport-pagination.md) — verify initial modal opening and nested pointer paging, not only layouts after a manual resize.
+- [Viewport and dialog checks](viewport-pagination.md) — verify initial opening, complete controls and the ends of internal scroll regions, not only absence of document scroll.

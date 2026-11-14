@@ -1,4 +1,4 @@
-import { Paged } from './paged';
+import { ScrollPanel } from './scroll-panel';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
@@ -100,9 +100,9 @@ export function BriefingDialog({ mission, open, onOpenChange }: { mission: Missi
           <DialogTitle className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">{mission.title}</DialogTitle>
           <DialogDescription className="text-muted-foreground">{mission.subtitle}</DialogDescription>
         </div>
-        <Paged className="max-h-[calc(88dvh-130px)]" innerClassName="p-5 sm:p-6" label="Briefing" testid="panel-briefing-dialog">
+        <ScrollPanel className="max-h-[calc(88dvh-130px)]" innerClassName="p-5 sm:p-6" label="Briefing" testid="panel-briefing-dialog">
           <BriefingBody mission={mission} />
-        </Paged>
+        </ScrollPanel>
       </DialogContent>
     </Dialog>
   );

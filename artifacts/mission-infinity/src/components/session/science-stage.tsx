@@ -33,7 +33,7 @@ function Stat({ label, value, tone, testid }: { label: string; value: string; to
 const Disclaimer = () => (
   <p className="flex gap-2 rounded-md border border-white/10 bg-void/60 p-2.5 text-[11px] leading-snug text-muted-foreground" data-testid="text-science-disclaimer">
     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ion" />
-    Prices, mass, power and quality are game balance figures, not verified manufacturer offers. Max science points are a potential ceiling, not points already earned.
+    Game balance values, not manufacturer offers. Science points show potential, not points earned.
   </p>
 );
 
@@ -71,7 +71,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
         <motion.div initial={calm ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="mx-auto max-w-4xl px-4 py-8 md:px-8">
           <div className="kicker mb-2 flex items-center gap-2"><Check className="h-3.5 w-3.5 text-burn" /> Stage 2 complete</div>
           <h1 className="font-display text-4xl font-bold uppercase leading-tight sm:text-5xl" data-testid="text-science-completed">Payload Locked</h1>
-          <p className="mt-1 text-sm text-muted-foreground">The Leader finalised the scientific payload. This purchase is recorded and cannot be repeated.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Payload confirmed. This purchase cannot be repeated.</p>
           <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 sm:grid-cols-5">
             <Stat label="Instruments" value={`${t.n}/${list.length}`} testid="text-science-final-count" />
             <Stat label="Science cost" value={formatExact(sci.spent)} tone="text-burn" testid="text-science-final-cost" />
@@ -121,7 +121,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
         <div className="min-w-0">
           <div className="kicker mb-2 flex items-center gap-2"><Microscope className="h-3.5 w-3.5 text-burn" /> Stage 2 / Scientific instruments</div>
           <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-5xl" data-testid="text-science-title">Choose the Payload</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Select any, all or none of the seven instruments. Every kilogram and watt competes with the budget you have left.</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Choose any instruments, including none. Check cost, mass and power.</p>
           <div className="mt-3"><Disclaimer /></div>
           {demo.enabled && <div className="mt-3"><DemoGuidePanel plan={demo.plan} loading={demo.loading} error={demo.error} refetch={demo.refetch} /></div>}
           <div className="mt-3 flex gap-2">
