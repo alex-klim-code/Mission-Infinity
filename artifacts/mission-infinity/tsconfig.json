@@ -16,6 +16,9 @@
   },
   "references": [
     {
+      "path": "../../lib/mission-physics"
+    },
+    {
       "path": "../../lib/api-client-react"
     }
   ]

@@ -92,7 +92,7 @@ test("mission engineering and funding remain transactional and persistent",async
         assert.equal((await previewEngineering(gameDb,session,{optionId:unrelated.id})).issues.length,0);
         await updateSession(f.u.id,f.s.id,{action:"finish-rocket"});
         await updateSession(f.u.id,f.s.id,{action:"open-science"});
-        await updateSession(f.u.id,f.s.id,{action:"purchase-instruments",instrumentIds:[]});
+        await updateSession(f.u.id,f.s.id,{action:"purchase-instruments",instrumentIds:["panchromatic-camera"]});
         await updateSession(f.u.id,f.s.id,{action:"open-fueling"});
         await updateSession(f.u.id,f.s.id,{action:"start-construction"});
         await gameDb.updateTable("game_session_mission_journeys").set({construction_started_at:new Date(Date.now()-11000)}).where("session_id","=",f.s.id).execute();
@@ -105,7 +105,7 @@ test("mission engineering and funding remain transactional and persistent",async
         const failed=[...state.engineering.failedCategoryIds];
         await Promise.all([updateSession(f.u.id,f.s.id,{action:"rebuild-rocket"}),updateSession(f.u.id,f.s.id,{action:"rebuild-rocket"})]);
         state=await sessionState(f.s.id,f.u.id);
-        assert.equal(state.engineering.attempt,2);assert.equal(state.build.spent,spent);assert.equal(state.build.elapsedMonths,elapsed);
+        assert.equal(state.engineering.attempt,2);assert.equal(state.build.spent,spent+2000000);assert.equal(state.build.elapsedMonths,elapsed);
         assert.equal(state.science.completed,true);
         const retained=Object.fromEntries(state.assembly.selections.map(x=>[x.categoryId,x.optionId]));
         assert.equal(retained["main-engines"],engine.id);
@@ -118,7 +118,7 @@ test("mission engineering and funding remain transactional and persistent",async
         }
         await Promise.all([updateSession(f.u.id,f.s.id,{action:"finish-rocket"}),updateSession(f.u.id,f.s.id,{action:"finish-rocket"})]);
         state=await sessionState(f.s.id,f.u.id);
-        assert.equal(state.build.spent,spent+replacementTotal,"Broken hardware is not refunded.");
+        assert.equal(state.build.spent,spent+2000000+replacementTotal,"Broken hardware is not refunded; the purchased camera is retained.");
         assert.equal(state.engineering.deadlineMonths,deadline+state.journey.construction.months,"Extend only once per repair attempt.");
         assert.equal(state.journey.construction.opened,true);
         await updateSession(f.u.id,f.s.id,{action:"start-construction"});
@@ -130,7 +130,7 @@ test("mission engineering and funding remain transactional and persistent",async
         assert.equal(state.build.elapsedMonths,elapsed+state.journey.construction.months);
         assert.equal(state.engineering.history.length,2);
         assert.deepEqual(state.engineering.history.map(h=>h.status),["FAILED","PASSED"]);
-        assert.equal(state.build.spent,spent+replacementTotal);
+        assert.equal(state.build.spent,spent+2000000+replacementTotal);
       }finally{await f.cleanup();}
     });
     await t.test("funding hides the draw, survives retries, settles once and caps concurrent requests at three",async()=>{

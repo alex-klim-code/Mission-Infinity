@@ -78,13 +78,11 @@ export function OptionDetail({ option, category, props, official, byOption, rema
       {option.parameters && (<><h3 className="kicker mt-5">Parameters</h3><p className="mt-1 whitespace-pre-line text-sm text-foreground/85 [overflow-wrap:anywhere]" data-testid="text-option-parameters">{option.parameters}</p></>)}
       {option.description && (<><h3 className="kicker mt-5">Description</h3><p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-foreground/85 [overflow-wrap:anywhere]" data-testid="text-option-description">{option.description}</p></>)}
       <RocketFuelCheck parts={[...official.values()].flatMap(id => byOption.get(id) ? [byOption.get(id)!] : [])} candidate={option} />
-      {option.qualityMethodology && (<><h3 className="kicker mt-5">Quality methodology</h3><p className="mt-1 whitespace-pre-line text-xs text-muted-foreground [overflow-wrap:anywhere]">{option.qualityMethodology}</p></>)}
       {option.referenceUrl && (
         <a href={option.referenceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex max-w-full items-center gap-1.5 text-xs text-ion hover:underline [overflow-wrap:anywhere]" data-testid="link-option-reference">
           <ExternalLink className="h-3.5 w-3.5 shrink-0" /> Reference
         </a>
       )}
-      <p className="mt-3 text-[11px] text-muted-foreground">Quality is a game score, not a reliability figure.</p>
 
       <h3 className="kicker mt-6">Crew proposals</h3>
       <ul className="mt-2 flex flex-wrap gap-1.5" data-testid="list-option-proposals">

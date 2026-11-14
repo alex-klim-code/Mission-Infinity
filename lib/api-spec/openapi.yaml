@@ -440,6 +440,9 @@ components:
       type: object
       required: [missions, presets, scenes, rocketCatalog]
       properties:
+        payloadProfiles:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/PayloadProfile' }
         rocketCatalog: { type: array, items: { $ref: '#/components/schemas/RocketSection' } }
         scientificInstruments: { type: array, items: { $ref: '#/components/schemas/ScientificInstrument' } }
         missions: { type: array, items: { $ref: '#/components/schemas/Mission' } }
@@ -568,20 +571,21 @@ components:
         siteId: { type: string, enum: [regolith, crater, ridge] }
         briefingDate: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
         quantityKg: { type: integer, minimum: 0, maximum: 30000 }
-        instrumentIds: { type: array, maxItems: 7, uniqueItems: true, items: { type: string } }
+        instrumentIds: { type: array, maxItems: 13, uniqueItems: true, items: { type: string } }
         optionId: { type: string }
         hullId: { type: string, enum: [falcon-shadow, titan-explorer, nova-prime] }
         ready: { type: boolean }
         expectedScene: { type: integer }
     ScientificInstrument:
       type: object
-      required: [id, name, price, massKg, powerW, quality, maxSciencePoints, description, scientificPurpose]
+      required: [id, name, group, price, massKg, powerW, quality, maxSciencePoints, description, scientificPurpose]
       properties:
         id: { type: string }
         name: { type: string }
+        group: { type: string, enum: [camera, sample-collection, sample-container, optional] }
         price: { type: integer }
         massKg: { type: number }
-        powerW: { type: number }
+        powerW: { type: [number, 'null'] }
         quality: { type: integer }
         maxSciencePoints: { type: integer }
         description: { type: string }
@@ -601,6 +605,18 @@ components:
         instrumentIds: { type: array, items: { type: string } }
         spent: { type: integer }
         proposals: { type: array, items: { $ref: '#/components/schemas/InstrumentProposal' } }
+        massLimitKg: { type: [number, 'null'], description: 'Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.' }
+        creditedEquipment: { type: array, items: { $ref: '#/components/schemas/ScienceEquipmentCredit' } }
+    ScienceEquipmentCredit:
+      type: object
+      required: [categoryId, optionId, name, group, massKg, quality]
+      properties:
+        categoryId: { type: string }
+        optionId: { type: string }
+        name: { type: string }
+        group: { type: string, enum: [sample-collection, sample-container] }
+        massKg: { type: [number, 'null'] }
+        quality: { type: [number, 'null'] }
     MissionJourney:
       type: object
       required: [construction, phase, weather, briefingDate, plan, flight, diagnostics, diagnosticsProgress, diagnosticsComplete, availableSciencePoints, maxSciencePoints]
@@ -930,6 +946,8 @@ components:
       type: object
       required: [id, categoryId, name, price, massKg, parameters, description, quality, dataStatus, source, originalCategory, referenceUrl, qualityMethodology, damageRisk]
       properties:
+        thrustN: { type: [number, 'null'] }
+        specificImpulseSeconds: { type: [number, 'null'] }
         damageRisk: { type: number, minimum: 0, maximum: 100, description: 'Gameplay damage chance in percent, resolved once after lunar arrival.' }
         fuel:
           anyOf:
@@ -948,6 +966,30 @@ components:
         originalCategory: { type: string }
         referenceUrl: { type: string }
         qualityMethodology: { type: string }
+    PayloadStage:
+      type: object
+      required: [id, componentCategoryIds, engineCategoryIds, fuelFraction]
+      properties:
+        id: { type: string }
+        componentCategoryIds: { type: array, items: { type: string } }
+        engineCategoryIds: { type: array, items: { type: string } }
+        fuelFraction: { type: number, minimum: 0, maximum: 1 }
+    PayloadBurn:
+      type: object
+      required: [id, stageId, phase, requiredDeltaVMps, separateStageIds]
+      properties:
+        id: { type: string }
+        stageId: { type: string }
+        phase: { type: string, enum: [LAUNCH, OUTBOUND, LUNAR_LANDING, EARTH_RETURN] }
+        requiredDeltaVMps: { type: number, exclusiveMinimum: 0 }
+        separateStageIds: { type: array, items: { type: string } }
+    PayloadProfile:
+      type: object
+      required: [source, stages, burns]
+      properties:
+        source: { type: string }
+        stages: { type: array, items: { $ref: '#/components/schemas/PayloadStage' } }
+        burns: { type: array, items: { $ref: '#/components/schemas/PayloadBurn' } }
     RocketCategory:
       type: object
       required: [id, name, options]

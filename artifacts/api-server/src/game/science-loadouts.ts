@@ -3,12 +3,17 @@ import { scientificInstruments } from "./scientific-instruments";
 import { sql } from "kysely";
 import {guardEngineeringPurchase} from "./engineering";
 import {effectiveMissionBudget} from "./mission-finance";
+import { scienceEquipmentCheck, scienceEquipmentCredits } from "./science-equipment";
+import { requireKnownPayloadFeasible, sessionPayloadCapacity } from "./payload-capacity";
 
 export async function scienceState(db: GameConnection, sessionId: string, activeIds: string[]) {
   const row = await db.selectFrom("game_session_science_loadouts").selectAll().where("session_id", "=", sessionId).executeTakeFirst();
+  const assembly = await db.selectFrom("game_session_rocket_assemblies").select("selections").where("session_id", "=", sessionId).executeTakeFirst();
   return {
     opened: row?.opened ?? false, completed: row?.completed ?? false,
     instrumentIds: row?.instrument_ids ?? [], spent: row?.spent ?? 0,
+    massLimitKg: (await sessionPayloadCapacity(db,sessionId)).maximumPayloadKg,
+    creditedEquipment: scienceEquipmentCredits(assembly?.selections ?? {}),
     proposals: Object.entries(row?.proposals ?? {}).filter(([id]) => activeIds.includes(id))
       .map(([playerId, instrumentIds]) => ({ playerId, instrumentIds })),
   };
@@ -20,7 +25,7 @@ export async function updateScience(
   userId: string, action: string, instrumentIds?: string[],acceptedIssueIds:string[]=[],
 ) {
   requireCondition(session.status === "MISSION_STARTED", 409, "Start the mission first.");
-  const assembly = await db.selectFrom("game_session_rocket_assemblies").select("completed").where("session_id", "=", session.id).executeTakeFirst();
+  const assembly = await db.selectFrom("game_session_rocket_assemblies").select(["completed", "selections"]).where("session_id", "=", session.id).executeTakeFirst();
   requireCondition(assembly?.completed, 409, "Complete Stage 1 before selecting scientific instruments.");
   const leader = userId === session.host_id;
   await db.insertInto("game_session_science_loadouts").values({ session_id: session.id })
@@ -32,7 +37,7 @@ export async function updateScience(
     return;
   }
   requireCondition(loadout.opened, 409, "Open Stage 2 first.");
-  requireCondition(Array.isArray(instrumentIds) && instrumentIds.length <= 7 &&
+  requireCondition(Array.isArray(instrumentIds) && instrumentIds.length <= scientificInstruments.length &&
     new Set(instrumentIds).size === instrumentIds.length &&
     instrumentIds.every(id => scientificInstruments.some(item => item.id === id)), 400, "Choose valid, unique scientific instruments.");
   const ids = scientificInstruments.filter(item => instrumentIds.includes(item.id)).map(item => item.id);
@@ -47,6 +52,9 @@ export async function updateScience(
     requireCondition(JSON.stringify(ids) === JSON.stringify(loadout.instrument_ids), 409, "The scientific loadout is already purchased.");
     return; // Retry cannot charge twice, including the empty loadout.
   }
+  const equipment = scienceEquipmentCheck(assembly.selections, ids);
+  requireCondition(equipment.missing.length === 0, 409, equipment.missing.map(item => item.warning).join(" "));
+  await requireKnownPayloadFeasible(db,session.id,{instrumentIds:ids});
   const cost = scientificInstruments.filter(item => ids.includes(item.id)).reduce((sum, item) => sum + item.price, 0);
   const build = await db.selectFrom("game_session_builds").selectAll().where("session_id", "=", session.id).executeTakeFirstOrThrow();
   const budget=await effectiveMissionBudget(db,session);

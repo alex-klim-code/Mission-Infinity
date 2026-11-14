@@ -4,7 +4,7 @@ import type { MissionFlightTelemetryManeuver } from '@workspace/api-client-react
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { HullVisual, useCalm, type Props } from '../rocket-shared';
-import { Earth, ModelNote, Moon, Stat, TickError, Waiting, bez, bezAngle, clamp01, fmtUtcDate, kg, num, useNow, type Pt } from './shared';
+import { Earth, Moon, Stat, TickError, Waiting, bez, bezAngle, clamp01, fmtUtcDate, kg, num, useNow, type Pt } from './shared';
 
 const E: Pt = { x: 120, y: 220 }, M: Pt = { x: 700, y: 110 }, C: Pt = { x: 360, y: -40 };
 const W = 800, H = 300;
@@ -45,7 +45,7 @@ export function FlightView({ session, isHost, act, pending, pendingAction, tickE
           <div className="kicker mb-1">{plan?.routeLabel ?? 'Earth / Moon / Earth'} / outbound leg</div>
           <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-5xl">{ready ? 'Ready for launch' : failed ? 'Mission aborted' : arrived ? 'Moon arrival' : 'In flight'}</h1>
           {ready && <p className="mt-1 text-xs text-muted-foreground" data-testid="text-launch-hold">{fmtUtcDate(j.briefingDate)} / Mission Day 1 — Engines off. Waiting for Start.</p>}
-          {ready && weather && <p className="mt-1 text-xs text-muted-foreground">Launch site weather: {weather.condition.replaceAll('_', ' ').toLowerCase()}.{weather.condition === 'RAIN' && ' Rain gives a 25% chance of a failed launch needing repairs (game balance rule, not a real forecast).'}</p>}
+          {ready && weather && <p className="mt-1 text-xs text-muted-foreground">Launch site weather: {weather.condition.replaceAll('_', ' ').toLowerCase()}.{weather.condition === 'RAIN' && ' Rain gives a 25% chance of a failed launch needing repairs.'}</p>}
         </div>
         {ready ? isHost ? <HudButton variant="burn" disabled={pending} loading={pendingAction === 'launch-flight'} onClick={() => act({ action: 'launch-flight' })} data-testid="button-launch"><Rocket className="h-4 w-4" /> Start</HudButton> : <Waiting testid="text-launch-guest">Waiting for the Leader to press Start</Waiting> : <div className="text-right">
           <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Mission day</div>
@@ -100,7 +100,6 @@ export function FlightView({ session, isHost, act, pending, pendingAction, tickE
             : <Waiting testid="text-check-guest">Waiting for the Leader to run diagnostics</Waiting>}
         </div>
       )}
-      <div className="mt-4"><ModelNote>Positions are illustrative. Speed, mass and fuel come from Mission Control's simplified training model using your engines, mass and loaded fuel; propellant is not consumed while coasting.</ModelNote></div>
     </div>
   );
 }

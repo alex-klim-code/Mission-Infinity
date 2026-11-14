@@ -39,7 +39,7 @@ export interface SessionAction {
    * @maximum 30000
    */
   quantityKg?: number;
-  /** @maxItems 7 */
+  /** @maxItems 13 */
   instrumentIds?: string[];
   optionId?: string;
   hullId?: SessionActionHullId;

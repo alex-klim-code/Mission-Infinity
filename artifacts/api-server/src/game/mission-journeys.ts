@@ -9,6 +9,7 @@ import {beginEngineering,finishEngineering} from "./engineering";
 import { resolveHardwareHealth } from "./hardware-health";
 import { flightDamageAlerts, scheduleFlightDamage } from "./flight-damage";
 import { makeLaunchAttempt, repairWeatherLaunch } from "./weather-launch";
+import { requireKnownPayloadFeasible } from "./payload-capacity";
 
 const json = <T>(value: T) => sql<T>`${JSON.stringify(value)}::jsonb`;
 const INIT_MS = 900, PER_INSTRUMENT_MS = 900;
@@ -144,6 +145,7 @@ export async function updateJourney(db: GameConnection, session: Session, userId
     const assembly = await db.selectFrom("game_session_rocket_assemblies").select("selections").where("session_id","=",session.id).executeTakeFirstOrThrow();
     const build = await db.selectFrom("game_session_builds").select("selected_hull_id").where("session_id","=",session.id).executeTakeFirstOrThrow();
     const science = await db.selectFrom("game_session_science_loadouts").select("instrument_ids").where("session_id","=",session.id).executeTakeFirstOrThrow();
+    await requireKnownPayloadFeasible(db,session.id,{instrumentIds:science.instrument_ids,fuelKg:fuel.loaded_kg});
     const plan = {...makeFlightPlan(build.selected_hull_id!,assembly.selections,science.instrument_ids,fuel.loaded_kg),launchAttempts:row.plan?.launchAttempts??[]};
     const lastFailure=plan.launchAttempts.filter(a=>a.failed).at(-1);
     const calendarStart=lastFailure?new Date(Date.parse(`${lastFailure.briefingDate}T00:00:00Z`)+86400000).toISOString().slice(0,10):now.toISOString().slice(0,10);
@@ -169,6 +171,7 @@ export async function updateJourney(db: GameConnection, session: Session, userId
     if (row.phase==="FLIGHT") return;
     requireCondition(row.phase==="MISSION_DAY",409,"Confirm the briefing date before launch.");
     requireCondition(row.plan,409,"Complete the flight briefing before launch.");
+    await requireKnownPayloadFeasible(db,session.id,{fuelKg:fuel.loaded_kg});
     const assembly=await db.selectFrom("game_session_rocket_assemblies").select("selections").where("session_id","=",session.id).executeTakeFirstOrThrow();
     const build=await db.selectFrom("game_session_builds").select(["selected_hull_id","spent"]).where("session_id","=",session.id).executeTakeFirstOrThrow();
     const science=await db.selectFrom("game_session_science_loadouts").select("spent").where("session_id","=",session.id).executeTakeFirstOrThrow();

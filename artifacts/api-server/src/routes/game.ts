@@ -24,6 +24,7 @@ import {GetDemoPlanResponse} from "@workspace/api-zod";
 import {PreviewEngineeringBody,PreviewEngineeringResponse} from "@workspace/api-zod";
 import {gameDb} from "../game/database";
 import { rocketCatalog } from "../game/rocket-catalog";
+import { lunaPayloadProfiles } from "../game/luna-payload-profiles";
 import { scientificInstruments } from "../game/scientific-instruments";
 import { inviteToSession, respondToInvite } from "../game/invitations";
 import { sendSessionMessage } from "../game/session-messages";
@@ -83,7 +84,7 @@ gameApi.setErrorHandler((error, _req, reply) => {
 });
 
 gameApi.get("/api/healthz", async () => ({ status: "ok" }));
-gameApi.get("/api/game/catalog", async () => GetGameCatalogResponse.parse({...await getCatalog(), rocketCatalog, scientificInstruments}));
+gameApi.get("/api/game/catalog", async () => GetGameCatalogResponse.parse({...await getCatalog(), rocketCatalog, scientificInstruments, payloadProfiles:lunaPayloadProfiles}));
 gameApi.get("/api/game/me", async req => GetPlayerResponse.parse(await getAccount(req.playerId)));
 gameApi.get("/api/game/avatar-config", async () => GetAvatarConfigResponse.parse(getAvatarConfig()));
 gameApi.post("/api/game/avatar-uploads", async (req, reply) => {

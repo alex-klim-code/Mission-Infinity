@@ -135,11 +135,3 @@ export function bezAngle(a: Pt, c: Pt, b: Pt, t: number) {
   const dy = 2 * (1 - t) * (c.y - a.y) + 2 * t * (b.y - c.y);
   return (Math.atan2(dy, dx) * 180) / Math.PI;
 }
-
-export function ModelNote({ children, testid = 'text-gameplay-model' }: { children: React.ReactNode; testid?: string }) {
-  return (
-    <p className="rounded-md border border-[hsl(40_90%_60%/.35)] bg-[hsl(40_90%_60%/.06)] p-2.5 text-[11px] leading-snug text-[hsl(40_80%_78%)]" data-testid={testid}>
-      <span className="mr-1 font-mono text-[9px] font-bold uppercase tracking-widest">Gameplay model.</span>{children}
-    </p>
-  );
-}

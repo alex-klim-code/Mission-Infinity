@@ -1,4 +1,5 @@
 import { requireCondition, type GameConnection } from "./database";
+import { requireKnownPayloadFeasible } from "./payload-capacity";
 import {effectiveMissionBudget} from "./mission-finance";
 
 // Explicit gameplay values from the fueling brief, not tank engineering data.
@@ -69,8 +70,10 @@ export async function updateFueling(
   const increment = row.flowing_at ? fuelIncrement(row.loaded_kg, row.target_kg, now.getTime() - row.flowing_at.getTime(), remaining) : 0;
   const loaded = row.loaded_kg + increment;
   const cost = row.spent + increment * fuelSettings.pricePerKg;
-  if (action === "confirm-fuel")
+  if (action === "confirm-fuel") {
     requireCondition(loaded > 0 && loaded === row.target_kg, 409, "Load the selected fuel quantity before confirming.");
+    await requireKnownPayloadFeasible(db,session.id,{fuelKg:loaded});
+  }
   const continues = action === "fuel-tick" && !!row.flowing_at &&
     now.getTime() - row.flowing_at.getTime() < heartbeatLimitMs && loaded < row.target_kg && remaining - increment * fuelSettings.pricePerKg >= fuelSettings.pricePerKg;
   if (increment) await db.updateTable("game_session_builds").set({ spent: build.spent + increment * fuelSettings.pricePerKg }).where("session_id", "=", session.id).execute();

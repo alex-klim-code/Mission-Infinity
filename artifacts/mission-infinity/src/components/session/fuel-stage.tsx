@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as RKeyboardEvent, type PointerEvent as RPointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, ArrowRight, Check, CheckCircle2, Fuel, Info, Link2, Lock, Plug, Unplug } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, Fuel, Link2, Lock, Plug, Unplug } from 'lucide-react';
 import type { SessionAction } from '@workspace/api-client-react';
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
@@ -24,13 +24,6 @@ function Row({ label, value, tone, testid }: { label: string; value: string; ton
     </div>
   );
 }
-
-const Disclaimer = () => (
-  <p className="flex gap-2 rounded-md border border-white/10 bg-void/60 p-2.5 text-[11px] leading-snug text-muted-foreground" data-testid="text-fuel-disclaimer">
-    <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ion" />
-    Training-game capacity, prices and pump speed—not certified engineering or fuel-chemistry data. Stage 1 compatibility checks still apply.
-  </p>
-);
 
 export function FuelStage({ session, mission, isHost, act, pending, pendingAction }: Props) {
   const calm = useCalm();
@@ -268,7 +261,6 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
                 ? <HudButton variant="burn" loading={pendingAction === 'open-briefing'} disabled={pending} onClick={() => act({ action: 'open-briefing' })} data-testid="button-open-briefing">Continue to Mission Briefing <ArrowRight className="h-4 w-4" /></HudButton>
                 : <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-fuel-next">Waiting for the Leader to open the Mission Briefing.</p>}
             </div>
-            <div className="mt-4"><Disclaimer /></div>
           </div>
         </motion.div>
       </div>
@@ -277,11 +269,11 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
 
   /* ---------- active station ---------- */
   return (
-    <div className="relative z-10" data-testid="panel-fuel-station">
-      <div className="mx-auto max-w-6xl px-3 py-5 md:px-6">
+    <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden" data-testid="panel-fuel-station">
+      <div className="flex min-h-0 w-full flex-1 flex-col px-3 py-3 md:px-4">
         <div className="kicker mb-1 flex items-center gap-2"><Fuel className="h-3.5 w-3.5 text-burn" /> Propellant operations</div>
-        <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-4xl" data-testid="text-fuel-title">Fuel Loading Station</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Refuel Your Rocket Before Launch</p>
+        <h1 className="shrink-0 font-display text-2xl font-bold uppercase leading-tight sm:text-3xl" data-testid="text-fuel-title">Fuel Loading Station</h1>
+        <p className="mt-1 shrink-0 text-xs text-muted-foreground">Refuel Your Rocket Before Launch</p>
         {stationError && <p role="alert" className="mt-3 rounded-md border border-destructive/40 bg-void/90 p-3 text-sm text-destructive" data-testid="alert-fuel-command">
           Fuel station command failed. Pumping has stopped. Your saved fuel load is safe. Check your connection and try again.
         </p>}
@@ -289,9 +281,9 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
           <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground" data-testid="text-fuel-leader-only"><Lock className="h-3.5 w-3.5" /> Only the Leader operates the pump. You are watching live telemetry.</p>
         )}
 
-        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_290px]">
+        <div tabIndex={0} role="region" aria-label="Fueling workspace" className="scroll-thin mt-3 grid min-h-0 flex-1 items-start gap-3 overflow-y-auto overscroll-contain lg:grid-cols-[minmax(0,1fr)_250px] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden">
           {/* ---------- pad ---------- */}
-          <div ref={stageRef} className="glass hud-corners scanline relative h-[440px] touch-none select-none overflow-hidden rounded-lg" data-testid="panel-fuel-pad">
+          <div ref={stageRef} className="glass hud-corners scanline relative h-[clamp(12rem,42dvh,26rem)] touch-none select-none overflow-hidden rounded-lg lg:h-full lg:min-h-0" data-testid="panel-fuel-pad">
             {/* pump */}
             <motion.div
               className="absolute bottom-6 left-3 w-[clamp(90px,16%,120px)] rounded-md border border-white/15 bg-[linear-gradient(180deg,hsl(220_40%_14%),hsl(224_50%_7%))] p-2"
@@ -366,7 +358,7 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
           </div>
 
           {/* ---------- dashboard ---------- */}
-          <aside className="space-y-3">
+          <aside tabIndex={0} role="region" aria-label="Fuel dashboard and quantity" className="scroll-thin min-h-0 space-y-3 overscroll-contain lg:h-full lg:overflow-y-auto">
             <div className="glass rounded-lg p-3" data-testid="panel-fuel-dashboard">
               <div className="kicker mb-1">Fuel dashboard</div>
               <dl>
@@ -431,8 +423,11 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
               )}
             </div>
 
+          </aside>
+        </div>
             {isHost && (
-              <div className="space-y-2">
+              <div className="shrink-0 border-t border-white/10 bg-void/95 pt-2 mt-3" data-testid="panel-fuel-actions">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-2">
                 <button
                   type="button"
                   disabled={holdDisabled}
@@ -445,27 +440,22 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
                   onKeyUp={(e) => { if (e.key === ' ' || e.key === 'Enter') release(); }}
                   onBlur={release}
                   aria-pressed={holding}
-                  className={cn('relative w-full touch-none select-none overflow-hidden rounded-md border py-4 font-display text-sm font-bold uppercase tracking-[.2em] transition-colors disabled:opacity-40',
+                  className={cn('relative min-h-10 w-full touch-none select-none overflow-hidden rounded-md border px-2 py-2 font-display text-[11px] font-bold uppercase tracking-wider transition-colors disabled:opacity-40',
                     holding ? 'border-ion bg-ion/25 text-ion' : 'border-burn bg-burn text-void')}
                   data-testid="button-fuel-hold"
                 >
                   <span className="relative">{holding ? 'Fueling... release to stop' : !connected ? 'Connect hose first' : f.loadedKg >= f.targetKg ? 'Target reached' : 'Hold to refuel'}</span>
                 </button>
-                <p className="text-center font-mono text-[10px] text-muted-foreground">Hold with mouse, touch, Space or Enter</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <HudButton variant="ghost" disabled={!connected || f.loading || pending} loading={pendingAction === 'disconnect-fuel-hose'} onClick={disconnect} data-testid="button-fuel-disconnect">
+                  <HudButton variant="ghost" className="min-w-0 px-2 text-[11px] tracking-wider" disabled={!connected || f.loading || pending} loading={pendingAction === 'disconnect-fuel-hose'} onClick={disconnect} data-testid="button-fuel-disconnect">
                     <Unplug className="h-4 w-4" /> Disconnect
                   </HudButton>
-                  <HudButton variant="ion" disabled={!done || pending} loading={pendingAction === 'confirm-fuel'} onClick={() => send({ action: 'confirm-fuel' })} data-testid="button-fuel-confirm">
+                  <HudButton variant="ion" className="min-w-0 px-2 text-[11px] tracking-wider" disabled={!done || pending} loading={pendingAction === 'confirm-fuel'} onClick={() => send({ action: 'confirm-fuel' })} data-testid="button-fuel-confirm">
                     <CheckCircle2 className="h-4 w-4" /> Confirm fuel load
                   </HudButton>
                 </div>
-                {done && <p className="text-[11px] text-muted-foreground" data-testid="text-fuel-ready">Target reached. Confirm the fuel load, or raise the target to keep pumping. Cost is already charged.</p>}
+                <p className="mt-1 text-center text-[10px] text-muted-foreground" data-testid={done ? 'text-fuel-ready' : undefined}>{done ? 'Target reached. Confirm the load — no extra charge.' : 'Hold to refuel · Mouse, touch, Space or Enter'}</p>
               </div>
             )}
-            <Disclaimer />
-          </aside>
-        </div>
       </div>
     </div>
   );

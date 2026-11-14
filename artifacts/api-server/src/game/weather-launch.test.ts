@@ -79,7 +79,8 @@ test("weather failure, paid repair and fresh fueling preserve receipts and canno
     assert.equal(repaired.build.spent,155240000);
     assert.equal(repaired.build.elapsedMonths,14);
     assert.deepEqual(repaired.assembly,failed.assembly);
-    assert.deepEqual(repaired.science,failed.science);
+    assert.deepEqual({...repaired.science,massLimitKg:null},{...failed.science,massLimitKg:null});
+    assert.equal(repaired.science?.massLimitKg,0,"Empty repaired tanks update the capacity reference without changing the receipt.");
     assert.equal(repaired.fueling.loadedKg,0);
     assert.equal(repaired.fueling.completed,false);
     assert.equal(repaired.fueling.opened,true);

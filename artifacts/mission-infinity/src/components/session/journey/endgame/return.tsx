@@ -4,7 +4,7 @@ import type { MissionOperations } from '@workspace/api-client-react';
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { HullVisual, formatExact, useCalm, type Props } from '../../rocket-shared';
-import { Earth, ModelNote, Moon, Stat, TickError, Waiting, bez, bezAngle, clamp01, kg, num, useNow, type Pt } from '../shared';
+import { Earth, Moon, Stat, TickError, Waiting, bez, bezAngle, clamp01, kg, num, useNow, type Pt } from '../shared';
 import { compOf } from './common';
 import { HardwareCheckList } from './hardware-checks';
 
@@ -240,7 +240,6 @@ export function ReturnGameplayStage(props: Props & Extra) {
       )}
       {ph === 'RESULTS' && <Results {...props} ops={ops} />}
       {tickError && <TickError onRetry={onRetry} testid="alert-return-tick" />}
-      <div className="mt-4"><ModelNote>Fuel, heating and recovery outcomes come from Mission Control using your selected components. Visuals are illustrative.</ModelNote></div>
     </div>
   );
 }

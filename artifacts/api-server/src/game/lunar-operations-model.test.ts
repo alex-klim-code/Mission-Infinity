@@ -6,7 +6,7 @@ import { makeFlightPlan } from "./mission-flight-model";
 import { advanceOperations, makeOperations, missionResults, recommendedThrust } from "./lunar-operations-model";
 
 const selections=Object.fromEntries(componentCategories.map(c=>[c.id,c.options.reduce((a,b)=>(a.quality??0)>(b.quality??0)?a:b).id]));
-const diagnostics=scientificInstruments.map(i=>({instrumentId:i.id,name:i.name,quality:i.quality,status:"OPERATIONAL" as const,
+const diagnostics=scientificInstruments.filter(i=>i.powerW!==null).map(i=>({instrumentId:i.id,name:i.name,quality:i.quality,status:"OPERATIONAL" as const,
   maxSciencePoints:i.maxSciencePoints,availableSciencePoints:i.maxSciencePoints,failure:null,progress:1}));
 const plan=makeFlightPlan("falcon-shadow",selections,[],30000);
 const time=Date.UTC(2026,10,14);
@@ -15,7 +15,7 @@ test("instrument validation distinguishes missing, broken and damaged; no analyz
   const empty=makeOperations(selections,[],10000);
   assert.equal(empty.hasCamera,false);assert.equal(empty.canCollect,true);
   assert.equal(empty.equipment.find(i=>i.id==="advanced-sample-analyzer")?.available,false);
-  assert.ok(empty.warnings.some(w=>w.startsWith("NO CAMERA INSTALLED")));
+  assert.ok(empty.warnings.some(w=>w.startsWith("NO VIDEO SIGNAL")));
   assert.ok(empty.warnings.some(w=>w.startsWith("SPECTROMETER MISSING")));
   const broken=makeOperations(selections,[{...diagnostics[0],status:"CRITICAL_FAILURE",availableSciencePoints:0}],10000);
   assert.equal(broken.hasCamera,false);
@@ -42,6 +42,34 @@ test("manual thrust physics permits a controlled landing and rejects a ballistic
   ballistic.landing={...ballistic.landing,status:"DESCENDING",thrust:0,startedAt:new Date(time).toISOString(),lastTickAt:new Date(time).toISOString()};
   const crash=advanceOperations("LANDING",ballistic,plan,time+30000);
   assert.equal(crash.phase,"LANDING_FAILED");assert.ok(crash.operations.failure?.includes("Hard landing"));
+});
+
+test("landing assist permits ordinary fixed throttle without continuous precision input",()=>{
+  for(const thrust of [0,30,50,100]){
+    let o=makeOperations(selections,diagnostics,10000);
+    let phase:"LANDING"|"SAMPLE_COLLECTION"|"LANDING_FAILED"="LANDING";
+    o.landing={...o.landing,status:"DESCENDING",thrust,startedAt:new Date(time).toISOString(),lastTickAt:new Date(time).toISOString()};
+    for(let t=1000;t<=150000&&phase==="LANDING";t+=1000){
+      // Even repeatedly moving the slider to an extreme stays controllable.
+      o.landing.thrust=thrust;
+      const result=advanceOperations(phase,o,plan,time+t);
+      o=result.operations;phase=result.phase as typeof phase;
+    }
+    assert.equal(phase,"SAMPLE_COLLECTION",`Throttle ${thrust}% should be forgiving`);
+    assert.equal(o.landing.status,"LANDED");
+    assert.ok(o.landing.fuelUsedKg>0);
+    assert.ok(Math.abs(o.remainingFuelKg+o.landing.fuelUsedKg-10000)<.1);
+  }
+});
+
+test("landing assist also guides saved descents across long gaps and slower engines",()=>{
+  const o=makeOperations(selections,diagnostics,10000);
+  o.components=o.components.map(c=>c.categoryId==="lunar-descent-engine"?{...c,quality:55}:c);
+  o.landing={...o.landing,status:"DESCENDING",velocityMps:8,thrust:0,startedAt:new Date(time).toISOString(),lastTickAt:new Date(time).toISOString()};
+  const result=advanceOperations("LANDING",o,plan,time+100000);
+  assert.equal(result.phase,"SAMPLE_COLLECTION");
+  assert.equal(result.operations.landing.status,"LANDED");
+  assert.ok(result.operations.remainingFuelKg<10000);
 });
 
 test("collections are resumable, unique and cannot farm samples or Science Points",()=>{
@@ -85,8 +113,10 @@ test("selected thermal protection and recovery system determine capsule survival
 });
 
 test("Stage 8 uses explicit weights totaling 100 and distinguishes collected from recovered samples",()=>{
-  const o=makeOperations(selections,diagnostics,3000);
-  Object.assign(o,{sampleMassKg:10,scienceEarned:1540,collectedSites:["regolith","crater","ridge"],returnProgress:1,returnManeuver:"LANDED_ON_EARTH",recoveryStartedAt:new Date(time).toISOString(),missionDay:14});
+  const fullProgram=scientificInstruments.map(i=>({instrumentId:i.id,name:i.name,quality:i.quality,status:"OPERATIONAL" as const,
+    maxSciencePoints:i.maxSciencePoints,availableSciencePoints:i.maxSciencePoints,failure:null,progress:1}));
+  const o=makeOperations(selections,fullProgram,3000);
+  Object.assign(o,{sampleMassKg:10,scienceEarned:fullProgram.reduce((sum,i)=>sum+i.maxSciencePoints,0),collectedSites:["regolith","crater","ridge"],returnProgress:1,returnManeuver:"LANDED_ON_EARTH",recoveryStartedAt:new Date(time).toISOString(),missionDay:14});
   o.landing.status="LANDED";
   const all=missionResults(o,plan,123456789);
   assert.equal(all.objectives.reduce((s,i)=>s+i.weight,0),100);assert.equal(all.completionPercent,100);

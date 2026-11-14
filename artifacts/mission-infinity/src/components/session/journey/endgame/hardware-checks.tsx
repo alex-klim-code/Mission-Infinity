@@ -45,7 +45,6 @@ export function ReturnCheckView({ session, isHost, act, pending, pendingAction, 
         <h2 className="font-display text-lg font-bold uppercase">Pre-return hardware check</h2>
         <span className="ml-auto font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{ready ? `${checks.length} parts / ${damaged.length} damaged` : 'Awaiting data'}</span>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">Damage was resolved once by Mission Control after lunar arrival. Percentages are game risk values, not real-world reliability.</p>
 
       {!ready ? (
         <div className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-white/10 bg-void/70 p-3" role="status" data-testid="status-checks-pending">

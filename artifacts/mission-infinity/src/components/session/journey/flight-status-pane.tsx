@@ -1,3 +1,4 @@
+import { SessionPayloadCapacityPanel } from '../payload-capacity-panel';
 import { useMemo, useState } from 'react';
 import { AlertOctagon, ChevronDown } from 'lucide-react';
 import { useGetGameCatalog } from '@workspace/api-client-react';
@@ -81,7 +82,6 @@ export function FlightStatusPane({ session }: Props) {
         <p className="mt-2 font-mono text-xs" data-testid="text-pane-science">Science potential <span className="text-ion">{j?.diagnosticsComplete ? j.availableSciencePoints : '--'}</span> / {j?.maxSciencePoints ?? 0}</p>
         {o&&<p className="mt-1 font-mono text-xs text-ion">{o.sampleMassKg.toFixed(2)} kg samples / {o.scienceEarned} Science Points earned</p>}
       </div>
-      <p className="text-[10px] leading-snug text-muted-foreground">Values from Mission Control's simplified training model, not a real orbital simulation.</p>
     </>
   );
 
@@ -101,6 +101,7 @@ export function FlightStatusPane({ session }: Props) {
         {open && <div className="scroll-thin max-h-[45dvh] space-y-3 overflow-y-auto px-3 pb-3">{stats}{fuelBar}{details}</div>}
       </div>
       <aside className="scroll-thin hidden min-h-0 space-y-3 overflow-y-auto border-l border-white/10 bg-void/60 p-4 backdrop-blur-xl md:order-2 md:block" data-testid="panel-flight-status">
+        <SessionPayloadCapacityPanel session={session}/>
         <div className="kicker">Rocket Status</div>
         <HullVisual hullId={hull?.id} className="h-48 w-full lg:h-60" />
         <div className="text-center font-display text-lg font-bold uppercase tracking-wider" data-testid="text-pane-hull">{hull?.name ?? 'Rocket'}</div>

@@ -5,7 +5,7 @@ import type { MissionOperations, SessionActionSiteId } from '@workspace/api-clie
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { useCalm, type Props } from '../../rocket-shared';
-import { ModelNote, Stat, TickError, Waiting, clamp01, kg, num, useNow } from '../shared';
+import { Stat, TickError, Waiting, clamp01, kg, num, useNow } from '../shared';
 import { ReturnCheckView } from './hardware-checks';
 import { LanderSvg, Warn, compOf, landerVariant } from './common';
 
@@ -101,7 +101,9 @@ function ThrustControl({ ops, isHost, act, pending }: { ops: MissionOperations; 
           onChange={(e) => change(Number(e.target.value))} className="w-full accent-[hsl(28_100%_58%)]" data-testid="input-landing-thrust" />
         <div className="pointer-events-none absolute -top-1 h-5 w-0.5 bg-ion" style={{ left: `${ops.landing.recommendedThrust}%` }} aria-hidden />
       </div>
-      <p className="mt-1 font-mono text-[10px] text-ion" data-testid="text-recommended-thrust">Guidance suggests {Math.round(ops.landing.recommendedThrust)}% / touchdown at 4 m/s or less</p>
+      <p className="mt-1 font-mono text-[10px] text-ion" data-testid="text-recommended-thrust">Guidance suggests {Math.round(ops.landing.recommendedThrust)}% / touchdown at 6 m/s or less</p>
+      <p className="mt-1 text-[11px] text-muted-foreground">Landing assist stabilizes thrust and helps slow your descent.</p>
+      {isHost&&<HudButton variant="ion" className="mt-2 w-full" disabled={disabled||pending} onClick={()=>change(ops.landing.recommendedThrust)} data-testid="button-landing-guidance">Use recommended thrust</HudButton>}
       {!isHost && <p className="mt-1 text-[11px] text-muted-foreground">The Leader is flying the descent.</p>}
     </div>
   );
@@ -243,7 +245,7 @@ export function LunarGameplayStage(props: Props & Extra) {
   const engine = compOf(ops.components, 'descent');
   const blind = !ops.hasCamera && !ops.alternativeNavigation;
   const crashed = L.status === 'CRASHED';
-  const vTone = L.velocityMps > 4 ? 'text-destructive' : 'text-[hsl(150_70%_55%)]';
+  const vTone = L.velocityMps > 6 ? 'text-destructive' : 'text-[hsl(150_70%_55%)]';
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 md:px-8" data-testid="panel-journey-lunar-gameplay">
@@ -279,7 +281,7 @@ export function LunarGameplayStage(props: Props & Extra) {
               {L.status === 'DESCENDING' && <ThrustControl ops={ops} isHost={isHost} act={act} pending={pending} />}
               {L.status === 'READY' && (
                 <div className="rounded-md border border-white/10 bg-void/70 p-3">
-                  <p className="text-sm text-muted-foreground"><Gauge className="mr-1 inline h-4 w-4 text-ion" />Once the burn starts, gravity pulls the lander down in real time. Hold thrust near guidance and slow to 4 m/s or less before touchdown.</p>
+                  <p className="text-sm text-muted-foreground"><Gauge className="mr-1 inline h-4 w-4 text-ion" />Landing assist is active. Follow the guidance marker or use recommended thrust. Aim for 6 m/s or less at touchdown.</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {isHost ? <>
                       <HudButton variant="burn" disabled={pending || blind} loading={pendingAction === 'start-landing'} onClick={() => act({ action: 'start-landing' })} data-testid="button-start-landing"><PlaneLanding className="h-4 w-4" /> Begin powered descent</HudButton>
@@ -303,7 +305,6 @@ export function LunarGameplayStage(props: Props & Extra) {
       )}
       {phase === 'SAMPLE_COLLECTION' && !ops.returnCheckOpened && <div className="mt-4"><EquipmentPanel ops={ops} /></div>}
       {phase === 'SAMPLE_COLLECTION' && tickError && <TickError onRetry={onRetry} testid="alert-collection-tick" />}
-      <div className="mt-4"><ModelNote>Descent physics, sample mass and science are computed by Mission Control. The scene is illustrative.</ModelNote></div>
       {!calm && L.status === 'DESCENDING' && <motion.span className="sr-only">descending</motion.span>}
     </div>
   );

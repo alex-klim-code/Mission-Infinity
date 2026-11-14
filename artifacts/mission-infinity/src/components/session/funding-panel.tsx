@@ -123,10 +123,10 @@ function FundingDialog({ open, onOpenChange, session, isHost, ticker }: {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85dvh] w-[calc(100vw-1.5rem)] max-w-lg flex-col gap-0 overflow-hidden border-ion/25 bg-card p-0" data-testid="dialog-funding">
         <div className="border-b border-white/10 p-4 pr-12">
-          <div className="kicker text-ion">Program office / simulation</div>
+          <div className="kicker text-ion">Program office</div>
           <DialogTitle className="mt-1 font-display text-xl font-bold uppercase tracking-wider">Mission funding</DialogTitle>
-          <DialogDescription className="mt-1 text-xs text-muted-foreground" data-testid="text-funding-disclaimer">
-            A game simulation of a supplementary budget review. It is not real NASA funding, no agency is contacted and no payment is made.
+          <DialogDescription className="mt-1 text-xs text-muted-foreground">
+            Choose an amount and explain why your mission needs more funding.
           </DialogDescription>
         </div>
         <ScrollPanel className="min-h-0 flex-1" innerClassName="space-y-4 p-4" label="Funding">

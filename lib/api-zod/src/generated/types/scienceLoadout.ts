@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { InstrumentProposal } from "./instrumentProposal";
+import type { ScienceEquipmentCredit } from "./scienceEquipmentCredit";
 
 export interface ScienceLoadout {
   opened: boolean;
@@ -13,4 +14,10 @@ export interface ScienceLoadout {
   instrumentIds: string[];
   spent: number;
   proposals: InstrumentProposal[];
+  /**
+   * Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.
+   * @nullable
+   */
+  massLimitKg?: number | null;
+  creditedEquipment?: ScienceEquipmentCredit[];
 }

@@ -106,7 +106,7 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
   const canStart = others.filter((p) => p.connected).every((p) => p.ready);
   const slots = Array.from({ length: 4 }, (_, i) => session.players[i]);
   return (
-    <div className="grain relative flex h-[100dvh] flex-col overflow-hidden bg-background">
+    <div className="grain fixed inset-0 flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-background">
       {mission && <img src={imgUrl(mission.image)} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-30" />}
       <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
       <Starfield density={0.5} />
@@ -245,7 +245,7 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
 
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
+    <div className="fixed inset-0 flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-background">
       <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
       <div className="flex gap-1 bg-void/80 px-3 py-1.5 md:px-8" aria-label={`Scene ${idx + 1} of ${scenes.length}`}>
         {scenes.map((s) => (
@@ -359,7 +359,7 @@ function Build({ session, mission, me, isHost, openBadge }: StageProps) {
     return { on: leader || n > 0, label: leader ? 'Leader' : n ? `${n} proposed` : 'Browsing' };
   };
   return (
-    <div className="grain flex h-[100dvh] flex-col overflow-hidden bg-background">
+    <div className="grain fixed inset-0 flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-background">
       <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
       <main className="relative min-h-0 flex-1 overflow-hidden" data-testid={`panel-build-${completed ? 'completed' : screen.toLowerCase()}`}>
         <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns pointer-events-none fixed inset-0 h-full w-full object-cover opacity-25" />

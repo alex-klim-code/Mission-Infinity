@@ -116,7 +116,7 @@ export function CrewBar({ session, flag, meId, onOpenBadge, children }: { sessio
   return (
     <div className="relative z-20 shrink-0 border-t border-white/[.08] bg-void/80 backdrop-blur-xl" data-testid="bar-crew">
       {children}
-      <div className="mx-auto flex max-w-6xl flex-wrap items-end gap-2 px-3 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 md:px-8">
+      <div className="flex w-full flex-wrap items-end gap-2 px-3 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 md:px-4">
         <ul className="flex min-w-0 flex-1 basis-[3.75rem] items-end overflow-x-auto gap-0.5 sm:basis-[12rem] sm:gap-3" aria-label="Crew">
           {crew.map((sp) => {
             const leader = sp.player.id === session.hostId;

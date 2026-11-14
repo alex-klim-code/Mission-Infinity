@@ -11,7 +11,7 @@ export function RocketFuelCheck({ parts, candidate }: { parts: RocketComponent[]
   return (
     <section className="my-3 space-y-2 rounded-md border border-burn/30 bg-burn/5 p-3 text-xs [overflow-wrap:anywhere]" aria-label="Main propulsion compatibility" data-testid={candidate?'panel-option-fuel':'panel-design-fuel'}>
       <h3 className="font-semibold text-burn">Main engine / tank propellant mismatch</h3>
-      {conflicts.map(pair=><p key={`${pair.engine.id}:${pair.tank.id}`}>{pair.engine.name} requires {fuelDescription(pair.engine)}; {pair.tank.name} specifies {fuelDescription(pair.tank)}. In this training model, the main tank must supply the main engine.</p>)}
+      {conflicts.map(pair=><p key={`${pair.engine.id}:${pair.tank.id}`}>{pair.engine.name} requires {fuelDescription(pair.engine)}; {pair.tank.name} specifies {fuelDescription(pair.tank)}. The main tank must supply the main engine.</p>)}
       <p>Purchase will ask you to review and explicitly accept this incompatibility. No money is charged before confirmation.</p>
     </section>
   );

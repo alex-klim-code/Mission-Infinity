@@ -1,6 +1,6 @@
 import { ScrollPanel } from './scroll-panel';
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, ArrowRight, Loader2, RefreshCw, ShieldAlert, Wrench } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { usePreviewEngineering, useGetGameCatalog, type CompatibilityIssue, type EngineeringAdvice, type RocketComponent } from '@workspace/api-client-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { HudButton } from '@/components/ui-kit';
@@ -153,10 +153,6 @@ export function EngineeringGuardProvider({ props, byOption, children }: { props:
                   );
                 })}
                 {c?.kind === 'science' && <p className="text-xs text-muted-foreground">Cancel to adjust the instrument selection, or purchase anyway and accept the risk.</p>}
-                <p className="flex gap-2 rounded-md border border-white/10 bg-void/60 p-2.5 text-[11px] leading-snug text-muted-foreground" data-testid="text-engineering-disclaimer">
-                  <Wrench className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ion" />
-                  {state.advice.disclaimer || 'These are disclosed training-game rules, not verified manufacturer compatibility data.'}
-                </p>
                 <p className="text-sm font-semibold text-burn" data-testid="text-confirm-incompatible-purchase">Are you sure you want to buy this? This configuration will fail the integration check. Replacement parts cost money and extra months.</p>
               </>
             )}

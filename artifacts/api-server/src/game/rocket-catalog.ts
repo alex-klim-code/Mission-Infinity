@@ -1,5 +1,6 @@
 import imported from "./luna-catalog-data.json";
 import translations from "./luna-catalog.en.json";
+import { engineSpecifications, ENGINE_CATEGORIES } from "@workspace/mission-physics";
 
 const definitions: [string, string, [string, string][]][] = [
   ["structure", "Rocket Structure", [["rocket-body","Rocket Body"],["rocket-stages","Rocket Stages"],["payload-fairing","Payload Fairing"],["stage-separation","Stage Separation"]]],
@@ -28,6 +29,7 @@ export const rocketOptions = [
   ...imported.map(option => ({...option, ...(translations as Record<string, Partial<typeof option>>)[option.id]})),
 ].map(option => ({
   ...option,
+  ...(ENGINE_CATEGORIES.has(option.categoryId) ? engineSpecifications(option.parameters) : { thrustN: null, specificImpulseSeconds: null }),
   // Gameplay reliability only. The catalog's least expensive tier has Q55:
   // 50% damage risk; Q96 has 4%. Unspecified hull quality uses a 25% estimate.
   damageRisk: option.quality === null ? 25 : Math.max(2,Math.min(50,Math.round((100-option.quality)*50/45))),

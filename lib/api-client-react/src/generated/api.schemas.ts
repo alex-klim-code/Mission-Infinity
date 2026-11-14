@@ -294,6 +294,44 @@ export interface StoryScene {
   image: string;
 }
 
+export interface PayloadStage {
+  id: string;
+  componentCategoryIds: string[];
+  engineCategoryIds: string[];
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  fuelFraction: number;
+}
+
+export type PayloadBurnPhase =
+  (typeof PayloadBurnPhase)[keyof typeof PayloadBurnPhase];
+
+export const PayloadBurnPhase = {
+  LAUNCH: "LAUNCH",
+  OUTBOUND: "OUTBOUND",
+  LUNAR_LANDING: "LUNAR_LANDING",
+  EARTH_RETURN: "EARTH_RETURN",
+} as const;
+
+export interface PayloadBurn {
+  id: string;
+  stageId: string;
+  phase: PayloadBurnPhase;
+  /** @exclusiveMinimum 0 */
+  requiredDeltaVMps: number;
+  separateStageIds: string[];
+}
+
+export interface PayloadProfile {
+  source: string;
+  stages: PayloadStage[];
+  burns: PayloadBurn[];
+}
+
+export type CatalogPayloadProfiles = { [key: string]: PayloadProfile };
+
 export type RocketFuelRole =
   (typeof RocketFuelRole)[keyof typeof RocketFuelRole];
 
@@ -320,6 +358,10 @@ export interface RocketFuel {
 }
 
 export interface RocketComponent {
+  /** @nullable */
+  thrustN?: number | null;
+  /** @nullable */
+  specificImpulseSeconds?: number | null;
   /**
    * Gameplay damage chance in percent, resolved once after lunar arrival.
    * @minimum 0
@@ -356,12 +398,24 @@ export interface RocketSection {
   categories: RocketCategory[];
 }
 
+export type ScientificInstrumentGroup =
+  (typeof ScientificInstrumentGroup)[keyof typeof ScientificInstrumentGroup];
+
+export const ScientificInstrumentGroup = {
+  camera: "camera",
+  "sample-collection": "sample-collection",
+  "sample-container": "sample-container",
+  optional: "optional",
+} as const;
+
 export interface ScientificInstrument {
   id: string;
   name: string;
+  group: ScientificInstrumentGroup;
   price: number;
   massKg: number;
-  powerW: number;
+  /** @nullable */
+  powerW: number | null;
   quality: number;
   maxSciencePoints: number;
   description: string;
@@ -369,6 +423,7 @@ export interface ScientificInstrument {
 }
 
 export interface Catalog {
+  payloadProfiles?: CatalogPayloadProfiles;
   rocketCatalog: RocketSection[];
   scientificInstruments?: ScientificInstrument[];
   missions: Mission[];
@@ -522,12 +577,37 @@ export interface InstrumentProposal {
   instrumentIds: string[];
 }
 
+export type ScienceEquipmentCreditGroup =
+  (typeof ScienceEquipmentCreditGroup)[keyof typeof ScienceEquipmentCreditGroup];
+
+export const ScienceEquipmentCreditGroup = {
+  "sample-collection": "sample-collection",
+  "sample-container": "sample-container",
+} as const;
+
+export interface ScienceEquipmentCredit {
+  categoryId: string;
+  optionId: string;
+  name: string;
+  group: ScienceEquipmentCreditGroup;
+  /** @nullable */
+  massKg: number | null;
+  /** @nullable */
+  quality: number | null;
+}
+
 export interface ScienceLoadout {
   opened: boolean;
   completed: boolean;
   instrumentIds: string[];
   spent: number;
   proposals: InstrumentProposal[];
+  /**
+   * Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.
+   * @nullable
+   */
+  massLimitKg?: number | null;
+  creditedEquipment?: ScienceEquipmentCredit[];
 }
 
 export interface FuelLoad {
@@ -1050,7 +1130,7 @@ export interface SessionAction {
    * @maximum 30000
    */
   quantityKg?: number;
-  /** @maxItems 7 */
+  /** @maxItems 13 */
   instrumentIds?: string[];
   optionId?: string;
   hullId?: SessionActionHullId;

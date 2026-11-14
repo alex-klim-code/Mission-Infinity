@@ -5,6 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { CatalogPayloadProfiles } from "./catalogPayloadProfiles";
 import type { CharacterPreset } from "./characterPreset";
 import type { Mission } from "./mission";
 import type { RocketSection } from "./rocketSection";
@@ -12,6 +13,7 @@ import type { ScientificInstrument } from "./scientificInstrument";
 import type { StoryScene } from "./storyScene";
 
 export interface Catalog {
+  payloadProfiles?: CatalogPayloadProfiles;
   rocketCatalog: RocketSection[];
   scientificInstruments?: ScientificInstrument[];
   missions: Mission[];

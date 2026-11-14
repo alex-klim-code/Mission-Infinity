@@ -24,10 +24,56 @@ export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
 
+export const getGameCatalogResponsePayloadProfilesStagesItemFuelFractionMin = 0;
+export const getGameCatalogResponsePayloadProfilesStagesItemFuelFractionMax = 1;
+
+export const getGameCatalogResponsePayloadProfilesBurnsItemRequiredDeltaVMpsExclusiveMin = 0;
+
 export const getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDamageRiskMin = 0;
 export const getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDamageRiskMax = 100;
 
 export const GetGameCatalogResponse = zod.object({
+  payloadProfiles: zod
+    .record(
+      zod.string(),
+      zod.object({
+        source: zod.string(),
+        stages: zod.array(
+          zod.object({
+            id: zod.string(),
+            componentCategoryIds: zod.array(zod.string()),
+            engineCategoryIds: zod.array(zod.string()),
+            fuelFraction: zod
+              .number()
+              .min(
+                getGameCatalogResponsePayloadProfilesStagesItemFuelFractionMin,
+              )
+              .max(
+                getGameCatalogResponsePayloadProfilesStagesItemFuelFractionMax,
+              ),
+          }),
+        ),
+        burns: zod.array(
+          zod.object({
+            id: zod.string(),
+            stageId: zod.string(),
+            phase: zod.enum([
+              "LAUNCH",
+              "OUTBOUND",
+              "LUNAR_LANDING",
+              "EARTH_RETURN",
+            ]),
+            requiredDeltaVMps: zod
+              .number()
+              .gt(
+                getGameCatalogResponsePayloadProfilesBurnsItemRequiredDeltaVMpsExclusiveMin,
+              ),
+            separateStageIds: zod.array(zod.string()),
+          }),
+        ),
+      }),
+    )
+    .optional(),
   rocketCatalog: zod.array(
     zod.object({
       id: zod.string(),
@@ -38,6 +84,8 @@ export const GetGameCatalogResponse = zod.object({
           name: zod.string(),
           options: zod.array(
             zod.object({
+              thrustN: zod.number().nullish(),
+              specificImpulseSeconds: zod.number().nullish(),
               damageRisk: zod
                 .number()
                 .min(
@@ -89,9 +137,15 @@ export const GetGameCatalogResponse = zod.object({
       zod.object({
         id: zod.string(),
         name: zod.string(),
+        group: zod.enum([
+          "camera",
+          "sample-collection",
+          "sample-container",
+          "optional",
+        ]),
         price: zod.number().int(),
         massKg: zod.number(),
-        powerW: zod.number(),
+        powerW: zod.number().nullable(),
         quality: zod.number().int(),
         maxSciencePoints: zod.number().int(),
         description: zod.string(),
@@ -1326,6 +1380,24 @@ export const CreateGameSessionResponse = zod.object({
           instrumentIds: zod.array(zod.string()),
         }),
       ),
+      massLimitKg: zod
+        .number()
+        .nullish()
+        .describe(
+          "Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.",
+        ),
+      creditedEquipment: zod
+        .array(
+          zod.object({
+            categoryId: zod.string(),
+            optionId: zod.string(),
+            name: zod.string(),
+            group: zod.enum(["sample-collection", "sample-container"]),
+            massKg: zod.number().nullable(),
+            quality: zod.number().nullable(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
   fueling: zod
@@ -1931,6 +2003,24 @@ export const GetGameSessionResponse = zod.object({
           instrumentIds: zod.array(zod.string()),
         }),
       ),
+      massLimitKg: zod
+        .number()
+        .nullish()
+        .describe(
+          "Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.",
+        ),
+      creditedEquipment: zod
+        .array(
+          zod.object({
+            categoryId: zod.string(),
+            optionId: zod.string(),
+            name: zod.string(),
+            group: zod.enum(["sample-collection", "sample-container"]),
+            massKg: zod.number().nullable(),
+            quality: zod.number().nullable(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
   fueling: zod
@@ -2336,7 +2426,7 @@ export const updateGameSessionBodyBriefingDateRegExp = new RegExp(
 export const updateGameSessionBodyQuantityKgMin = 0;
 export const updateGameSessionBodyQuantityKgMax = 30000;
 
-export const updateGameSessionBodyInstrumentIdsMax = 7;
+export const updateGameSessionBodyInstrumentIdsMax = 13;
 
 export const UpdateGameSessionBody = zod.object({
   action: zod.enum([
@@ -2651,6 +2741,24 @@ export const UpdateGameSessionResponse = zod.object({
               instrumentIds: zod.array(zod.string()),
             }),
           ),
+          massLimitKg: zod
+            .number()
+            .nullish()
+            .describe(
+              "Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.",
+            ),
+          creditedEquipment: zod
+            .array(
+              zod.object({
+                categoryId: zod.string(),
+                optionId: zod.string(),
+                name: zod.string(),
+                group: zod.enum(["sample-collection", "sample-container"]),
+                massKg: zod.number().nullable(),
+                quality: zod.number().nullable(),
+              }),
+            )
+            .optional(),
         })
         .optional(),
       fueling: zod
@@ -3350,6 +3458,24 @@ export const SendSessionMessageResponse = zod.object({
           instrumentIds: zod.array(zod.string()),
         }),
       ),
+      massLimitKg: zod
+        .number()
+        .nullish()
+        .describe(
+          "Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.",
+        ),
+      creditedEquipment: zod
+        .array(
+          zod.object({
+            categoryId: zod.string(),
+            optionId: zod.string(),
+            name: zod.string(),
+            group: zod.enum(["sample-collection", "sample-container"]),
+            massKg: zod.number().nullable(),
+            quality: zod.number().nullable(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
   fueling: zod
@@ -3974,6 +4100,24 @@ export const RespondToInvitationResponse = zod.object({
               instrumentIds: zod.array(zod.string()),
             }),
           ),
+          massLimitKg: zod
+            .number()
+            .nullish()
+            .describe(
+              "Dynamic maximum payload, or null when physical specifications are incomplete. Never a fixed limit.",
+            ),
+          creditedEquipment: zod
+            .array(
+              zod.object({
+                categoryId: zod.string(),
+                optionId: zod.string(),
+                name: zod.string(),
+                group: zod.enum(["sample-collection", "sample-container"]),
+                massKg: zod.number().nullable(),
+                quality: zod.number().nullable(),
+              }),
+            )
+            .optional(),
         })
         .optional(),
       fueling: zod

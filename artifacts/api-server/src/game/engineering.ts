@@ -15,7 +15,7 @@ async function snapshot(db:GameConnection,id:string){
   return {selections:a?.selections??{},ids:s?.instrument_ids??[]};
 }
 export async function previewEngineering(db:GameConnection,session:Session,input:EngineeringPreview):Promise<EngineeringAdvice>{
-  if(input.instrumentIds!==undefined)requireCondition(input.instrumentIds.length<=7&&new Set(input.instrumentIds).size===input.instrumentIds.length&&input.instrumentIds.every(id=>scientificInstruments.some(i=>i.id===id)),400,"Choose a unique list of valid scientific instruments.");
+  if(input.instrumentIds!==undefined)requireCondition(input.instrumentIds.length<=scientificInstruments.length&&new Set(input.instrumentIds).size===input.instrumentIds.length&&input.instrumentIds.every(id=>scientificInstruments.some(i=>i.id===id)),400,"Choose a unique list of valid scientific instruments.");
   const {selections,ids}=await snapshot(db,session.id);
   const m=await db.selectFrom("missions").select("definition").where("id","=",session.mission_id).executeTakeFirstOrThrow();
   const easy=(m.definition as {difficulty:string}).difficulty.toLowerCase()==="easy";

@@ -125,7 +125,6 @@ export function ConstructionStage({ session, mission, isHost, act, pending, pend
               {eng.checks.filter((k) => k.status === 'FAIL' && k.message).map((k) => (
                 <p key={k.id} className="font-mono text-[11px] text-destructive/90" data-testid={`text-failed-check-${k.id}`}>{k.label}: {k.message}</p>
               ))}
-              <p className="text-[11px] text-muted-foreground">Compatibility rules are disclosed training-game rules, not verified manufacturer data.</p>
               <div className="pt-2">
                 {isHost ? (
                   <HudButton variant="burn" className="w-full sm:w-auto" disabled={pending} loading={pendingAction === 'rebuild-rocket'} onClick={() => setConfirmRebuild(true)} data-testid="button-rebuild-rocket">

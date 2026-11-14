@@ -7,7 +7,11 @@ export const COLLECTION_MS=8000, RETURN_MS=20000, REENTRY_MS=12000, RECOVERY_MS=
 export const sites = {regolith:2,crater:3,ridge:5} as const;
 const clamp=(n:number,min=0,max=1)=>Math.max(min,Math.min(max,n));
 const round=(n:number)=>Math.round(n*1000)/1000;
-const quality=(o:MissionOperations,id:string)=>o.components.find(c=>c.categoryId===id)?.quality??0;
+const quality=(o:MissionOperations,id:string)=>Math.max(
+  o.components.find(c=>c.categoryId===id)?.quality??0,
+  ...o.equipment.filter(e=>e.available&&scientificInstruments.some(i=>i.id===e.id&&i.group===id))
+    .map(e=>scientificInstruments.find(i=>i.id===e.id)!.quality),
+);
 const name=(o:MissionOperations,id:string)=>o.components.find(c=>c.categoryId===id)?.name??"Not installed";
 /** Heavy launch stages and the descent lander stay behind. Only the selected
  * return module, its avionics and remaining reserve participate in this burn. */
@@ -22,7 +26,7 @@ export function returnFuelRequirement(selections:Record<string,string>,remaining
 }
 const maxAcceleration=(o:MissionOperations)=>3.5+quality(o,"lunar-descent-engine")/100*1.5;
 export function recommendedThrust(o:MissionOperations) {
-  const target=o.landing.altitudeM<25?1.4:5;
+  const target=o.landing.altitudeM<50?1.5:4;
   return round(clamp((1.62+(o.landing.velocityMps-target)*0.85)/maxAcceleration(o))*100);
 }
 
@@ -52,13 +56,17 @@ export function makeOperations(selections:Record<string,string>,diagnostics:Inst
   const warnings=equipment.flatMap(e=>e.warning?[e.warning]:[]);
   if(!hasCamera) warnings.unshift(equipment.some(e=>e.id.endsWith("camera")&&e.status!=="MISSING")
     ?"CAMERA UNAVAILABLE — No installed camera survived. Visual feed unavailable."
-    :"NO CAMERA INSTALLED — Visual feed unavailable.");
+    :"NO VIDEO SIGNAL — Lunar surface visualization unavailable.");
   if(!hasCamera&&!alternativeNavigation) warnings.unshift("MISSION AT RISK — REQUIRED SCIENTIFIC EQUIPMENT MISSING. No working camera or lunar-capable inertial/star-tracker navigation: safe visual navigation is impossible. Landing is blocked; you may return without samples.");
-  const canCollect=components.some(c=>c.categoryId==="sample-collection")&&components.some(c=>c.categoryId==="sample-container");
-  if(!canCollect) warnings.push("MISSION AT RISK — REQUIRED SCIENTIFIC EQUIPMENT MISSING. A sample collector and sample container are required for physical collection. No samples can be recovered.");
+  const hasEquipment=(group:string)=>components.some(c=>c.categoryId===group)
+    ||equipment.some(e=>e.available&&scientificInstruments.some(i=>i.id===e.id&&i.group===group));
+  const collector=hasEquipment("sample-collection"),container=hasEquipment("sample-container");
+  const canCollect=collector&&container;
+  if(!collector)warnings.push("SAMPLE COLLECTION UNAVAILABLE — Cannot collect lunar samples.");
+  if(!container)warnings.push("SAMPLE STORAGE MISSING — Cannot safely return lunar samples to Earth.");
   const o:MissionOperations={
     components,equipment,warnings,hasCamera,alternativeNavigation,canCollect,
-    landing:{status:"READY",altitudeM:120,velocityMps:8,thrust:0,recommendedThrust:0,fuelUsedKg:0,startedAt:null,lastTickAt:null,elapsedSeconds:0},
+    landing:{status:"READY",altitudeM:120,velocityMps:4,thrust:0,recommendedThrust:0,fuelUsedKg:0,startedAt:null,lastTickAt:null,elapsedSeconds:0},
     collectionProgress:0,siteId:null,siteStartedAt:null,collectedSites:[],sampleMassKg:0,scienceEarned:0,remainingFuelKg,
     returnInitialFuelKg:0,returnStartedAt:null,returnRequiredKg:0,returnProgress:0,returnManeuver:"LUNAR_ORBIT",
     reentryStartedAt:null,recoveryStartedAt:null,missionDay:1,failure:null,results:null,
@@ -77,6 +85,12 @@ export function advanceOperations(phase:JourneyPhase,saved:MissionOperations,pla
     let dt=clamp((now-Date.parse(l.lastTickAt!))/1000,0,100);
     while(dt>0&&l.status==="DESCENDING") {
       const step=Math.min(0.1,dt);
+      // Always-on stability assist makes the controls forgiving, including old
+      // active saves and delayed commands. It adjusts thrust, never adds fuel.
+      if(o.remainingFuelKg>0) {
+        const guidance=recommendedThrust(o);
+        l.thrust=clamp(l.thrust,Math.max(0,guidance-8),Math.min(100,guidance+8));
+      }
       const throttle=o.remainingFuelKg>0?l.thrust/100:0;
       const used=Math.min(o.remainingFuelKg,5*throttle*step);
       const actualThrottle=used/(5*step);
@@ -85,12 +99,12 @@ export function advanceOperations(phase:JourneyPhase,saved:MissionOperations,pla
       l.altitudeM-=l.velocityMps*step;l.elapsedSeconds+=step;dt-=step;
       if(l.altitudeM<=0) {
         l.altitudeM=0;
-        const safe=l.velocityMps<=4&&quality(o,"landing-legs")>=40;
+        const safe=l.velocityMps<=6&&quality(o,"landing-legs")>=40;
         l.status=safe?"LANDED":"CRASHED";next=safe?"SAMPLE_COLLECTION":"LANDING_FAILED";
         o.returnManeuver=safe?"LUNAR_SURFACE":"LANDER_LOST";
         if(!safe)o.failure=`Hard landing at ${round(l.velocityMps)} m/s. ${name(o,"landing-legs")} could not protect the lander and samples were not collected.`;
         l.velocityMps=0;
-      } else if(l.elapsedSeconds>=90||l.altitudeM>300) {
+      } else if(l.elapsedSeconds>=150||l.altitudeM>300) {
         l.status="CRASHED";next="LANDING_FAILED";
         o.failure="Lunar descent window exceeded. The lander was lost after failing to reach a controlled touchdown.";
       }

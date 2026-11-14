@@ -5,6 +5,7 @@ import {compatibilityIssues} from "./engineering-rules";
 import {criticalReturnCategories} from "./hardware-health";
 import {makeFlightPlan} from "./mission-flight-model";
 import {fuelSettings} from "./fuel-loads";
+import {scienceEquipmentCheck} from "./science-equipment";
 
 type Choice={ids:Record<string,string>;cost:number;score:number};
 const assumptions="Educational recommendations use the game's integration, power, fuel and quality rules, not manufacturer certification. Missing source specifications remain unknown. Recommendations do not purchase parts, prevent random damage or guarantee success. Use a full fuel load, choose sunny weather and review the return checks.";
@@ -32,7 +33,7 @@ export function makeDemoPlan(session:GameSession):DemoPlan {
   const fuelReserveCost=session.fueling?.completed?0:Math.ceil(Math.max(0,fuelKg-(session.fueling?.loadedKg??0))*fuelSettings.pricePerKg);
   const hullCost=session.build?.selectedHullId?0:componentById.get(hull)!.price;
   const payloads=session.science?.completed?[session.science.instrumentIds]:[
-    ["multispectral-camera","advanced-sample-analyzer"],["multispectral-camera"],["panchromatic-camera"],[],
+    ["multispectral-camera","advanced-sample-analyzer"],["multispectral-camera"],["panchromatic-camera"],
   ];
   const options=groups.map(group=>{
     let choices:Choice[]=[{ids:{},cost:0,score:0}];
@@ -71,6 +72,8 @@ export function makeDemoPlan(session:GameSession):DemoPlan {
     }
     for(const choice of beam) {
       if(Object.keys(choice.ids).length!==categories.length)continue;
+      const equipment=scienceEquipmentCheck(choice.ids,instruments);
+      if(!session.science?.completed&&(equipment.missing.length||!equipment.withinMassLimit))continue;
       const flight=makeFlightPlan(hull,choice.ids,instruments,fuelKg);
       if(flight.requiredFuelKg>fuelKg)continue;
       const scienceScore=scientificInstruments.filter(i=>instruments.includes(i.id))

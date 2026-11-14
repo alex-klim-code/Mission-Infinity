@@ -177,8 +177,8 @@ export function SessionTopBar({ session, mission, me, act, pending, onOpenBadge 
   const [briefOpen, setBriefOpen] = useState(false);
   const demo = useDemoMode(me?.player.id ?? '');
   return (
-    <header className="relative z-30 border-b border-white/[.08] bg-void/60 backdrop-blur-xl" data-testid="bar-session-top">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5 md:px-8">
+    <header className="relative z-30 shrink-0 border-b border-white/[.08] bg-void/60 backdrop-blur-xl" data-testid="bar-session-top">
+      <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5 md:px-4">
         <div className="min-w-0 flex-1">
           <div className="font-mono text-[9px] uppercase tracking-[.25em] text-ion" data-testid="text-session-stage">
             {session.status === 'MISSION_STARTED'

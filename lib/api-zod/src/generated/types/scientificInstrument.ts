@@ -5,13 +5,16 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { ScientificInstrumentGroup } from "./scientificInstrumentGroup";
 
 export interface ScientificInstrument {
   id: string;
   name: string;
+  group: ScientificInstrumentGroup;
   price: number;
   massKg: number;
-  powerW: number;
+  /** @nullable */
+  powerW: number | null;
   quality: number;
   maxSciencePoints: number;
   description: string;

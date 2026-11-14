@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Route } from 'lucide-react';
 import { HudButton } from '@/components/ui-kit';
 import { useCalm, type Props } from '../rocket-shared';
-import { Earth, ModelNote, Moon, Stat, Waiting, bez, kg, type Pt } from './shared';
+import { Earth, Moon, Stat, Waiting, bez, kg, type Pt } from './shared';
 
 const E: Pt = { x: 90, y: 170 }, M: Pt = { x: 400, y: 170 }, R: Pt = { x: 710, y: 170 };
 const CO: Pt = { x: 245, y: 20 }, CR: Pt = { x: 555, y: 20 };
@@ -63,7 +63,6 @@ export function RouteView({ session, isHost, act, pending, pendingAction }: Prop
               ? `Not enough propellant for the outbound transfer. The model requires ${kg(plan.requiredOutboundKg)} to reach the Moon; fuel exhaustion will halt this flight.`
               : `The outbound transfer is covered, but the modeled Earth return reserve is short by ${kg(plan.requiredFuelKg - plan.fuelLoadedKg)}. Reaching the Moon does not guarantee enough fuel to return.`}
           </p>}
-          <div className="mt-3"><ModelNote testid="text-route-assumptions">{plan.assumptions}{plan.massAssumed ? ' * Some masses were assumed because catalog data is missing.' : ''}</ModelNote></div>
         </>
       ) : <p className="mt-4 text-sm text-muted-foreground" data-testid="text-route-noplan">Flight plan is being prepared by Mission Control.</p>}
       <div className="mt-5">

@@ -16,6 +16,8 @@ import { errMsg } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import { BODY_CATEGORY, HullVisual, fmtKg, formatExact, hullById, useCalm, type Props } from './rocket-shared';
 import { Navigator } from './rocket-navigator';
+import { SessionPayloadCapacityPanel as InstalledPayload } from './payload-capacity-panel';
+import { PayloadDraftProvider } from './payload-draft';
 import { ScienceStage } from './science-stage';
 import { FuelStage } from './fuel-stage';
 import { ConstructionStage, MissionJourneyStage, FlightStatusPane } from './journey';
@@ -96,7 +98,7 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
           </div>
           <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')} />
         </button>
-        {open && <div className="scroll-thin max-h-[45dvh] space-y-3 overflow-y-auto px-3 pb-3">{stats}{list}</div>}
+        {open && <div className="scroll-thin max-h-[45dvh] space-y-3 overflow-y-auto px-3 pb-3">{stats}<InstalledPayload session={session}/>{list}</div>}
         {finish && <div className="px-3 pb-2">{finish}</div>}
       </div>
       {/* desktop pane */}
@@ -109,9 +111,9 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
         </div>
         <div className="mt-2 text-center font-display text-lg font-bold uppercase tracking-wider" data-testid="text-builder-hull">{hull?.name ?? 'Body not bought'}</div>
         <div className="mt-3">{stats}</div>
+        <div className="mt-3"><InstalledPayload session={session}/></div>
         {session.science?.completed && <p className="mt-2 font-mono text-xs text-ion" data-testid="text-summary-payload">Science payload: {session.science.instrumentIds.length} instruments / {formatExact(session.science.spent)}</p>}
         {session.fueling?.opened && <p className="mt-2 font-mono text-xs text-ion" data-testid="text-summary-fuel">Fuel: {fmtKg(session.fueling.loadedKg)} / {formatExact(session.fueling.spent)}</p>}
-        <p className="mt-2 text-[10px] leading-snug text-muted-foreground">Dry mass sums parts with known catalog mass only{summary.unknownMass ? ` (${summary.unknownMass} without data)` : ''}; body mass is not included. Not a total wet mass.</p>
         {finish && <div className="mt-3">{finish}</div>}
         <div className="mt-4">{list}</div>
       </aside>
@@ -212,6 +214,7 @@ export function RocketBuildView(props: Props) {
 
   return (
     <EngineeringGuardProvider props={props} byOption={byOption}>
+    <PayloadDraftProvider>
     <div className="relative z-10 flex h-full min-h-0 flex-col md:grid md:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
       <div className="md:order-2 md:min-h-0 md:contents">
         {flightStatus ? <FlightStatusPane {...props} /> : <SummaryPane session={session} sections={sections} summary={summary} isHost={props.isHost} act={props.act} pending={props.pending} pendingAction={props.pendingAction} official={official} byOption={byOption} />}
@@ -222,6 +225,10 @@ export function RocketBuildView(props: Props) {
         <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col overflow-hidden px-3 py-4 md:px-6" data-testid="panel-builder-left">
           <Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} />
         </div>
+      ) : !journeyOpen && !constructionOpen && session.fueling?.opened && !session.fueling.completed ? (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" data-testid="panel-builder-left">
+          <FuelStage {...props} />
+        </div>
       ) : (
         <ScrollPanel className="min-h-0 min-w-0 flex-1 overflow-x-hidden" testid="panel-builder-left" label="Stage" resetKey={`${journey?.phase ?? ''}:${session.science?.opened}:${session.fueling?.opened}:${constructionOpen}`}>
           {journeyOpen ? <MissionJourneyStage {...props} /> : constructionOpen ? <ConstructionStage {...props} /> : session.fueling?.opened ? <FuelStage {...props} /> : <ScienceStage {...props} />}
@@ -229,6 +236,7 @@ export function RocketBuildView(props: Props) {
       )}
       </div>
     </div>
+    </PayloadDraftProvider>
     </EngineeringGuardProvider>
   );
 }

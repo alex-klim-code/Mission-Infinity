@@ -23,11 +23,14 @@ function rawIssues(selections:Record<string,string>,instrumentIds:string[]):Comp
   mismatch("navigation-computer","navigation-sensors","onboard-computer","Navigation / computer integration mismatch");
   const eps=part("electrical-power-system");
   const selected=scientificInstruments.filter(i=>instrumentIds.includes(i.id));
-  const demand=20+selected.reduce((sum,i)=>sum+i.powerW,0);
+  // Unknown ratings remain unknown. The known subtotal is a lower bound:
+  // if even it exceeds capacity the mismatch is certain, otherwise unverified.
+  const unknownPower=selected.some(i=>i.powerW===null);
+  const demand=20+selected.reduce((sum,i)=>sum+(i.powerW??0),0);
   const capacity=eps?60+Math.max(0,(eps.quality??55)-55)*4:0;
   if(eps&&demand>capacity)issues.push({
     id:`science-power:${eps.id}:${selected.map(i=>i.id).sort().join(",")}`,title:"Science payload / power system mismatch",
-    message:`${selected.map(i=>i.name).join(", ")} and baseline avionics require ${demand} model W. ${eps.name} supports ${capacity} model W. The science power bus will fail integration; upgrade the power system or reduce the optional payload.`,
+    message:`${selected.map(i=>i.name).join(", ")} and baseline avionics require ${unknownPower?"at least ":""}${demand} model W${unknownPower?" (additional instrument power is unspecified)":""}. ${eps.name} supports ${capacity} model W. The science power bus will fail integration; upgrade the power system or reduce the optional payload.`,
     categoryIds:["electrical-power-system","scientific-instruments"],optionIds:[eps.id,...selected.map(i=>i.id)],
     repairCategoryId:"electrical-power-system",alternatives:[],source:"GAME_RULE",
   });
