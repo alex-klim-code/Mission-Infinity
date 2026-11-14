@@ -1,0 +1,113 @@
+import Fastify, { type FastifyRequest } from "fastify";
+import { getAuth } from "@clerk/express";
+import type { Request } from "express";
+import { z } from "zod";
+import {
+  GetGameCatalogResponse, GetPlayerResponse, SaveCharacterBody, SaveCharacterResponse,
+  GetSocialQueryParams, GetSocialResponse, UpdateFriendshipBody, UpdateFriendshipResponse,
+  CreateGameSessionBody, CreateGameSessionResponse, GetGameSessionResponse,
+  UpdateGameSessionBody, UpdateGameSessionResponse, InvitePlayerBody, InvitePlayerResponse,
+  RespondToInvitationBody, RespondToInvitationResponse, GetCareerResponse,
+} from "@workspace/api-zod";
+import { getCatalog } from "../game/content";
+import { getAccount, getCareer, resolveUser, savePlayer } from "../game/players";
+import { friendshipAction, socialState } from "../game/social";
+import { createSession, notifySession, sessionState, updateSession } from "../game/sessions";
+import { inviteToSession, respondToInvite } from "../game/invitations";
+import { GameError, requireCondition } from "../game/database";
+import { logger } from "../lib/logger";
+import { notifyUsers } from "../game/presence";
+import { getClerkProxyHost } from "../middlewares/clerkProxyMiddleware";
+
+declare module "fastify" {
+  interface FastifyRequest { playerId: string; }
+}
+
+export const gameApi = Fastify({ bodyLimit: 16 * 1024, disableRequestLogging: true });
+gameApi.decorateRequest("playerId", "");
+
+const windows = new Map<string, { count: number; until: number }>();
+const cleanup = setInterval(() => {
+  for (const [key, value] of windows) if (value.until < Date.now()) windows.delete(key);
+}, 60_000);
+cleanup.unref();
+
+export function validateOrigin(req: {headers: import("node:http").IncomingHttpHeaders}) {
+  const origin = req.headers.origin;
+  if (!origin) return;
+  let originHost = "";
+  try { originHost = new URL(origin).host; } catch { throw new GameError(403, "Invalid request origin."); }
+  requireCondition(originHost === getClerkProxyHost(req), 403, "Cross-origin game requests are not allowed.");
+}
+
+function idParam(req: FastifyRequest) {
+  return z.string().uuid().parse((req.params as {id: string}).id);
+}
+
+gameApi.addHook("onRequest", async request => {
+  const route = request.url.split("?")[0];
+  if (route === "/api/healthz" || route === "/api/game/catalog") return;
+  validateOrigin(request.raw);
+  const auth = getAuth(request.raw as Request);
+  const authId = auth?.userId;
+  requireCondition(authId, 401, "Sign in to access your mission.");
+  const key = `${authId}:${request.method === "GET" ? "read" : "write"}`;
+  const limit = request.method === "GET" ? 240 : 80;
+  const window = windows.get(key);
+  if (!window || window.until < Date.now()) windows.set(key, { count: 1, until: Date.now() + 60_000 });
+  else {
+    window.count++;
+    requireCondition(window.count <= limit, 429, "Too many requests. Please wait a moment.");
+  }
+  request.playerId = await resolveUser(authId);
+});
+
+gameApi.setErrorHandler((error, _req, reply) => {
+  const e = error as Error & {code?: string; statusCode?: number};
+  if (e.name === "ZodError") return reply.code(400).send({ error: "Please check the submitted values." });
+  if (e.code === "23505") return reply.code(409).send({ error: "That name or record already exists. Please choose another." });
+  if (e.code === "22P02") return reply.code(400).send({ error: "Invalid identifier." });
+  const status = e.statusCode ?? 500;
+  if (status >= 500) logger.error({ err: e }, "Game request failed");
+  return reply.code(status).send({ error: status >= 500 ? "Mission control encountered an error. Please try again." : e.message });
+});
+
+gameApi.get("/api/healthz", async () => ({ status: "ok" }));
+gameApi.get("/api/game/catalog", async () => GetGameCatalogResponse.parse(await getCatalog()));
+gameApi.get("/api/game/me", async req => GetPlayerResponse.parse(await getAccount(req.playerId)));
+gameApi.put("/api/game/character", async req => {
+  const player = await savePlayer(req.playerId, SaveCharacterBody.parse(req.body));
+  notifyUsers([req.playerId], "social:changed");
+  const { activeSessionId } = await getAccount(req.playerId);
+  if (activeSessionId) await notifySession(activeSessionId);
+  return SaveCharacterResponse.parse(player);
+});
+gameApi.get("/api/game/social", async req => {
+  const query = GetSocialQueryParams.parse(req.query);
+  return GetSocialResponse.parse(await socialState(req.playerId, query.q ?? ""));
+});
+gameApi.post("/api/game/friend-actions", async req => {
+  const body = UpdateFriendshipBody.parse(req.body);
+  z.string().uuid().parse(body.targetId);
+  return UpdateFriendshipResponse.parse(await friendshipAction(req.playerId, body.targetId, body.action));
+});
+gameApi.post("/api/game/sessions", async (req, reply) => {
+  const body = CreateGameSessionBody.parse(req.body);
+  const session = await createSession(req.playerId, body.missionId, body.mode);
+  return reply.code(201).send(CreateGameSessionResponse.parse(session));
+});
+gameApi.get("/api/game/sessions/:id", async req => GetGameSessionResponse.parse(await sessionState(idParam(req), req.playerId)));
+gameApi.post("/api/game/sessions/:id/actions", async req => {
+  const result = await updateSession(req.playerId, idParam(req), UpdateGameSessionBody.parse(req.body));
+  return UpdateGameSessionResponse.parse(result);
+});
+gameApi.post("/api/game/sessions/:id/invitations", async req => {
+  const body = InvitePlayerBody.parse(req.body);
+  z.string().uuid().parse(body.userId);
+  return InvitePlayerResponse.parse(await inviteToSession(req.playerId, idParam(req), body.userId));
+});
+gameApi.post("/api/game/invitations/:id", async req => {
+  const body = RespondToInvitationBody.parse(req.body);
+  return RespondToInvitationResponse.parse(await respondToInvite(req.playerId, idParam(req), body.action));
+});
+gameApi.get("/api/game/career", async req => GetCareerResponse.parse(await getCareer(req.playerId)));

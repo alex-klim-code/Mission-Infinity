@@ -1,0 +1,215 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { gameDb } from "./database";
+import { seedGameContent, getCatalog } from "./content";
+import { getAccount, savePlayer, getCareer } from "./players";
+import { friendshipAction, socialState } from "./social";
+import { createSession, sessionState, updateSession, reconcilePresence } from "./sessions";
+import { inviteToSession, respondToInvite } from "./invitations";
+import { markConnected, markDisconnected } from "./presence";
+import { pool } from "@workspace/db";
+
+// Domain/integration tests use disposable identities, never bypass browser auth.
+test("Mission Infinity server-authoritative game rules", async t => {
+  const fixtures: string[] = [];
+  async function players(count: number) {
+    const ids: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const user = await gameDb.insertInto("users").values({ auth_id: `test-only-${randomUUID()}` })
+        .returning("id").executeTakeFirstOrThrow();
+      fixtures.push(user.id);
+      ids.push(user.id);
+      await savePlayer(user.id, {
+        name: `Test ${user.id.slice(0, 12)}`, age: 29, gender: "unspecified", presetId: "engineer-01",
+      });
+      markConnected(user.id, `test-${user.id}`);
+    }
+    return ids;
+  }
+  async function makeFriends(a: string, b: string) {
+    await friendshipAction(a, b, "send");
+    await friendshipAction(b, a, "accept");
+  }
+  async function invite(a: string, b: string, sessionId: string) {
+    await makeFriends(a, b);
+    await inviteToSession(a, sessionId, b);
+    const state = await socialState(b);
+    return state.invitations.find(i => i.sessionId === sessionId && i.direction === "incoming")!.id;
+  }
+  try {
+    await seedGameContent();
+    await t.test("catalog contains one enabled mission, ten presets, six scenes and a complete briefing", async () => {
+      const catalog = await getCatalog();
+      assert.equal(catalog.missions.filter(m => m.enabled).length, 1);
+      assert.equal(catalog.presets.length, 10);
+      assert.equal(catalog.scenes.length, 6);
+      const mission = catalog.missions.find(m => m.enabled)!;
+      assert.equal(mission.budget, 150000000);
+      assert.equal(mission.developmentMonths, 24);
+      assert.equal(mission.operationalYears, 3);
+      assert.equal(mission.requirements.length, 10);
+      assert.equal(mission.briefing.length, 10);
+    });
+    await t.test("character saves, reloads, edits and rejects unknown presets and duplicate names", async () => {
+      const [a, b] = await players(2);
+      await savePlayer(a, { name: `Engineer ${a.slice(0, 8)}`, age: 60, gender: "female", presetId: "engineer-10" });
+      const account = await getAccount(a);
+      assert.equal(account.character?.presetId, "engineer-10");
+      assert.equal(account.character?.age, 60);
+      await assert.rejects(savePlayer(a, { name: "Invalid", age: 30, gender: "male", presetId: "unknown" }));
+      await assert.rejects(savePlayer(b, { name: account.character!.name.toUpperCase(), age: 30, gender: "male", presetId: "engineer-02" }));
+    });
+    await t.test("friend requests prevent self, duplicate and unauthorized replies; accept and remove persist", async () => {
+      const [a, b, outsider] = await players(3);
+      await assert.rejects(friendshipAction(a, a, "send"));
+      await friendshipAction(a, b, "send");
+      await assert.rejects(friendshipAction(a, b, "send"));
+      await assert.rejects(friendshipAction(b, a, "send"));
+      await assert.rejects(friendshipAction(a, b, "accept"));
+      await assert.rejects(friendshipAction(outsider, a, "accept"));
+      assert.equal((await socialState(b)).incoming[0].id, a);
+      await friendshipAction(b, a, "accept");
+      assert.equal((await socialState(a)).friends[0].id, b);
+      await friendshipAction(a, b, "remove");
+      assert.equal((await socialState(b)).friends.length, 0);
+    });
+    await t.test("incoming requests can be rejected and outgoing requests cancelled", async () => {
+      const [a, b] = await players(2);
+      await friendshipAction(a, b, "send");
+      await friendshipAction(b, a, "reject");
+      assert.equal((await socialState(a)).sent.length, 0);
+      await friendshipAction(a, b, "send");
+      await friendshipAction(a, b, "cancel");
+      assert.equal((await socialState(b)).incoming.length, 0);
+    });
+    await t.test("disabled missions and a second active session are rejected", async () => {
+      const [a] = await players(1);
+      await assert.rejects(createSession(a, "mars-orbiter", "solo"));
+      const s = await createSession(a, "earth-observer", "crew");
+      assert.equal((await getAccount(a)).activeSessionId, s.id);
+      await assert.rejects(createSession(a, "earth-observer", "solo"));
+    });
+    await t.test("private sessions reject outsiders and non-friend invitations", async () => {
+      const [a, b] = await players(2);
+      const s = await createSession(a, "earth-observer", "crew");
+      await assert.rejects(sessionState(s.id, b));
+      await assert.rejects(inviteToSession(a, s.id, b));
+      await assert.rejects(updateSession(b, s.id, { action: "start" }));
+    });
+    await t.test("invitations persist, decline, expire and cannot be accepted by another player", async () => {
+      const [a, b, outsider] = await players(3);
+      const s = await createSession(a, "earth-observer", "crew");
+      const first = await invite(a, b, s.id);
+      assert.equal((await socialState(b)).invitations[0].id, first);
+      await assert.rejects(respondToInvite(outsider, first, "accept"));
+      await respondToInvite(b, first, "decline");
+      assert.equal((await socialState(b)).invitations.length, 0);
+      await inviteToSession(a, s.id, b);
+      const second = (await socialState(b)).invitations[0].id;
+      await gameDb.updateTable("game_invitations").set({ expires_at: new Date(Date.now() - 1000) }).where("id", "=", second).execute();
+      await assert.rejects(respondToInvite(b, second, "accept"));
+    });
+    await t.test("concurrent accepts respect four-player capacity and duplicate accepts are idempotent", async () => {
+      const [a, ...others] = await players(5);
+      const s = await createSession(a, "earth-observer", "crew");
+      const invitations: string[] = [];
+      for (const b of others) invitations.push(await invite(a, b, s.id));
+      const results = await Promise.allSettled(others.map((b, i) => respondToInvite(b, invitations[i], "accept")));
+      assert.equal(results.filter(r => r.status === "fulfilled").length, 3);
+      assert.equal(results.filter(r => r.status === "rejected").length, 1);
+      const state = await sessionState(s.id, a);
+      assert.equal(state.players.length, 4);
+      const joinedIndex = results.findIndex(r => r.status === "fulfilled");
+      await respondToInvite(others[joinedIndex], invitations[joinedIndex], "accept");
+      assert.equal((await sessionState(s.id, a)).players.length, 4);
+    });
+    await t.test("only host starts; crew readiness and host migration are enforced", async () => {
+      const [a, b] = await players(2);
+      const s = await createSession(a, "earth-observer", "crew");
+      const invitation = await invite(a, b, s.id);
+      await respondToInvite(b, invitation, "accept");
+      await assert.rejects(updateSession(b, s.id, { action: "start" }));
+      await assert.rejects(updateSession(a, s.id, { action: "start" }));
+      await updateSession(b, s.id, { action: "ready", ready: true });
+      assert.equal((await sessionState(s.id, a)).players.find(p => p.player.id === b)?.ready, true);
+      await updateSession(a, s.id, { action: "leave" });
+      assert.equal((await sessionState(s.id, b)).hostId, b);
+      await updateSession(b, s.id, { action: "start" });
+      assert.equal((await sessionState(s.id, b)).status, "STORY");
+    });
+    await t.test("host can start with one player; story persists and concurrent scene clicks cannot skip", async () => {
+      const [a] = await players(1);
+      const s = await createSession(a, "earth-observer", "crew");
+      await updateSession(a, s.id, { action: "start" });
+      const attempts = await Promise.allSettled([
+        updateSession(a, s.id, { action: "next", expectedScene: 0 }),
+        updateSession(a, s.id, { action: "next", expectedScene: 0 }),
+      ]);
+      assert.equal(attempts.filter(r => r.status === "fulfilled").length, 1);
+      assert.equal((await sessionState(s.id, a)).scene, 1);
+      markDisconnected(a, `test-${a}`);
+      markConnected(a, `test-${a}`);
+      await reconcilePresence(a);
+      assert.equal((await sessionState(s.id, a)).scene, 1);
+      await assert.rejects(updateSession(a, s.id, { action: "initiate" }));
+    });
+    await t.test("solo prologue reaches exactly MISSION_STARTED and records career without gameplay", async () => {
+      const [a] = await players(1);
+      const s = await createSession(a, "earth-observer", "solo");
+      assert.equal(s.status, "STORY");
+      for (let i = 0; i < 5; i++) await updateSession(a, s.id, { action: "next", expectedScene: i });
+      assert.equal((await sessionState(s.id, a)).status, "MISSION_ACCEPTANCE");
+      await updateSession(a, s.id, { action: "accept" });
+      assert.equal((await sessionState(s.id, a)).status, "READY_TO_START");
+      await updateSession(a, s.id, { action: "initiate" });
+      assert.equal((await sessionState(s.id, a)).status, "MISSION_STARTED");
+      assert.equal((await getCareer(a)).missionsInitiated, 1);
+      await assert.rejects(updateSession(a, s.id, { action: "next", expectedScene: 5 }));
+    });
+    await t.test("multiplayer requires every connected player acceptance and prevents late joins", async () => {
+      const [a, b, c] = await players(3);
+      const s = await createSession(a, "earth-observer", "crew");
+      const ib = await invite(a, b, s.id), ic = await invite(a, c, s.id);
+      await respondToInvite(b, ib, "accept");
+      await updateSession(b, s.id, { action: "ready", ready: true });
+      await updateSession(a, s.id, { action: "start" });
+      await assert.rejects(respondToInvite(c, ic, "accept"));
+      await assert.rejects(updateSession(b, s.id, { action: "next", expectedScene: 0 }));
+      await updateSession(b, s.id, { action: "continue-ready", ready: true });
+      assert.equal((await sessionState(s.id, a)).players.find(p => p.player.id === b)?.continueReady, true);
+      for (let i = 0; i < 5; i++) await updateSession(a, s.id, { action: "next", expectedScene: i });
+      await updateSession(a, s.id, { action: "accept" });
+      assert.equal((await sessionState(s.id, a)).status, "MISSION_ACCEPTANCE");
+      await updateSession(b, s.id, { action: "accept" });
+      assert.equal((await sessionState(s.id, a)).status, "READY_TO_START");
+      await assert.rejects(updateSession(b, s.id, { action: "initiate" }));
+      await updateSession(a, s.id, { action: "initiate" });
+      assert.equal((await sessionState(s.id, b)).status, "MISSION_STARTED");
+    });
+    await t.test("disconnected host transfers to connected crew and reconnects without losing the scene", async () => {
+      const [a, b] = await players(2);
+      const s = await createSession(a, "earth-observer", "crew");
+      await respondToInvite(b, await invite(a, b, s.id), "accept");
+      await updateSession(b, s.id, { action: "ready", ready: true });
+      await updateSession(a, s.id, { action: "start" });
+      await updateSession(a, s.id, { action: "next", expectedScene: 0 });
+      markDisconnected(a, `test-${a}`);
+      await reconcilePresence(a, true);
+      assert.equal((await sessionState(s.id, b)).hostId, b);
+      markConnected(a, `test-${a}`);
+      await reconcilePresence(a);
+      const resumed = await sessionState(s.id, a);
+      assert.equal(resumed.scene, 1);
+      assert.equal(resumed.players.length, 2);
+      assert.equal(resumed.hostId, b);
+    });
+  } finally {
+    for (const id of fixtures) markDisconnected(id, `test-${id}`);
+    if (fixtures.length) {
+      await gameDb.deleteFrom("game_sessions").where("host_id", "in", fixtures).execute();
+      await gameDb.deleteFrom("users").where("id", "in", fixtures).execute();
+    }
+    await pool.end();
+  }
+});

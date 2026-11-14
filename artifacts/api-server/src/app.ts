@@ -1,8 +1,10 @@
 import express, { type Express } from "express";
-import cors from "cors";
 import pinoHttp from "pino-http";
-import router from "./routes";
 import { logger } from "./lib/logger";
+import { clerkMiddleware } from "@clerk/express";
+import { publishableKeyFromHost } from "@clerk/shared/keys";
+import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
+import { gameApi } from "./routes/game";
 
 const app: Express = express();
 
@@ -25,10 +27,22 @@ app.use(
     },
   }),
 );
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.use("/api", router);
+app.disable("x-powered-by");
+app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+app.use(
+  clerkMiddleware((req) => ({
+    publishableKey: publishableKeyFromHost(
+      getClerkProxyHost(req) ?? "",
+      process.env.CLERK_PUBLISHABLE_KEY,
+    ),
+  })),
+);
+// Express is the canonical Clerk/proxy edge; Fastify owns all game routes,
+// validation, error responses and body parsing. Never parse its stream twice.
+await gameApi.ready();
+app.use((req, res, next) => {
+  if (!req.url.startsWith("/api/")) { next(); return; }
+  gameApi.routing(req, res);
+});
 
 export default app;

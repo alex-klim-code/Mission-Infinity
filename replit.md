@@ -1,45 +1,50 @@
-# [Project name]
+# Mission: Infinity
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A browser-based cooperative space mission story for 1–4 players.
 
-## Run & Operate
+## Product scope
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- The user's title is **Mission: Infinity**, overriding the title in the original attached brief.
+- Phase 1 stops at **MISSION INITIATED / TO BE CONTINUED**, with the session persisted as `MISSION_STARTED`.
+- Do not add spacecraft engineering, rocket selection, orbital calculations or mission simulation in this phase.
+- All game text is initially English; keep content outside UI components.
+- Earth Observer is the only enabled mission. Its $150M budget, 24-month development and 3-year lifetime are fictional educational parameters, not NASA specifications.
+- No chat or direct messages. Friends and game invitations are distinct.
+- No guest authentication, seeded fake players, or nonfunctional primary actions.
 
-## Stack
+## Run and verify
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: `pnpm --filter @workspace/mission-infinity run dev` (managed workflow).
+- API: `pnpm --filter @workspace/api-server run dev` (managed workflow).
+- `pnpm run typecheck` — all TypeScript packages.
+- `pnpm --filter @workspace/api-server test` — disposable PostgreSQL-backed domain tests.
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas.
+- `pnpm --filter @workspace/db run push` — development schema only.
 
-## Where things live
+## Architecture
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- React, TypeScript, Vite, Tailwind, shadcn/ui, Framer Motion, TanStack Query.
+- Clerk manages real sign-in and OAuth. Canonical Express middleware and production proxy are the authentication edge; Fastify owns the game API and parses request bodies.
+- Kysely handles game queries and transactions. Existing Drizzle schema tooling is retained for development/publish schema integration rather than introducing a second migration executor.
+- PostgreSQL stores all player, friendship, invitation, lobby and story state.
+- Socket.IO uses `/api/socket.io` under the API artifact path. Cookies authenticate both HTTP and socket connections.
+- One running API instance is required for socket presence and room notifications. Use an always-running VM for this version; distributed scaling needs a shared Socket.IO adapter and shared presence storage.
+- No production DDL in builds or startup. Publishing applies the development schema. Startup only upserts versioned mission/character content.
 
-## Architecture decisions
+## Locations
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- `artifacts/mission-infinity` — frontend and generated visual assets.
+- `artifacts/api-server/src/game` — game services, content and domain tests.
+- `artifacts/api-server/src/routes/game.ts` — Fastify endpoints and request security.
+- `lib/api-spec/openapi.yaml` — source-of-truth HTTP contract.
+- `lib/db/src/schema/game.ts` — schema.
+- `README.md` — setup, deployment and verification limitations.
 
-## Product
+## Reliability
 
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
-
-## Gotchas
-
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Critical transitions lock the session row in a transaction.
+- Joining also locks the user, preventing concurrent membership in different rooms.
+- One active membership per user and one pending invitation per room/recipient are database-enforced.
+- Scene progression requires the expected current scene, preventing double clicks from skipping a scene.
+- A disconnected host has a reconnect grace period; explicit leave transfers ownership immediately.
+- Do not claim a successful Google OAuth round trip or multi-browser real-time verification without actually performing those checks.

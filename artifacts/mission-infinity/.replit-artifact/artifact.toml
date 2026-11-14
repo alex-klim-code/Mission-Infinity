@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Mission: Infinity"
+description = "A cinematic cooperative space mission game for 1–4 players: create your engineer, assemble a crew, and begin Earth Observer."
+version = "1.0.0"
+id = "artifacts/mission-infinity"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26107
+
+[services.development]
+run = "pnpm --filter @workspace/mission-infinity run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mission-infinity", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/mission-infinity/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26107"
+BASE_PATH = "/"
