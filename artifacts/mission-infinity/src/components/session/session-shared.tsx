@@ -266,15 +266,24 @@ export function MessageComposer({ sessionId }: { sessionId: string }) {
   return (
     <form onSubmit={submit} className="mx-auto w-full max-w-md" aria-label="Crew channel">
       <div className="flex items-center gap-2 rounded-md border border-white/15 bg-void/70 p-1 pl-3 backdrop-blur focus-within:border-ion/60">
-        <label htmlFor="session-message" className="sr-only">Short message to crew</label>
-        <input
+        <label htmlFor="session-message" className="sr-only">Your message to the crew</label>
+        <textarea
           id="session-message"
+          name="message"
+          rows={2}
+          inputMode="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value.slice(0, 180))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
           maxLength={180}
-          placeholder="Say something to the crew"
+          placeholder="Write your message…"
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground/70"
+          className="pointer-events-auto min-w-0 flex-1 resize-none bg-transparent py-2 text-sm text-foreground caret-ion outline-none placeholder:text-muted-foreground/70"
           data-testid="input-session-message"
         />
         <span className="hidden font-mono text-[10px] text-muted-foreground sm:inline" aria-hidden>{draft.length}/180</span>
@@ -288,6 +297,7 @@ export function MessageComposer({ sessionId }: { sessionId: string }) {
           <Send className={cn('h-4 w-4', send.isPending && 'animate-pulse')} />
         </button>
       </div>
+      <p className="mt-1 text-[10px] text-muted-foreground">Enter to send · Shift+Enter for a new line</p>
       {error && <p className="mt-1.5 text-xs text-destructive" role="alert" data-testid="text-message-error">{error}</p>}
     </form>
   );

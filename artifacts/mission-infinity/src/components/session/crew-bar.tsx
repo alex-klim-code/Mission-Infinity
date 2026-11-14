@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Crown, MessageSquare, Sparkles, X } from 'lucide-react';
 import type { GameSession, SessionPlayer } from '@workspace/api-client-react';
@@ -30,16 +30,17 @@ export function orderCrew(session: GameSession, meId: string) {
 
 function CrewChatDialog({ open, onOpenChange, session, meId, now }: { open: boolean; onOpenChange: (o: boolean) => void; session: GameSession; meId: string; now: number }) {
   const crew = orderCrew(session, meId);
-  useEffect(() => {
+  const panelRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
     if (!open) return;
-    const frame = window.requestAnimationFrame(() => document.getElementById('crew-chat-panel')?.querySelector('input')?.focus({ preventScroll: true }));
-    return () => window.cancelAnimationFrame(frame);
+    // Keep focus within the opening gesture so mobile browsers can show the keyboard.
+    panelRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus({ preventScroll: true });
   }, [open]);
-  if (!open) return null;
+  // Hiding, not unmounting, preserves drafts and in-flight send callbacks.
   return createPortal(
-      <section id="crew-chat-panel" role="region" aria-labelledby="crew-chat-title"
+      <section ref={panelRef} id="crew-chat-panel" role="region" hidden={!open} aria-labelledby="crew-chat-title"
         onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onOpenChange(false); } }}
-        className="fixed right-3 top-32 z-40 max-h-[calc(100dvh-9rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto rounded-lg border border-ion/25 bg-card/95 shadow-2xl" data-testid="dialog-crew-chat">
+        className="pointer-events-auto fixed right-3 top-32 z-40 max-h-[calc(100dvh-9rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto rounded-lg border border-ion/25 bg-card/95 shadow-2xl" data-testid="dialog-crew-chat">
         <div className="relative border-b border-white/10 p-3 pr-12">
           <div className="kicker">Crew channel</div>
           <h2 id="crew-chat-title" className="font-display text-lg font-bold uppercase tracking-wider">Crew chat</h2>
@@ -178,8 +179,8 @@ export function CrewBar({ session, flag, meId, onOpenBadge, children }: { sessio
           </button>
         </div>
       </div>
-      <CrewChatDialog open={chat} onOpenChange={setChat} session={session} meId={meId} now={now} />
-      <AiDraftDialog key={`${session.id}:${meId}`} open={ai} onOpenChange={setAi} draftKey={`${session.id}:${meId}`} />
+      <CrewChatDialog key={`chat:${session.id}:${meId}`} open={chat} onOpenChange={setChat} session={session} meId={meId} now={now} />
+      <AiDraftDialog key={`advisor:${session.id}:${meId}`} open={ai} onOpenChange={setAi} draftKey={`${session.id}:${meId}`} />
     </div>
   );
 }

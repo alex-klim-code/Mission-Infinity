@@ -4,3 +4,4 @@
 - [Publish check constraints](publish-check-constraints.md) — changing a CHECK expression under the same name can be invisible to Publish; verify the actual production constraint.
 - [Build/test resource contention](build-test-resources.md) — finish builds and workspace TypeScript checks before browser recording; concurrent compilers can stop services.
 - [Account cache identity](account-cache-identity.md) — direct account writes must use the current user's scoped key; the generated base key is only a prefix.
+- [Floating panel focus](portal-focus-safety.md) — overlapping body portals can intercept typing; check DOM counts and namespace sibling panel keys.
