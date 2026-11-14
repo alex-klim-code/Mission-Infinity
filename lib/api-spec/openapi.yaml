@@ -414,6 +414,7 @@ components:
       required: [missions, presets, scenes, rocketCatalog]
       properties:
         rocketCatalog: { type: array, items: { $ref: '#/components/schemas/RocketSection' } }
+        scientificInstruments: { type: array, items: { $ref: '#/components/schemas/ScientificInstrument' } }
         missions: { type: array, items: { $ref: '#/components/schemas/Mission' } }
         presets: { type: array, items: { $ref: '#/components/schemas/CharacterPreset' } }
         scenes: { type: array, items: { $ref: '#/components/schemas/StoryScene' } }
@@ -505,6 +506,7 @@ components:
         chat: { $ref: '#/components/schemas/SessionChatPage' }
         build: { $ref: '#/components/schemas/RocketBuild' }
         assembly: { $ref: '#/components/schemas/RocketAssembly' }
+        science: { $ref: '#/components/schemas/ScienceLoadout' }
         createdAt: { type: string }
     RocketBuild:
       type: object
@@ -525,11 +527,40 @@ components:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket] }
+        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments] }
+        instrumentIds: { type: array, maxItems: 7, uniqueItems: true, items: { type: string } }
         optionId: { type: string }
         hullId: { type: string, enum: [falcon-shadow, titan-explorer, nova-prime] }
         ready: { type: boolean }
         expectedScene: { type: integer }
+    ScientificInstrument:
+      type: object
+      required: [id, name, price, massKg, powerW, quality, maxSciencePoints, description, scientificPurpose]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        price: { type: integer }
+        massKg: { type: number }
+        powerW: { type: number }
+        quality: { type: integer }
+        maxSciencePoints: { type: integer }
+        description: { type: string }
+        scientificPurpose: { type: string }
+    InstrumentProposal:
+      type: object
+      required: [playerId, instrumentIds]
+      properties:
+        playerId: { type: string }
+        instrumentIds: { type: array, items: { type: string } }
+    ScienceLoadout:
+      type: object
+      required: [opened, completed, instrumentIds, spent, proposals]
+      properties:
+        opened: { type: boolean }
+        completed: { type: boolean }
+        instrumentIds: { type: array, items: { type: string } }
+        spent: { type: integer }
+        proposals: { type: array, items: { $ref: '#/components/schemas/InstrumentProposal' } }
     RocketComponent:
       type: object
       required: [id, categoryId, name, price, massKg, parameters, description, quality, dataStatus, source, originalCategory, referenceUrl, qualityMethodology]

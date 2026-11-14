@@ -341,6 +341,11 @@ function Build({ session, mission, me, isHost, openBadge }: StageProps) {
   const completed = !!session.assembly?.completed;
   const hullBought = !!session.build?.selectedHullId;
   const flag: CrewFlag = (sp, leader) => {
+    if (session.science?.opened) {
+      if (session.science.completed) return { on: true, label: 'Payload locked' };
+      const proposal = session.science.proposals.find((p) => p.playerId === sp.player.id);
+      return { on: leader || !!proposal, label: leader ? 'Leader' : proposal ? `${proposal.instrumentIds.length} proposed` : 'Selecting' };
+    }
     if (completed) return { on: true, label: 'Built' };
     if (!hullBought) {
       const h = hullById(votes.find((v) => v.playerId === sp.player.id)?.hullId);

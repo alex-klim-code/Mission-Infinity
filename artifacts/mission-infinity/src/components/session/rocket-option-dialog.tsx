@@ -3,6 +3,7 @@ import type { RocketCategory, RocketComponent, SessionActionHullId } from '@work
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
+import { purchaseRocketPart } from '@/lib/rocket-purchase';
 import { BODY_CATEGORY, HullVisual, Price, fmtKg, fmtSigned, formatExact, hullById, isHullOption, type Props } from './rocket-shared';
 
 type DetailProps = {
@@ -40,11 +41,8 @@ export function OptionDetail({ option, category, props, official, byOption, rema
     } else act({ action: 'choose-component', optionId: option.id }, proposeDone);
   };
   const confirm = () => {
-    if (pending || overBudget) return;
-    if (body) {
-      if (screen === 'INTRO') act({ action: 'build-next' }, () => act({ action: 'confirm-hull', hullId }, onSelected));
-      else act({ action: 'confirm-hull', hullId }, onSelected);
-    } else act({ action: 'confirm-component', optionId: option.id }, onSelected);
+    if (overBudget) return;
+    purchaseRocketPart(props, category.id, option.id, onSelected);
   };
   const guestBlockedIntro = body && !isHost && screen === 'INTRO';
 

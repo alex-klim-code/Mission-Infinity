@@ -23,4 +23,7 @@ export const SessionActionAction = {
   "choose-component": "choose-component",
   "confirm-component": "confirm-component",
   "finish-rocket": "finish-rocket",
+  "open-science": "open-science",
+  "propose-instruments": "propose-instruments",
+  "purchase-instruments": "purchase-instruments",
 } as const;

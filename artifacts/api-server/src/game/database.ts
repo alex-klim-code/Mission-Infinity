@@ -59,6 +59,14 @@ interface Invites {
   created_at: Time;
 }
 export interface GameDatabase {
+  game_session_science_loadouts: {
+    session_id: string;
+    opened: Generated<boolean>;
+    completed: Generated<boolean>;
+    instrument_ids: Generated<string[]>;
+    proposals: Generated<Record<string, string[]>>;
+    spent: Generated<number>;
+  };
   game_session_builds: {
     session_id: string;
     screen: Generated<string>;

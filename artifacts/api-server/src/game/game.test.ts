@@ -16,6 +16,7 @@ import { ObjectStorageService } from "../lib/objectStorage";
 import { avatarFixture } from "./testing/avatar";
 import { rocketCatalog, componentCategories, rocketOptions } from "./rocket-catalog";
 import { rocketHulls } from "./rocket-builds";
+import { scientificInstruments } from "./scientific-instruments";
 
 // Domain/integration tests use disposable identities, never bypass browser auth.
 test("Mission Infinity server-authoritative game rules", async t => {
@@ -194,6 +195,65 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.equal(finished.build.spent,expected);
       await assert.rejects(updateSession(leader,session.id,{action:"confirm-component",optionId:expensive.id}),/already built/);
       await assert.rejects(updateSession(crew,session.id,{action:"choose-component",optionId:cheap.id}),/already built/);
+      // The new stage must not change prior purchases or preparation time.
+      await assert.rejects(updateSession(crew,session.id,{action:"open-science"}),/Leader/);
+      await assert.rejects(updateSession(outsider,session.id,{action:"open-science"}),/member/);
+      await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:[]}),/Open Stage 2/);
+      await updateSession(leader,session.id,{action:"open-science"});
+      await updateSession(leader,session.id,{action:"open-science"});
+      await updateSession(crew,session.id,{action:"propose-instruments",instrumentIds:[]});
+      assert.deepEqual((await sessionState(session.id,leader)).science.proposals,[{playerId:crew,instrumentIds:[]}]);
+      const ids = scientificInstruments.map(item=>item.id);
+      await updateSession(crew,session.id,{action:"propose-instruments",instrumentIds:ids});
+      await assert.rejects(updateSession(crew,session.id,{action:"purchase-instruments",instrumentIds:ids}),/Leader/);
+      await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:["invented"]}),/valid/);
+      await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:[ids[0],ids[0]]}),/unique/);
+      await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments"}),/valid/);
+      await gameDb.updateTable("game_session_builds").set({spent:399000000}).where("session_id","=",session.id).execute();
+      await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:ids}),/insufficient/);
+      let state = await sessionState(session.id,crew);
+      assert.equal(state.science.completed,false);
+      assert.equal(state.science.spent,0);
+      assert.equal(state.build.spent,399000000);
+      await gameDb.updateTable("game_session_builds").set({spent:expected}).where("session_id","=",session.id).execute();
+      await Promise.all([1,2].map(()=>updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:[...ids].reverse()})));
+      state = await sessionState(session.id,crew);
+      assert.equal(state.science.completed,true);
+      assert.deepEqual(state.science.instrumentIds,ids);
+      assert.equal(state.science.spent,49000000);
+      assert.equal(state.build.spent,expected+49000000);
+      assert.equal(state.build.elapsedMonths,12);
+      assert.deepEqual(state.assembly,finished.assembly);
+      await assert.rejects(updateSession(leader,session.id,{action:"purchase-instruments",instrumentIds:[]}),/already purchased/);
+      await assert.rejects(updateSession(crew,session.id,{action:"propose-instruments",instrumentIds:[]}),/already purchased/);
+      assert.equal((await sessionState(session.id,leader)).build.spent,expected+49000000);
+    });
+    await t.test("Stage 2 catalog matches supplied game balance and an empty purchase advances for free", async () => {
+      assert.deepEqual(scientificInstruments.map(item=>[item.price,item.massKg,item.powerW,item.quality,item.maxSciencePoints]),[
+        [2000000,3,12,60,100],[5000000,5,20,75,180],[3000000,2,5,70,130],
+        [4000000,3,8,80,160],[8000000,8,25,85,250],[12000000,15,60,90,320],[15000000,12,45,95,400],
+      ]);
+      assert.equal(scientificInstruments.reduce((n,item)=>n+item.massKg,0),48);
+      assert.equal(scientificInstruments.reduce((n,item)=>n+item.powerW,0),175);
+      assert.equal(scientificInstruments.reduce((n,item)=>n+item.maxSciencePoints,0),1540);
+      const [player] = await players(1);
+      const session = await createSession(player,"earth-observer","solo");
+      await assert.rejects(updateSession(player,session.id,{action:"open-science"}),/Start the mission/);
+      for(let scene=0;scene<5;scene++) await updateSession(player,session.id,{action:"next",expectedScene:scene});
+      await updateSession(player,session.id,{action:"initiate"});
+      await assert.rejects(updateSession(player,session.id,{action:"open-science"}),/Complete Stage 1/);
+      assert.deepEqual((await sessionState(session.id,player)).science,{opened:false,completed:false,instrumentIds:[],spent:0,proposals:[]});
+      // Isolated, disposable fixture: Stage 1 validation is covered by the test above.
+      await gameDb.insertInto("game_session_rocket_assemblies").values({session_id:session.id,completed:true}).execute();
+      await gameDb.insertInto("game_session_builds").values({session_id:session.id,selected_hull_id:"falcon-shadow",spent:50000000,elapsed_months:12}).execute();
+      await updateSession(player,session.id,{action:"open-science"});
+      await Promise.all([1,2].map(()=>updateSession(player,session.id,{action:"purchase-instruments",instrumentIds:[]})));
+      const state = await sessionState(session.id,player);
+      assert.equal(state.science.completed,true);
+      assert.deepEqual(state.science.instrumentIds,[]);
+      assert.equal(state.science.spent,0);
+      assert.equal(state.build.spent,50000000);
+      assert.equal(state.build.elapsedMonths,12);
     });
     await t.test("catalog repricing never retroactively charges a previously purchased hull", async () => {
       const [player] = await players(1);

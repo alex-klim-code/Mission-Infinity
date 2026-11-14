@@ -54,6 +54,21 @@ export const GetGameCatalogResponse = zod.object({
       ),
     }),
   ),
+  scientificInstruments: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        name: zod.string(),
+        price: zod.number().int(),
+        massKg: zod.number(),
+        powerW: zod.number(),
+        quality: zod.number().int(),
+        maxSciencePoints: zod.number().int(),
+        description: zod.string(),
+        scientificPurpose: zod.string(),
+      }),
+    )
+    .optional(),
   missions: zod.array(
     zod.object({
       id: zod.string(),
@@ -1260,6 +1275,20 @@ export const CreateGameSessionResponse = zod.object({
       ),
     })
     .optional(),
+  science: zod
+    .object({
+      opened: zod.boolean(),
+      completed: zod.boolean(),
+      instrumentIds: zod.array(zod.string()),
+      spent: zod.number().int(),
+      proposals: zod.array(
+        zod.object({
+          playerId: zod.string(),
+          instrumentIds: zod.array(zod.string()),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1463,12 +1492,28 @@ export const GetGameSessionResponse = zod.object({
       ),
     })
     .optional(),
+  science: zod
+    .object({
+      opened: zod.boolean(),
+      completed: zod.boolean(),
+      instrumentIds: zod.array(zod.string()),
+      spent: zod.number().int(),
+      proposals: zod.array(
+        zod.object({
+          playerId: zod.string(),
+          instrumentIds: zod.array(zod.string()),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
 export const UpdateGameSessionParams = zod.object({
   id: zod.coerce.string(),
 });
+
+export const updateGameSessionBodyInstrumentIdsMax = 7;
 
 export const UpdateGameSessionBody = zod.object({
   action: zod.enum([
@@ -1485,7 +1530,14 @@ export const UpdateGameSessionBody = zod.object({
     "choose-component",
     "confirm-component",
     "finish-rocket",
+    "open-science",
+    "propose-instruments",
+    "purchase-instruments",
   ]),
+  instrumentIds: zod
+    .array(zod.string())
+    .max(updateGameSessionBodyInstrumentIdsMax)
+    .optional(),
   optionId: zod.string().optional(),
   hullId: zod
     .enum(["falcon-shadow", "titan-explorer", "nova-prime"])
@@ -1689,6 +1741,20 @@ export const UpdateGameSessionResponse = zod.object({
                   playerId: zod.string(),
                 }),
               ),
+          ),
+        })
+        .optional(),
+      science: zod
+        .object({
+          opened: zod.boolean(),
+          completed: zod.boolean(),
+          instrumentIds: zod.array(zod.string()),
+          spent: zod.number().int(),
+          proposals: zod.array(
+            zod.object({
+              playerId: zod.string(),
+              instrumentIds: zod.array(zod.string()),
+            }),
           ),
         })
         .optional(),
@@ -1931,6 +1997,20 @@ export const SendSessionMessageResponse = zod.object({
       ),
     })
     .optional(),
+  science: zod
+    .object({
+      opened: zod.boolean(),
+      completed: zod.boolean(),
+      instrumentIds: zod.array(zod.string()),
+      spent: zod.number().int(),
+      proposals: zod.array(
+        zod.object({
+          playerId: zod.string(),
+          instrumentIds: zod.array(zod.string()),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -2150,6 +2230,20 @@ export const RespondToInvitationResponse = zod.object({
                   playerId: zod.string(),
                 }),
               ),
+          ),
+        })
+        .optional(),
+      science: zod
+        .object({
+          opened: zod.boolean(),
+          completed: zod.boolean(),
+          instrumentIds: zod.array(zod.string()),
+          spent: zod.number().int(),
+          proposals: zod.array(
+            zod.object({
+              playerId: zod.string(),
+              instrumentIds: zod.array(zod.string()),
+            }),
           ),
         })
         .optional(),

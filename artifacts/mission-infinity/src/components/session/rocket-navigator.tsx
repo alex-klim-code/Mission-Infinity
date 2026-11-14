@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState, type RefObject } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2, Lock, Rocket } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Lock, Rocket, ShoppingCart } from 'lucide-react';
 import type { RocketCategory, RocketComponent, RocketSection } from '@workspace/api-client-react';
 import { imgUrl } from '@/lib/game';
 import { cn } from '@/lib/utils';
-import { BODY_CATEGORY, categoryIcon, fmtKg, formatExact, hullById, shortDescription, type Props } from './rocket-shared';
+import { purchaseRocketPart } from '@/lib/rocket-purchase';
+import { BODY_CATEGORY, categoryIcon, fmtKg, fmtSigned, formatExact, hullById, shortDescription, type Props } from './rocket-shared';
 import { OptionDialog } from './rocket-option-dialog';
 import { Breadcrumb, RootOverview, SectionOverview, type Crumb } from './rocket-overviews';
 
@@ -25,6 +26,8 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
   const headRef = useRef<HTMLHeadingElement>(null);
 
   const idx = flat.findIndex((x) => x.cat.id === catId);
+  const currentCategoryRef = useRef(catId);
+  currentCategoryRef.current = catId;
   const entry = idx >= 0 ? flat[idx] : undefined;
   const sec = entry?.sec;
   const cat = entry?.cat;
@@ -32,6 +35,8 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
   const dialogOpt = optId ? dialogCat?.options.find((o) => o.id === optId) ?? byOption.get(optId) : undefined;
 
   const [view, setView] = useState<'root' | 'section' | 'category'>('category');
+  const viewRef = useRef(view);
+  viewRef.current = view;
   const [secId, setSecId] = useState<string | null>(null);
   const viewSec = sections.find((s) => s.id === secId);
   const goto = (id: string) => { setCatId(id); setOptId(null); setView('category'); };
@@ -63,7 +68,7 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
         <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-4xl" data-testid="text-builder-title"><button type="button" onClick={openRoot} className="rounded-sm text-left transition-colors hover:text-ion focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion" aria-label="View all Rocket Builder sections">Rocket Builder</button></h1>
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-nav-progress">{doneCount}/{flat.length} categories set</span>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">{hullBought ? 'Pick one part per category. Crew proposes, the Leader confirms.' : 'Start with the rocket body. Other parts unlock once it is bought.'}</p>
+      {!hullBought && <p className="mt-1 text-sm text-muted-foreground">Start with the rocket body. Other parts unlock once it is bought.</p>}
 
       <Breadcrumb items={crumbs} />
 
@@ -76,9 +81,14 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
       ) : (
         <CategoryPanel
           cat={cat} secName={sec?.name ?? ''} pos={sec ? sec.categories.indexOf(cat) + 1 : 0} of={sec?.categories.length ?? 0}
-          official={official} props={props} hullBought={hullBought} headRef={headRef}
+          official={official} byOption={byOption} remaining={remaining} props={props} hullBought={hullBought} headRef={headRef}
           onPrev={idx > 0 ? () => step(-1) : undefined} onNext={() => (flat[idx + 1] ? step(1) : goto(READY))}
           onOpen={(id) => { openerRef.current = document.activeElement as HTMLElement; setOptId(id); }}
+          onPurchase={(id) => purchaseRocketPart(props, cat.id, id, () => {
+            if (currentCategoryRef.current !== cat.id || viewRef.current !== 'category') return;
+            advanceFrom(cat.id);
+            requestAnimationFrame(() => headRef.current?.focus());
+          })}
         />
       )}
 
@@ -96,9 +106,9 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
   );
 }
 
-function CategoryPanel({ cat, secName, pos, of, official, props, hullBought, headRef, onPrev, onNext, onOpen }: {
-  cat: RocketCategory; secName: string; pos: number; of: number; official: Map<string, string>; props: Props; hullBought: boolean;
-  headRef: RefObject<HTMLHeadingElement | null>; onPrev?: () => void; onNext: () => void; onOpen: (id: string) => void;
+function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, props, hullBought, headRef, onPrev, onNext, onOpen, onPurchase }: {
+  cat: RocketCategory; secName: string; pos: number; of: number; official: Map<string, string>; byOption: Map<string, RocketComponent>; remaining: number; props: Props; hullBought: boolean;
+  headRef: RefObject<HTMLHeadingElement | null>; onPrev?: () => void; onNext: () => void; onOpen: (id: string) => void; onPurchase: (id: string) => void;
 }) {
   const Icon = categoryIcon(cat);
   const body = cat.id === BODY_CATEGORY;
@@ -127,9 +137,14 @@ function CategoryPanel({ cat, secName, pos, of, official, props, hullBought, hea
           const mine = proposals.includes(o.id);
           const hull = body ? hullById(o.id) : undefined;
           const price = hull?.price ?? o.price;
+          const currentPrice = byOption.get(official.get(cat.id) ?? '')?.price ?? 0;
+          const locked = !!props.session.assembly?.completed || (body ? hullBought : !hullBought);
+          const overBudget = price - currentPrice > remaining;
+          const purchaseDisabled = !props.isHost || props.pending || locked || sel || overBudget;
+          const purchaseReason = sel ? 'Purchased' : locked ? 'Locked' : !props.isHost ? 'Leader only' : overBudget ? 'Insufficient budget' : undefined;
           const desc = shortDescription(o);
           return (
-            <li key={o.id} className="min-w-0">
+            <li key={o.id} className="flex min-w-0 flex-col">
               <button type="button" onClick={() => onOpen(o.id)} aria-haspopup="dialog"
                 className={cn('group relative flex h-full w-full min-w-0 flex-col overflow-hidden rounded-lg border bg-void/70 text-left transition-[border-color,transform,background-color] duration-200 hover:-translate-y-0.5 hover:border-ion/50 hover:bg-ion/[.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion',
                   sel ? 'border-burn/70 bg-burn/[.06]' : 'border-white/10')}
@@ -161,6 +176,12 @@ function CategoryPanel({ cat, secName, pos, of, official, props, hullBought, hea
                     </div>
                   )}
                 </div>
+              </button>
+              <button type="button" disabled={purchaseDisabled} onClick={() => onPurchase(o.id)}
+                aria-label={`Purchase ${o.name}`} title={purchaseReason}
+                className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-burn/50 bg-burn/15 px-3 py-2 font-display text-xs font-bold uppercase tracking-wider text-burn transition-colors hover:bg-burn/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burn disabled:cursor-not-allowed disabled:opacity-45"
+                data-testid={`button-purchase-option-${o.id}`}>
+                <ShoppingCart className="h-3.5 w-3.5" /> Purchase{purchaseReason ? ` · ${purchaseReason}` : currentPrice > 0 ? ` · ${fmtSigned(price - currentPrice)}` : ''}
               </button>
             </li>
           );

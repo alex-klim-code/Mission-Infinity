@@ -21,3 +21,4 @@ export * from "./game";
 export * from "./session-messages";
 export * from "./rocket-builds";
 export * from "./rocket-assemblies";
+export * from "./science-loadouts";

@@ -324,8 +324,21 @@ export interface RocketSection {
   categories: RocketCategory[];
 }
 
+export interface ScientificInstrument {
+  id: string;
+  name: string;
+  price: number;
+  massKg: number;
+  powerW: number;
+  quality: number;
+  maxSciencePoints: number;
+  description: string;
+  scientificPurpose: string;
+}
+
 export interface Catalog {
   rocketCatalog: RocketSection[];
+  scientificInstruments?: ScientificInstrument[];
   missions: Mission[];
   presets: CharacterPreset[];
   scenes: StoryScene[];
@@ -472,6 +485,19 @@ export interface RocketAssembly {
   proposals: ComponentProposal[];
 }
 
+export interface InstrumentProposal {
+  playerId: string;
+  instrumentIds: string[];
+}
+
+export interface ScienceLoadout {
+  opened: boolean;
+  completed: boolean;
+  instrumentIds: string[];
+  spent: number;
+  proposals: InstrumentProposal[];
+}
+
 export interface GameSession {
   id: string;
   roomCode: string;
@@ -484,6 +510,7 @@ export interface GameSession {
   chat?: SessionChatPage;
   build?: RocketBuild;
   assembly?: RocketAssembly;
+  science?: ScienceLoadout;
   createdAt: string;
 }
 
@@ -504,6 +531,9 @@ export const SessionActionAction = {
   "choose-component": "choose-component",
   "confirm-component": "confirm-component",
   "finish-rocket": "finish-rocket",
+  "open-science": "open-science",
+  "propose-instruments": "propose-instruments",
+  "purchase-instruments": "purchase-instruments",
 } as const;
 
 export type SessionActionHullId =
@@ -517,6 +547,8 @@ export const SessionActionHullId = {
 
 export interface SessionAction {
   action: SessionActionAction;
+  /** @maxItems 7 */
+  instrumentIds?: string[];
   optionId?: string;
   hullId?: SessionActionHullId;
   ready?: boolean;

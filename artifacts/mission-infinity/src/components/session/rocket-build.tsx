@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ChevronDown, Rocket } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Rocket } from 'lucide-react';
 import {
   useGetGameCatalog,
   type GameSession,
@@ -14,6 +14,7 @@ import { errMsg } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import { BODY_CATEGORY, HullVisual, fmtKg, formatExact, hullById, useCalm, type Props } from './rocket-shared';
 import { Navigator } from './rocket-navigator';
+import { ScienceStage } from './science-stage';
 import type { ActFn } from './session-shared';
 
 export { HULLS, hullById, formatExact, BODY_CATEGORY } from './rocket-shared';
@@ -33,7 +34,7 @@ function useOfficial(session: GameSession, sections: RocketSection[]) {
       // amount, so their configuration rows must still add up to saved spending.
       const hull = byOption.get(hullId);
       const partsCost = (session.assembly?.selections ?? []).reduce((sum, s) => sum + (byOption.get(s.optionId)?.price ?? 0), 0);
-      if (hull) byOption.set(hullId, {...hull, price: Math.max(0, (session.build?.spent ?? 0) - partsCost)});
+      if (hull) byOption.set(hullId, {...hull, price: Math.max(0, (session.build?.spent ?? 0) - (session.science?.spent ?? 0) - partsCost)});
     }
     return { byOption, cats, official };
   }, [session, sections]);
@@ -109,7 +110,7 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
 
 /* ---------------- Final ---------------- */
 
-function Built({ session, sections, summary, official, byOption, mission }: { session: GameSession; sections: RocketSection[]; summary: Summary; official: Map<string, string>; byOption: Map<string, RocketComponent>; mission?: Mission }) {
+function Built({ session, sections, summary, official, byOption, mission, isHost, act, pendingAction }: { isHost: boolean; act: ActFn; pendingAction?: string; session: GameSession; sections: RocketSection[]; summary: Summary; official: Map<string, string>; byOption: Map<string, RocketComponent>; mission?: Mission }) {
   const calm = useCalm();
   const hull = hullById(session.build?.selectedHullId);
   return (
@@ -122,6 +123,10 @@ function Built({ session, sections, summary, official, byOption, mission }: { se
           <div className="kicker mb-2 flex items-center gap-2"><Check className="h-3.5 w-3.5 text-burn" /> Assembly complete</div>
           <h1 className="font-display text-4xl font-bold uppercase leading-tight sm:text-6xl" data-testid="text-rocket-built">Rocket Built</h1>
           <p className="mt-1 text-sm text-muted-foreground">{hull?.name} / {summary.count}/{summary.total} categories / {session.build?.elapsedMonths ?? 0} of {mission?.developmentMonths ?? 0} months</p>
+          <div className="mt-4 flex flex-col gap-2 rounded-md border border-white/10 bg-void/70 p-3 sm:flex-row sm:items-center" data-testid="panel-science-continue">
+            <p className="flex-1 text-sm text-muted-foreground" data-testid="text-science-continue">{isHost ? 'Next: choose the scientific instruments your rocket will carry.' : 'Waiting for the Leader to open Stage 2: Scientific instruments.'}</p>
+            {isHost && <HudButton variant="burn" loading={pendingAction === 'open-science'} onClick={() => act({ action: 'open-science' })} data-testid="button-open-science">Scientific instruments <ArrowRight className="h-4 w-4" /></HudButton>}
+          </div>
           <dl className="mt-5 grid grid-cols-1 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 sm:grid-cols-3">
             <div className="bg-void/85 p-3"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Total cost</dt><dd className="mt-0.5 font-mono text-lg text-burn" data-testid="text-built-cost">{formatExact(summary.spent)}</dd></div>
             <div className="bg-void/85 p-3"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Remaining budget</dt><dd className="mt-0.5 font-mono text-lg text-ion" data-testid="text-built-remaining">{formatExact(summary.remaining)}</dd></div>
@@ -183,10 +188,11 @@ export function RocketBuildView(props: Props) {
     if (o?.massKg != null) dryMass += o.massKg;
     else unknownMass += 1;
   });
-  const spent = session.build?.spent ?? 0;
+  const spent = (session.build?.spent ?? 0) - (session.science?.spent ?? 0);
   const summary: Summary = { spent, remaining: (mission?.budget ?? 0) - spent, count: cats.filter((c) => official.has(c.id)).length, total: cats.length, dryMass, unknownMass, hullId: session.build?.selectedHullId };
 
-  if (session.assembly?.completed) return <Built session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} />;
+  if (session.assembly?.completed && session.science?.opened) return <ScienceStage {...props} />;
+  if (session.assembly?.completed) return <Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} />;
 
   return (
     <div className="relative z-10 flex h-full min-h-0 flex-col md:grid md:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">

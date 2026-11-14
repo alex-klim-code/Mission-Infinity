@@ -10,6 +10,8 @@ import type { SessionActionHullId } from "./sessionActionHullId";
 
 export interface SessionAction {
   action: SessionActionAction;
+  /** @maxItems 7 */
+  instrumentIds?: string[];
   optionId?: string;
   hullId?: SessionActionHullId;
   ready?: boolean;

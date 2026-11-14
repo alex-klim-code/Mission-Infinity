@@ -6,6 +6,7 @@ import { getMissionStory } from "./content";
 import { sessionHistory } from "./session-history";
 import { rocketBuildState, updateRocketBuild } from "./rocket-builds";
 import { assemblyState, updateAssembly } from "./rocket-assemblies";
+import { scienceState, updateScience } from "./science-loadouts";
 
 export async function sessionMembers(id: string, db: GameConnection = gameDb) {
   return db.selectFrom("game_session_players").selectAll()
@@ -31,6 +32,7 @@ export async function sessionState(id: string, userId: string, db: GameConnectio
     createdAt: session.created_at.toISOString(), players, chat: await sessionHistory(id, db),
     build: await rocketBuildState(id, db, members.map(m => m.user_id)),
     assembly: await assemblyState(db, id, members.map(m => m.user_id)),
+    science: await scienceState(db, id, members.map(m => m.user_id)),
   };
 }
 export async function notifySession(id: string, extraIds: string[] = []) {
@@ -94,7 +96,7 @@ export async function maybeCompleteAcceptance(id: string, tx: GameConnection) {
   }
 }
 
-export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number; hullId?: string; optionId?: string }) {
+export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number; hullId?: string; optionId?: string; instrumentIds?: string[] }) {
   await gameDb.transaction().execute(async tx => {
     const session = await tx.selectFrom("game_sessions").selectAll().where("id", "=", id).forUpdate().executeTakeFirst();
     requireCondition(session, 404, "Mission session not found.");
@@ -117,6 +119,8 @@ export async function updateSession(userId: string, id: string, input: { action:
         await tx.updateTable("game_sessions").set({ host_id: successor.user_id }).where("id", "=", id).execute();
       }
       await maybeCompleteAcceptance(id, tx);
+    } else if (["open-science", "propose-instruments", "purchase-instruments"].includes(input.action)) {
+      await updateScience(tx, session, userId, input.action, input.instrumentIds);
     } else if (["choose-component", "confirm-component", "finish-rocket"].includes(input.action)) {
       await updateAssembly(tx, session, userId, input.action, input.optionId);
     } else if (["build-next", "choose-hull", "confirm-hull"].includes(input.action)) {

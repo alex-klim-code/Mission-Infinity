@@ -8,6 +8,7 @@
 import type { GameSessionStatus } from "./gameSessionStatus";
 import type { RocketAssembly } from "./rocketAssembly";
 import type { RocketBuild } from "./rocketBuild";
+import type { ScienceLoadout } from "./scienceLoadout";
 import type { SessionChatPage } from "./sessionChatPage";
 import type { SessionPlayer } from "./sessionPlayer";
 
@@ -23,5 +24,6 @@ export interface GameSession {
   chat?: SessionChatPage;
   build?: RocketBuild;
   assembly?: RocketAssembly;
+  science?: ScienceLoadout;
   createdAt: string;
 }

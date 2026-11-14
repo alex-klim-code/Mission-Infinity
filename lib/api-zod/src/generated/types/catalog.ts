@@ -8,10 +8,12 @@
 import type { CharacterPreset } from "./characterPreset";
 import type { Mission } from "./mission";
 import type { RocketSection } from "./rocketSection";
+import type { ScientificInstrument } from "./scientificInstrument";
 import type { StoryScene } from "./storyScene";
 
 export interface Catalog {
   rocketCatalog: RocketSection[];
+  scientificInstruments?: ScientificInstrument[];
   missions: Mission[];
   presets: CharacterPreset[];
   scenes: StoryScene[];
