@@ -123,7 +123,7 @@ function Hero() {
               </a>
             </div>
             <Link href="/sign-in" className="lp-focus mt-4 inline-block text-sm text-ion underline-offset-4 hover:underline" data-testid="link-cta-google">
-              Sign in with Google
+              Continue with Google or Apple
             </Link>
             <div className="glass mt-5 rounded-md p-4 text-sm" data-testid="text-availability">
               <div className="flex flex-wrap items-center gap-2"><StatusTag s="now" /> <span className="text-foreground/85">Mission 001 Earth Observer: story prologue, crew lobby, briefing and mission acceptance.</span></div>

@@ -27,7 +27,7 @@ export const userCharacters = pgTable("user_characters", {
   avatar3d: jsonb("avatar_3d"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => [
-  check("character_age_range", sql`${t.age} >= 14 and ${t.age} <= 60`),
+  check("character_age_range_14_60", sql`${t.age} >= 14 and ${t.age} <= 60`),
   check("character_gender", sql`${t.gender} in ('female','male','unspecified')`),
 ]);
 

@@ -11,7 +11,7 @@ import { AppearanceEditor, CountryPicker } from '@/components/appearance-editor'
 import { EmployeeBadge } from '@/components/character-avatar';
 import { HudButton, PlayerPortrait } from '@/components/ui-kit';
 import { defaultAppearance, randomAppearance, sameAppearance, withBase, type Base } from '@/lib/avatar';
-import { errMsg, imgUrl, invalidateGame } from '@/lib/game';
+import { errMsg, errStatus, imgUrl, invalidateGame } from '@/lib/game';
 import { cn } from '@/lib/utils';
 
 const STEPS = ['Identity', 'Age', 'Country', 'Avatar'];
@@ -50,7 +50,7 @@ function Creator({ account }: { account: PlayerAccount }) {
   const [step, setStep] = useState(0);
   const [gender, setGender] = useState<Base | null>(existing && existing.gender !== 'unspecified' ? existing.gender : null);
   const [age, setAge] = useState(existing?.age ?? 20);
-  const [country, setCountry] = useState((existing?.appearance?.countryCode ?? existing?.countryCode ?? 'PL').toUpperCase());
+  const [country, setCountry] = useState((existing?.countryCode ?? existing?.appearance?.countryCode ?? 'PL').toUpperCase());
   const [app, setApp] = useState<CharacterAppearance>(() => existing?.appearance ?? defaultAppearance(account.id, gender ?? 'female', country));
   const [name, setName] = useState(existing?.name ?? '');
   const [touched, setTouched] = useState(false);
@@ -58,7 +58,9 @@ function Creator({ account }: { account: PlayerAccount }) {
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
   // Preset-only profiles keep their classic portrait unless the player explicitly customizes.
   const [legacyEdited, setLegacyEdited] = useState(!existing || !!existing.appearance);
+  const [lookEdited, setLookEdited] = useState(false);
   const inFlight = useRef(false);
+  const nameInput = useRef<HTMLInputElement>(null);
   const save = useSaveCharacter();
   const qc = useQueryClient();
   const [, setLocation] = useLocation();
@@ -75,9 +77,12 @@ function Creator({ account }: { account: PlayerAccount }) {
   };
 
   const classicOnly = !!existing && !existing.appearance && !legacyEdited;
-  const sendApp = !existing ? true : existing.appearance ? !sameAppearance(live, existing.appearance) : legacyEdited;
+  const sendApp = existing?.avatar3d ? lookEdited || gender !== existing.gender :
+    !existing ? true : existing.appearance ? !sameAppearance(live, existing.appearance) : legacyEdited;
+  const updateLook = (value: CharacterAppearance) => { setApp(value); setLookEdited(true); };
 
   const reset = () => {
+    setLookEdited(false);
     if (existing && !existing.appearance) {
       setLegacyEdited(false);
       setApp(defaultAppearance(account.id, gender ?? 'female', country));
@@ -106,6 +111,11 @@ function Creator({ account }: { account: PlayerAccount }) {
           }
           await invalidateGame(qc);
           setSaved(p);
+        },
+        onError: (error) => {
+          if (errStatus(error) === 409 && /name.*already exists/i.test(errMsg(error))) {
+            nameInput.current?.focus();
+          }
         },
         onSettled: () => {
           inFlight.current = false;
@@ -168,23 +178,43 @@ function Creator({ account }: { account: PlayerAccount }) {
                   {step === 3 && (
                     <>
                       <Heading title="Let's put a face to your name." sub="Create your look and prepare your official Asterion Aerospace badge." />
+                      <div className="mb-7 rounded-xl border-2 border-ion/60 bg-ion/[.08] p-5 shadow-[0_0_32px_hsl(186_92%_56%/.08)] sm:p-6" data-testid="card-username">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                          <label htmlFor="input-name" className="font-display text-xl font-bold uppercase tracking-wide text-foreground">Choose your username</label>
+                          <span className="rounded border border-burn/50 bg-burn/10 px-2 py-1 font-mono text-xs uppercase tracking-wider text-burn">Required</span>
+                        </div>
+                        <p id="username-help" className="mb-4 text-sm text-foreground/80">Your crew will know you by this name. Use 3–24 characters and start with a letter or number.</p>
+                        <input
+                          ref={nameInput}
+                          id="input-name"
+                          name="username"
+                          autoComplete="username"
+                          required
+                          value={name}
+                          maxLength={24}
+                          onChange={(e) => setName(e.target.value)}
+                          onBlur={() => setTouched(true)}
+                          onKeyDown={(e) => e.key === 'Enter' && submit()}
+                          placeholder="Enter your username"
+                          aria-invalid={touched && !!nErr}
+                          aria-describedby="username-help username-error"
+                          className="min-h-14 w-full rounded-lg border-2 border-ion/50 bg-background px-4 py-3 font-display text-2xl font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ion focus:ring-2 focus:ring-ion/30 aria-invalid:border-destructive"
+                          data-testid="input-name"
+                        />
+                        <div className="mt-2 flex justify-between gap-3 text-sm">
+                          <span id="username-error" className="text-destructive" role="alert">{touched && nErr}</span>
+                          <span className="shrink-0 font-mono text-muted-foreground">{name.trim().length}/24</span>
+                        </div>
+                        {(save.error || confirmationError) && (
+                          <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive" role="alert" data-testid="text-save-error">
+                            {confirmationError ?? errMsg(save.error)} Your edits are kept, try again.
+                          </p>
+                        )}
+                      </div>
                       <div className="grid gap-8 xl:grid-cols-[1fr_340px]">
                         <div className="min-w-0 space-y-5">
-                          <div className="inline-flex rounded-md border border-white/10 bg-white/[.02] p-1" role="radiogroup" aria-label="Avatar type">
-                            {([
-                              ['3d', '3D avatar', Box],
-                              ['legacy', existing?.appearance && !existing.avatar3d ? 'Keep current look' : 'Illustrated look', Palette],
-                            ] as const).map(([k, label, Icon]) => (
-                              <button key={k} type="button" role="radio" aria-checked={mode === k} onClick={() => setMode(k)} className={cn('inline-flex min-h-10 items-center gap-2 rounded px-3 font-display text-xs font-semibold uppercase tracking-[.14em] transition-colors', mode === k ? 'bg-ion text-void' : 'text-muted-foreground hover:text-foreground')} data-testid={`button-mode-${k}`}>
-                                <Icon className="h-3.5 w-3.5" /> {label}
-                              </button>
-                            ))}
-                          </div>
-                          {mode === '3d' ? (
-                            <Avatar3DStudio api={draftApi} gender={gender} saved={savedModel} name={name} onEditIdentity={() => setStep(0)} />
-                          ) : (
-                            <>
-                              {savedModel && <p className="rounded-md border border-burn/30 bg-burn/5 p-3 text-sm text-muted-foreground">Saving with the illustrated look sets your 3D model aside. It stays on record; you can scan again any time.</p>}
+                          <p className="text-sm text-muted-foreground">Customize your character here in the game. No extra account or external editor needed.</p>
+                              {savedModel && <p className="rounded-md border border-burn/30 bg-burn/5 p-3 text-sm text-muted-foreground">Your saved character is kept until you customize and save a new in-game look. Stored models are not deleted.</p>}
                               {classicOnly ? (
                                 <div className="flex flex-col items-start gap-5 rounded-lg border border-dashed border-white/10 p-5 sm:flex-row sm:items-center" data-testid="card-keep-classic">
                                   <div className="w-28 shrink-0 overflow-hidden rounded-md">
@@ -193,48 +223,17 @@ function Creator({ account }: { account: PlayerAccount }) {
                                   <div className="flex-1">
                                     <div className="font-display text-lg font-semibold uppercase tracking-wider">Classic portrait</div>
                                     <p className="mt-1 text-sm text-muted-foreground">Kept exactly as it is. Customize only if you want a new illustrated look.</p>
-                                    <HudButton variant="ghost" className="mt-4" onClick={() => { setApp(defaultAppearance(account.id, gender ?? 'female', country)); setLegacyEdited(true); }} data-testid="button-customize-look">
+                                    <HudButton variant="ghost" className="mt-4" onClick={() => { updateLook(defaultAppearance(account.id, gender ?? 'female', country)); setLegacyEdited(true); }} data-testid="button-customize-look">
                                       <Palette className="h-4 w-4" /> Customize illustrated look
                                     </HudButton>
                                   </div>
                                 </div>
                               ) : (
-                                <AppearanceEditor value={live} onChange={setApp} onRandomize={() => setApp(randomAppearance(live))} onReset={reset} />
+                                <AppearanceEditor value={live} onChange={updateLook} onRandomize={() => updateLook(randomAppearance(live))} onReset={reset} />
                               )}
-                            </>
-                          )}
                         </div>
                         <div className="space-y-5">
-                          <div>
-                            <label htmlFor="input-name" className="kicker mb-2 block">Username</label>
-                            <input
-                              id="input-name"
-                              value={name}
-                              maxLength={24}
-                              onChange={(e) => setName(e.target.value)}
-                              onBlur={() => setTouched(true)}
-                              onKeyDown={(e) => e.key === 'Enter' && submit()}
-                              placeholder="e.g. Ines Okafor"
-                              aria-invalid={touched && !!nErr}
-                              className="w-full border-b-2 border-white/15 bg-transparent pb-2 font-display text-2xl font-semibold outline-none transition-colors placeholder:text-white/20 focus:border-ion"
-                              data-testid="input-name"
-                            />
-                            <div className="mt-2 flex justify-between text-sm">
-                              <span className="text-destructive" role="alert">{touched && nErr}</span>
-                              <span className="font-mono text-muted-foreground">{name.trim().length}/24</span>
-                            </div>
-                          </div>
-                          {mode === '3d' ? (
-                            <EmployeeBadge avatar3d countryCode={country} portraitSrc={draft?.posterSrc ?? (savedOk ? avatarFileUrl(savedModel?.portraitUrl) : null)} name={name} idSource={account.id} />
-                          ) : (
-                            <EmployeeBadge appearance={classicOnly ? null : live} presetId={existing?.presetId} countryCode={country} name={name} idSource={account.id} />
-                          )}
-                          {threeDBlock && <p className="text-sm text-burn" role="status" data-testid="text-3d-block">{threeDBlock}</p>}
-                          {(save.error || confirmationError) && (
-                            <p className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive" role="alert" data-testid="text-save-error">
-                              {confirmationError ?? errMsg(save.error)} Your edits are kept, try again.
-                            </p>
-                          )}
+                          <EmployeeBadge appearance={classicOnly ? null : live} avatar3d={savedModel && !sendApp ? savedModel : null} presetId={existing?.presetId} countryCode={country} name={name} idSource={account.id} />
                         </div>
                       </div>
                     </>

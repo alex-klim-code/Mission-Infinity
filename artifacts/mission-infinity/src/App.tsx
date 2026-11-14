@@ -118,17 +118,37 @@ function AuthFrame({ children }: { children: ReactNode }) {
 }
 
 function SignInPage() {
+  const [location] = useLocation();
+  const isEntryScreen = /^\/sign-in\/?$/.test(location);
   return (
     <AuthFrame>
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+      <SignIn
+        routing="path"
+        path={`${basePath}/sign-in`}
+        signUpUrl={`${basePath}/sign-up`}
+        withSignUp
+        transferable
+        appearance={{
+          elements: {
+            // Keep callback, verification and account-completion forms functional.
+            ...(isEntryScreen ? { form: '!hidden', dividerRow: '!hidden' } : {}),
+            footerAction: '!hidden',
+          },
+        }}
+      />
     </AuthFrame>
   );
 }
 
 function SignUpPage() {
+  const [location] = useLocation();
+  // A single entry screen; retain Clerk's existing sign-up callback routes.
+  if (/^\/sign-up\/?$/.test(location)) {
+    return <Redirect to={`/sign-in${window.location.search}`} />;
+  }
   return (
     <AuthFrame>
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} appearance={{ elements: { footerAction: '!hidden' } }} />
     </AuthFrame>
   );
 }
@@ -214,8 +234,8 @@ function ClerkProviderWithRoutes() {
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       localization={{
-        signIn: { start: { title: 'Badge check', subtitle: 'Sign in to rejoin Asterion Aerospace' } },
-        signUp: { start: { title: 'Enlist', subtitle: 'Create your account to become a Mission Leader' } },
+        signIn: { start: { title: 'Badge check', subtitle: 'Continue with Google or Apple to join or rejoin Asterion Aerospace' } },
+        signUp: { start: { title: 'Badge check', subtitle: 'Continue with Google or Apple to join or rejoin Asterion Aerospace' } },
       }}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}

@@ -1,3 +1,5 @@
 - [Avatar identity defaults](avatar-identity.md) — distinguish correct starting defaults from restrictions on deliberately customized hairstyles.
 - [Validation scope](validation-scope.md) — passing runtime tests do not cover TypeScript errors in files excluded from the compiler project.
 - [App Storage compatibility](app-storage-compatibility.md) — major Google client upgrades require a real sidecar upload/read test, not just type checking.
+- [Publish check constraints](publish-check-constraints.md) — changing a CHECK expression under the same name can be invisible to Publish; verify the actual production constraint.
+- [Build/test resource contention](build-test-resources.md) — run full Vite builds after browser recording ends; concurrent runs can interrupt the workspace services.

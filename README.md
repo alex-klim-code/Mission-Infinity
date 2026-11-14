@@ -4,11 +4,13 @@ A cinematic, cooperative browser game about becoming a mission leader at the fic
 
 ## Custom characters
 
-### Avaturn free pilot
+### In-game character creation
 
-The realistic-character pilot uses the official `@avaturn/sdk` standard embedded editor and React Three Fiber/Three.js for exported GLB previews. Set the **public, non-secret** `AVATURN_PROJECT_URL` to an HTTPS project origin such as `https://your-project.avaturn.dev`. The application deliberately does not fall back to Avaturn's demo project. Missing configuration is shown explicitly.
+Onboarding and Settings use the built-in appearance editor only. Players customize their face, skin tone, hairstyle and hair color inside the game, with the shared Asterion uniform and their country flag. There is no external editor, provider sign-in or scan required.
 
-The free pilot does **not** include custom Asterion garments, a sewn flag on the 3D garment, paid SDK appearance controls or paid session/user APIs. Appearance is edited inside Avaturn; it may require its own sign-in. The selected country remains part of the personnel file/badge. The existing application login is unchanged. Avaturn receives photos supplied in its editor; the game stores the exported model, not the source photos.
+The Avaturn pilot was withdrawn because its separate login did not meet the requirement to create characters entirely inside the game. Existing models and profiles are not deleted. An existing model remains active until the player explicitly saves a replacement in-game look.
+
+### Archived 3D compatibility
 
 The model export and its supported metadata (avatar/body identifiers, gender and face-animation capability) are stored with the profile. The GLB itself is the appearance snapshot; no unsupported face/skin/hair parameter API is invented. GLBs and optional PNG posters are uploaded directly to App Storage, then validated and copied to immutable server-owned object keys. PostgreSQL contains upload ownership, asset references and configuration, never GLB/base64 bytes or signed export links.
 
@@ -16,7 +18,7 @@ Limits: 20 MiB per GLB, 1 MiB per poster, bounded model metadata/geometry, self-
 
 The server's App Storage client uses pinned, sidecar-compatible Google libraries. Test real direct upload, finalization and model download before upgrading their major versions.
 
-### Legacy appearance compatibility
+### Appearance persistence and older portraits
 
 Onboarding uses Identity, Age, Country and Character Customization, followed by a saved-badge confirmation. Ages are 14–60 (default 20); the initial country is Poland. A searchable ISO 3166-1 country selector controls both the personnel file and the flag sewn into the shared Asterion uniform.
 

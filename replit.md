@@ -11,12 +11,12 @@ A browser-based cooperative space mission story for 1–4 players.
 - Earth Observer is the only enabled mission. Its $150M budget, 24-month development and 3-year lifetime are fictional educational parameters, not NASA specifications.
 - No chat or direct messages. Friends and game invitations are distinct.
 - No guest authentication, seeded fake players, or nonfunctional primary actions.
-- Product requirement: Google-only sign-in with no separate registration form. Do not confuse hiding email/password UI with disabling that method in the authentication service.
+- Product requirement: a single shared sign-in/sign-up entry screen with Google and Apple only; no email field or separate Sign Up link. Preserve OAuth callbacks and account completion. Hiding email/password UI does not disable that method in the authentication service.
 - Position the product as an educational space mission game for ages 14+, accessible without prior engineering knowledge and with planned beginner-to-advanced scenarios.
 - Monthly missions are a goal, not an established release schedule. Never invent advisers, credentials or NASA involvement.
 - Character onboarding now targets ages 14–60 (default 20), Female/Male bases, and a searchable country selector defaulting to Poland. Preserve legacy profiles and their portraits until their owner explicitly customizes them.
 - Custom characters use deterministic DiceBear avatars with the same Asterion Aerospace uniform and an integrated country flag. Save appearance configuration, not generated images.
-- The user approved the **free Avaturn pilot**, not Pro: use only standard SDK embedding/export with an owned project. Paid API sessions, programmatic appearance controls and custom 3D uniforms require renewed approval. The existing DiceBear uniform/flag describes legacy portraits only; do not imply the free 3D pilot enforces that outfit.
+- Character creation must happen entirely inside the game, without external redirects or another provider login. The user rejected the Avaturn option for that reason; keep the built-in appearance editor as the only creation option. Retain existing saved models and profile data for compatibility, without exposing the external editor.
 - Preserve all legacy character data during 3D upgrades. Activate an uploaded GLB only after validation and successful profile save; keep app authentication, age, country and multiplayer behavior unchanged.
 
 ## Run and verify

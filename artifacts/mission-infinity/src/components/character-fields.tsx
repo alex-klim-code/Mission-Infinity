@@ -122,9 +122,4 @@ export function PresetGrid({ presets, value, onChange }: { presets: CharacterPre
   );
 }
 
-export function nameError(name: string): string | null {
-  const t = name.trim();
-  if (t.length < 3) return 'Name needs at least 3 characters.';
-  if (t.length > 24) return 'Name can be at most 24 characters.';
-  return null;
-}
+export { nameError } from '@/lib/character-name';
