@@ -1,0 +1,22 @@
+.lp-title { font-family: var(--app-font-display); font-weight: 700; text-transform: uppercase; line-height: .9; letter-spacing: -.01em; text-wrap: balance; }
+.lp-orbit { position: absolute; border-radius: 9999px; border: 1px dashed hsl(186 92% 56% / .18); pointer-events: none; }
+@keyframes lp-spin { to { transform: rotate(360deg); } }
+.lp-spin { animation: lp-spin 90s linear infinite; }
+@keyframes lp-travel { from { transform: translateX(-10%); } to { transform: translateX(1000%); } }
+.lp-path { overflow: hidden; }
+.lp-path::after { content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 10%; background: linear-gradient(90deg, transparent, hsl(22 96% 58%), transparent); animation: lp-travel 5s ease-in-out infinite; }
+.lp-card { transition: transform .35s cubic-bezier(.16,1,.3,1), border-color .3s; }
+.lp-card:hover { transform: translateY(-4px); border-color: hsl(186 92% 56% / .5); }
+.lp-cta { transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s; }
+.lp-cta:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -14px hsl(22 96% 58% / .7); }
+.lp-cta:focus-visible, .lp-focus:focus-visible { outline: 2px solid hsl(186 92% 66%); outline-offset: 3px; }
+.lp-cta svg { transition: transform .25s; }
+.lp-cta:hover svg { transform: translateX(3px); }
+html:has(.lp-root) { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html:has(.lp-root) { scroll-behavior: auto; }
+  .lp-spin, .lp-path::after { animation: none; }
+  .lp-card:hover, .lp-cta:hover { transform: none; }
+}
+.reduce-motion .lp-spin, .reduce-motion .lp-path::after { animation: none !important; }
+html.reduce-motion:has(.lp-root) { scroll-behavior: auto; }
