@@ -123,7 +123,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
           <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-5xl" data-testid="text-science-title">Choose the Payload</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Select any, all or none of the seven instruments. Every kilogram and watt competes with the budget you have left.</p>
           <div className="mt-3"><Disclaimer /></div>
-          {demo.enabled && <div className="mt-3"><DemoGuidePanel plan={demo.plan} loading={demo.loading} error={demo.error} refetch={demo.refetch} context="science" /></div>}
+          {demo.enabled && <div className="mt-3"><DemoGuidePanel plan={demo.plan} loading={demo.loading} error={demo.error} refetch={demo.refetch} /></div>}
           <div className="mt-3 flex gap-2">
             <button type="button" className="font-mono text-[11px] uppercase tracking-widest text-ion hover:underline" onClick={() => setSel(new Set(list.map((i) => i.id)))} data-testid="button-science-all">Select all</button>
             <span className="text-white/20">/</span>
