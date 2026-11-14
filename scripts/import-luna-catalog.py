@@ -10,6 +10,36 @@ SOURCE = Path("attached_assets/Mission_Luna_Component_Catalog_(1)_1794668160749.
 TARGET = Path("artifacts/api-server/src/game/luna-catalog-data.json")
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
+# Exact source values only. A slash may mean a fuel/oxidizer pair OR alternatives.
+PROPELLANTS = {
+    "Nafta RP-1 / LOX": [["rp-1", "lox"]],
+    "Ciekły metan (CH4) / LOX": [["methane", "lox"]],
+    "Ciekły wodór (LH2) / LOX": [["lh2", "lox"]],
+    "Ind (In)": [["indium"]],
+    "Podtlenek azotu (N2O) / Propylen": [["propylene", "n2o"]],
+    "LMP-103S (ADN)": [["lmp-103s"]],
+    "Hydrazyna (N2H4)": [["hydrazine"]],
+    "Jod (I2)": [["iodine"]],
+    "Ksenon / Krypton": [["xenon"], ["krypton"]],
+    "Hydrazyna (N2H4) / MON-3": [["hydrazine", "mon-3"]],
+    "Ksenon": [["xenon"]],
+}
+ENGINE_CATEGORIES = {"main-engines", "upper-stage-engines", "orbital-maneuvering",
+                     "lunar-descent-engine", "lunar-ascent-system"}
+
+def fuel_data(row, row_number):
+    category = slug(row["A"])
+    if category not in ENGINE_CATEGORIES | {"fuel-tanks"}:
+        return None
+    raw = row.get("M", "") if category in ENGINE_CATEGORIES else ""
+    return {
+        "role": "tank" if category == "fuel-tanks" else "engine",
+        "status": "documented" if raw in PROPELLANTS else "unverified",
+        "systems": PROPELLANTS.get(raw, []),
+        "sourceText": raw,
+        "sourceLocation": f"Component Catalog!M{row_number}" if raw else f"Component Catalog!E{row_number}:F{row_number}",
+    }
+
 def slug(value):
     text = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", text).strip("-")
@@ -29,7 +59,7 @@ with zipfile.ZipFile(SOURCE) as archive:
         rows.append(cells)
     assert len(rows) == 120
     components = []
-    for row in rows:
+    for row_number, row in enumerate(rows, start=2):
         if row["A"] == "Rocket Body":
             continue  # User explicitly retained the previous three hulls and prices.
         components.append({
@@ -39,6 +69,7 @@ with zipfile.ZipFile(SOURCE) as archive:
             "dataStatus": row["H"], "source": row["I"], "originalCategory": row.get("J", ""),
             "referenceUrl": row.get("K", ""), "qualityMethodology": row["L"],
             "originalValues": {k: row.get(k, "") for k in "MNOPQRST"},
+            "fuel": fuel_data(row, row_number),
         })
     assert len(components) == 116 and len({c["id"] for c in components}) == 116
     TARGET.write_text(json.dumps(components, ensure_ascii=False, indent=2) + "\n")

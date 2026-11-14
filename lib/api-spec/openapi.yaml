@@ -561,10 +561,28 @@ components:
         instrumentIds: { type: array, items: { type: string } }
         spent: { type: integer }
         proposals: { type: array, items: { $ref: '#/components/schemas/InstrumentProposal' } }
+    RocketFuel:
+      type: object
+      required: [role, status, systems, sourceText, sourceLocation]
+      properties:
+        role: { type: string, enum: [engine, tank] }
+        status: { type: string, enum: [documented, unverified] }
+        systems:
+          type: array
+          description: Alternative complete propellant systems. Every substance in one system is required together.
+          items:
+            type: array
+            items: { type: string }
+        sourceText: { type: string }
+        sourceLocation: { type: string }
     RocketComponent:
       type: object
       required: [id, categoryId, name, price, massKg, parameters, description, quality, dataStatus, source, originalCategory, referenceUrl, qualityMethodology]
       properties:
+        fuel:
+          anyOf:
+            - { $ref: '#/components/schemas/RocketFuel' }
+            - { type: 'null' }
         id: { type: string }
         categoryId: { type: string }
         name: { type: string }

@@ -5,8 +5,10 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { RocketFuel } from "./rocketFuel";
 
 export interface RocketComponent {
+  fuel?: RocketFuel | null;
   id: string;
   categoryId: string;
   name: string;

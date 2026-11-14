@@ -6,6 +6,8 @@ LUNA has a $400M budget, Easy difficulty, 36 months of preparation and four week
 
 ## Rocket Builder
 
+Propellant checks show non-blocking warnings in the full-details dialog, mobile/desktop summary and completed build. Chemistry comes from structured workbook data with cell references; unspecified tank chemistry remains unverified, never inferred from names or capacity. Separate engine stages are not treated as a shared supply. This is an educational catalog comparison, not certification or a flight simulation.
+
 Clickable **Rocket Builder / Section / Category** breadcrumbs navigate between the full section overview, a section's categories and its component cards. The overview shows overall and per-section percentages, based on confirmed categories only (including the purchased body). Browsing never purchases or changes saved choices.
 
 After mission start, players use a two-pane builder: component cards on the left, with the rocket, selected parts, spent funds and known dry-mass subtotal alongside. Desktop cards show three per row, with rocket images for bodies and category icons for other parts, names, USD prices and short English descriptions. Clicking opens full details in a dialog; opening or dismissing it never purchases. Successful guest proposals and Leader-confirmed purchases advance locally to the next category, then the next section; a Leader's proposal remains open for confirmation. Other players' changes never interrupt local navigation. The mobile layout keeps a compact summary visible.

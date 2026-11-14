@@ -16,6 +16,8 @@ import { BODY_CATEGORY, HullVisual, fmtKg, formatExact, hullById, useCalm, type 
 import { Navigator } from './rocket-navigator';
 import { ScienceStage } from './science-stage';
 import type { ActFn } from './session-shared';
+import { RocketFuelCheck } from './rocket-fuel-check';
+import { assessFuel, fuelCopy } from '@/lib/rocket-fuel';
 
 export { HULLS, hullById, formatExact, BODY_CATEGORY } from './rocket-shared';
 
@@ -50,6 +52,9 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
   const [open, setOpen] = useState(false);
   const hull = hullById(summary.hullId);
   const ready = summary.count === summary.total && summary.total > 0;
+  const selectedParts = [...official.values()].flatMap(id => byOption.get(id) ? [byOption.get(id)!] : []);
+  const fuel = assessFuel(selectedParts);
+  const fuelCheck = <RocketFuelCheck parts={selectedParts} />;
   const finish = isHost && !session.assembly?.completed && (
     <HudButton variant="burn" className="w-full" disabled={!ready || pending} loading={pendingAction === 'finish-rocket'} onClick={() => act({ action: 'finish-rocket' })} data-testid="button-finish-rocket">
       <Rocket className="h-4 w-4" /> Finish rocket {summary.count}/{summary.total}
@@ -88,10 +93,11 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
             <div className="truncate font-display text-sm font-bold uppercase">{hull?.name ?? 'Body not bought'}</div>
             <div className="font-mono text-[11px] text-burn">{formatExact(summary.spent)} <span className="text-muted-foreground">spent</span></div>
             <div className="font-mono text-[10px] text-muted-foreground">{summary.count}/{summary.total} categories / {fmtKg(summary.dryMass)} known dry</div>
+            <div className="text-[10px] text-amber-200">{fuelCopy.title}: {fuel.conflicts ? `${fuelCopy.conflict} (${fuel.conflicts})` : fuelCopy.unverified}</div>
           </div>
           <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')} />
         </button>
-        {open && <div className="scroll-thin max-h-[45dvh] space-y-3 overflow-y-auto px-3 pb-3">{stats}{list}</div>}
+        {open && <div className="scroll-thin max-h-[45dvh] space-y-3 overflow-y-auto px-3 pb-3">{stats}{fuelCheck}{list}</div>}
         {finish && <div className="px-3 pb-2">{finish}</div>}
       </div>
       {/* desktop pane */}
@@ -102,6 +108,7 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
         <div className="mt-3">{stats}</div>
         <p className="mt-2 text-[10px] leading-snug text-muted-foreground">Dry mass sums parts with known catalog mass only{summary.unknownMass ? ` (${summary.unknownMass} without data)` : ''}; body mass is not included. Not a total wet mass.</p>
         {finish && <div className="mt-3">{finish}</div>}
+        {fuelCheck}
         <div className="mt-4">{list}</div>
       </aside>
     </>
@@ -132,6 +139,7 @@ function Built({ session, sections, summary, official, byOption, mission, isHost
             <div className="bg-void/85 p-3"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Remaining budget</dt><dd className="mt-0.5 font-mono text-lg text-ion" data-testid="text-built-remaining">{formatExact(summary.remaining)}</dd></div>
             <div className="bg-void/85 p-3"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Known dry mass (parts)</dt><dd className="mt-0.5 font-mono text-lg">{fmtKg(summary.dryMass)}</dd></div>
           </dl>
+          <RocketFuelCheck parts={[...official.values()].flatMap(id => byOption.get(id) ? [byOption.get(id)!] : [])} />
           <div className="mt-6 space-y-4" data-testid="list-built-config">
             {sections.map((s) => (
               <section key={s.id}>

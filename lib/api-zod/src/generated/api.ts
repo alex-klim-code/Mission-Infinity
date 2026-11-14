@@ -35,6 +35,22 @@ export const GetGameCatalogResponse = zod.object({
           name: zod.string(),
           options: zod.array(
             zod.object({
+              fuel: zod
+                .union([
+                  zod.object({
+                    role: zod.enum(["engine", "tank"]),
+                    status: zod.enum(["documented", "unverified"]),
+                    systems: zod
+                      .array(zod.array(zod.string()))
+                      .describe(
+                        "Alternative complete propellant systems. Every substance in one system is required together.",
+                      ),
+                    sourceText: zod.string(),
+                    sourceLocation: zod.string(),
+                  }),
+                  zod.null(),
+                ])
+                .optional(),
               id: zod.string(),
               categoryId: zod.string(),
               name: zod.string(),

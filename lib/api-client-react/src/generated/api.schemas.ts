@@ -294,7 +294,33 @@ export interface StoryScene {
   image: string;
 }
 
+export type RocketFuelRole =
+  (typeof RocketFuelRole)[keyof typeof RocketFuelRole];
+
+export const RocketFuelRole = {
+  engine: "engine",
+  tank: "tank",
+} as const;
+
+export type RocketFuelStatus =
+  (typeof RocketFuelStatus)[keyof typeof RocketFuelStatus];
+
+export const RocketFuelStatus = {
+  documented: "documented",
+  unverified: "unverified",
+} as const;
+
+export interface RocketFuel {
+  role: RocketFuelRole;
+  status: RocketFuelStatus;
+  /** Alternative complete propellant systems. Every substance in one system is required together. */
+  systems: string[][];
+  sourceText: string;
+  sourceLocation: string;
+}
+
 export interface RocketComponent {
+  fuel?: RocketFuel | null;
   id: string;
   categoryId: string;
   name: string;

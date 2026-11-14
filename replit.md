@@ -4,6 +4,8 @@ A browser-based cooperative space mission story for 1–4 players.
 
 ## Product scope
 
+- Fuel warnings are advisory only: compare documented engine/tank chemistry, mark missing chemistry as unverified, and never infer shared fuel connections across stages or claim flight certification. Preserve exact workbook fuel text for audit and display chemistry in English.
+
 - The user's title is **Mission: Infinity**, overriding the title in the original attached brief.
 - `MISSION_STARTED` opens the full **Rocket Builder** in Stage 1 — Rocket Construction. Crew members browse/propose parts independently; the Leader confirms shared purchases and completion. It remains an active, resumable mission until explicitly left.
 - The Rocket Builder now includes seven sections and 28 categories. Use all 116 non-body Excel options plus the three retained hulls (119 total). The user explicitly rejected replacing those hulls with the four LUNA Frame options from Excel.

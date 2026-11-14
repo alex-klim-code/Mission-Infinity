@@ -5,6 +5,7 @@ import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { purchaseRocketPart } from '@/lib/rocket-purchase';
 import { BODY_CATEGORY, HullVisual, Price, fmtKg, fmtSigned, formatExact, hullById, isHullOption, type Props } from './rocket-shared';
+import { RocketFuelCheck } from './rocket-fuel-check';
 
 type DetailProps = {
   option: RocketComponent; category: RocketCategory; props: Props; official: Map<string, string>; byOption: Map<string, RocketComponent>; remaining: number;
@@ -66,6 +67,7 @@ export function OptionDetail({ option, category, props, official, byOption, rema
       </dl>
       {option.parameters && (<><h3 className="kicker mt-5">Parameters</h3><p className="mt-1 whitespace-pre-line text-sm text-foreground/85 [overflow-wrap:anywhere]" data-testid="text-option-parameters">{option.parameters}</p></>)}
       {option.description && (<><h3 className="kicker mt-5">Description</h3><p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-foreground/85 [overflow-wrap:anywhere]" data-testid="text-option-description">{option.description}</p></>)}
+      <RocketFuelCheck parts={[...official.values()].flatMap(id => byOption.get(id) ? [byOption.get(id)!] : [])} candidate={option} />
       {option.qualityMethodology && (<><h3 className="kicker mt-5">Quality methodology</h3><p className="mt-1 whitespace-pre-line text-xs text-muted-foreground [overflow-wrap:anywhere]">{option.qualityMethodology}</p></>)}
       {option.referenceUrl && (
         <a href={option.referenceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex max-w-full items-center gap-1.5 text-xs text-ion hover:underline [overflow-wrap:anywhere]" data-testid="link-option-reference">

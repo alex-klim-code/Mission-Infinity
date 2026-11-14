@@ -23,6 +23,7 @@ export const rocketOptions = [
     parameters: color, description: `${color} Asterion Aerospace rocket body.`,
     dataStatus: "GAME", source: "Mission: Infinity", originalCategory: "Rocket Body",
     referenceUrl: "", qualityMethodology: "Body mass and game quality have not been specified.",
+    fuel: null,
   })),
   ...imported.map(option => ({...option, ...(translations as Record<string, Partial<typeof option>>)[option.id]})),
 ];

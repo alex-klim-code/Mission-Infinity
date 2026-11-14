@@ -22,7 +22,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "attitude-control-cubespace-cubeadcs-3-axis",
@@ -47,7 +48,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "attitude-control-adcole-maryland-aerospace-mai-400",
@@ -72,7 +74,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "attitude-control-blue-canyon-technologies-xact-15",
@@ -97,7 +100,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "batteries-gomspace-nanopower-bp4",
@@ -122,7 +126,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "batteries-aac-clyde-space-optimus-40wh",
@@ -147,7 +152,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "batteries-endurosat-li-ion-battery-pack",
@@ -172,7 +178,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "communication-isispace-uhf-transceiver",
@@ -197,7 +204,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "communication-endurosat-s-band-transceiver",
@@ -222,7 +230,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "communication-endurosat-x-band-transmitter",
@@ -247,7 +256,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "electrical-power-system-crystalspace-p1u-p3u-eps",
@@ -272,7 +282,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "electrical-power-system-isispace-ieps",
@@ -297,7 +308,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "electrical-power-system-endurosat-eps-3u",
@@ -322,7 +334,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "electrical-power-system-gomspace-nanopower-p31u",
@@ -347,7 +360,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "flight-sensors-luna-flight-sensor-suite-basic",
@@ -372,7 +386,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "flight-sensors-luna-flight-sensor-suite-redundant",
@@ -397,7 +412,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "flight-sensors-luna-flight-sensor-suite-precision",
@@ -422,7 +438,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "flight-sensors-luna-flight-sensor-suite-deep-space",
@@ -447,7 +464,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "fuel-tanks-luna-propellant-tank-compact",
@@ -472,6 +490,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "tank",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E20:F20"
     }
   },
   {
@@ -497,6 +522,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "tank",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E21:F21"
     }
   },
   {
@@ -522,6 +554,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "tank",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E22:F22"
     }
   },
   {
@@ -547,6 +586,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "tank",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E23:F23"
     }
   },
   {
@@ -572,7 +618,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "landing-legs-luna-landing-gear-reinforced",
@@ -597,7 +644,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "landing-legs-luna-landing-gear-shock-absorbing",
@@ -622,7 +670,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "landing-legs-luna-landing-gear-smart-active",
@@ -647,7 +696,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "lunar-ascent-system-luna-ascent-module-light",
@@ -672,6 +722,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E28:F28"
     }
   },
   {
@@ -697,6 +754,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E29:F29"
     }
   },
   {
@@ -722,6 +786,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E30:F30"
     }
   },
   {
@@ -747,6 +818,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E31:F31"
     }
   },
   {
@@ -772,6 +850,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E32:F32"
     }
   },
   {
@@ -797,6 +882,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E33:F33"
     }
   },
   {
@@ -822,6 +914,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E34:F34"
     }
   },
   {
@@ -847,6 +946,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E35:F35"
     }
   },
   {
@@ -872,7 +978,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "lunar-lander-luna-lander-standard",
@@ -897,7 +1004,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "lunar-lander-luna-lander-robust",
@@ -922,7 +1030,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "lunar-lander-luna-lander-premium",
@@ -947,7 +1056,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "main-engines-rocket-lab-rutherford",
@@ -972,6 +1082,18 @@
       "R": "300",
       "S": "-",
       "T": "Rakieta Electron (udźwig rakiety 300 kg na LEO)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "rp-1",
+          "lox"
+        ]
+      ],
+      "sourceText": "Nafta RP-1 / LOX",
+      "sourceLocation": "Component Catalog!M40"
     }
   },
   {
@@ -997,6 +1119,18 @@
       "R": "150000",
       "S": "-",
       "T": "Starship / Super Heavy (zaktualizowany ciąg ~280 tf)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "methane",
+          "lox"
+        ]
+      ],
+      "sourceText": "Ciekły metan (CH4) / LOX",
+      "sourceLocation": "Component Catalog!M41"
     }
   },
   {
@@ -1022,6 +1156,18 @@
       "R": "45000",
       "S": "-",
       "T": "New Glenn (45 t LEO) / Vulcan Centaur"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "methane",
+          "lox"
+        ]
+      ],
+      "sourceText": "Ciekły metan (CH4) / LOX",
+      "sourceLocation": "Component Catalog!M42"
     }
   },
   {
@@ -1047,6 +1193,18 @@
       "R": "95000",
       "S": "-",
       "T": "Rakieta SLS Block 1 (wcześniej Space Shuttle; próżnia: 2279 kN)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "lh2",
+          "lox"
+        ]
+      ],
+      "sourceText": "Ciekły wodór (LH2) / LOX",
+      "sourceLocation": "Component Catalog!M43"
     }
   },
   {
@@ -1072,7 +1230,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "navigation-sensors-sensonor-stim210",
@@ -1097,7 +1256,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "navigation-sensors-arcsec-sagitta-star-tracker",
@@ -1122,7 +1282,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "navigation-sensors-sodern-hydra-star-tracker",
@@ -1147,7 +1308,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "onboard-computer-pumpkin-cubesat-kit-mcu",
@@ -1172,7 +1334,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "onboard-computer-gomspace-nanomind-a3200",
@@ -1197,7 +1360,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "onboard-computer-isispace-iobc",
@@ -1222,7 +1386,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "onboard-computer-endurosat-obc",
@@ -1247,7 +1412,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "orbital-maneuvering-enpulsion-nano",
@@ -1272,6 +1438,17 @@
       "R": "0",
       "S": "25",
       "T": "Kompaktowy napęd dla CubeSatów (deorbitacja, konstelacje)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "indium"
+        ]
+      ],
+      "sourceText": "Ind (In)",
+      "sourceLocation": "Component Catalog!M52"
     }
   },
   {
@@ -1297,6 +1474,18 @@
       "R": "0",
       "S": "50",
       "T": "CubeSat 3U–16U, manewry podnoszenia orbity"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "propylene",
+          "n2o"
+        ]
+      ],
+      "sourceText": "Podtlenek azotu (N2O) / Propylen",
+      "sourceLocation": "Component Catalog!M53"
     }
   },
   {
@@ -1322,6 +1511,17 @@
       "R": "0",
       "S": "250",
       "T": "Ekologiczny zamiennik hydrazyny (m.in. misje SkySat)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "lmp-103s"
+        ]
+      ],
+      "sourceText": "LMP-103S (ADN)",
+      "sourceLocation": "Component Catalog!M54"
     }
   },
   {
@@ -1347,6 +1547,17 @@
       "R": "0",
       "S": "1000",
       "T": "Klasyczny silnik manewrowy i korekcji orbity"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "hydrazine"
+        ]
+      ],
+      "sourceText": "Hydrazyna (N2H4)",
+      "sourceLocation": "Component Catalog!M55"
     }
   },
   {
@@ -1372,6 +1583,18 @@
       "R": "0",
       "S": "500",
       "T": "SmallSat 50–500 kg, bez toksycznych paliw"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "propylene",
+          "n2o"
+        ]
+      ],
+      "sourceText": "Podtlenek azotu (N2O) / Propylen",
+      "sourceLocation": "Component Catalog!M56"
     }
   },
   {
@@ -1397,6 +1620,17 @@
       "R": "0",
       "S": "30",
       "T": "CubeSat 6U+ / misje głębokiego kosmosu (Lunar IceCube)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "iodine"
+        ]
+      ],
+      "sourceText": "Jod (I2)",
+      "sourceLocation": "Component Catalog!M57"
     }
   },
   {
@@ -1422,6 +1656,20 @@
       "R": "0",
       "S": "500",
       "T": "Długie manewry orbitalne i utrzymanie pozycji"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "xenon"
+        ],
+        [
+          "krypton"
+        ]
+      ],
+      "sourceText": "Ksenon / Krypton",
+      "sourceLocation": "Component Catalog!M58"
     }
   },
   {
@@ -1447,6 +1695,18 @@
       "R": "0",
       "S": "4000",
       "T": "Silnik apogeowy – duże satelity GEO/LEO"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "hydrazine",
+          "mon-3"
+        ]
+      ],
+      "sourceText": "Hydrazyna (N2H4) / MON-3",
+      "sourceLocation": "Component Catalog!M59"
     }
   },
   {
@@ -1472,6 +1732,18 @@
       "R": "22800",
       "S": "-",
       "T": "Falcon 9 (22,8 t LEO) / Falcon Heavy (63,8 t LEO)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "rp-1",
+          "lox"
+        ]
+      ],
+      "sourceText": "Nafta RP-1 / LOX",
+      "sourceLocation": "Component Catalog!M60"
     }
   },
   {
@@ -1497,6 +1769,17 @@
       "R": "0",
       "S": "3000",
       "T": "Duże satelity telekomunikacyjne GEO i misja SMART-1"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "xenon"
+        ]
+      ],
+      "sourceText": "Ksenon",
+      "sourceLocation": "Component Catalog!M61"
     }
   },
   {
@@ -1522,7 +1805,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "payload-adapter-luna-adapter-medium",
@@ -1547,7 +1831,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "payload-adapter-luna-adapter-heavy",
@@ -1572,7 +1857,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "payload-adapter-luna-adapter-precision",
@@ -1597,7 +1883,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "payload-fairing-luna-fairing-compact",
@@ -1622,7 +1909,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "payload-fairing-luna-fairing-standard",
@@ -1647,7 +1935,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "payload-fairing-luna-fairing-large",
@@ -1672,7 +1961,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "payload-fairing-luna-fairing-composite-xl",
@@ -1697,7 +1987,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "re-entry-heat-shield-luna-ablative-shield-basic",
@@ -1722,7 +2013,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "re-entry-heat-shield-luna-ablative-shield-standard",
@@ -1747,7 +2039,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "re-entry-heat-shield-luna-ablative-shield-advanced",
@@ -1772,7 +2065,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "re-entry-heat-shield-luna-ablative-shield-deep-space",
@@ -1797,7 +2091,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "recovery-system-luna-recovery-basic-parachute",
@@ -1822,7 +2117,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "recovery-system-luna-recovery-dual-parachute",
@@ -1847,7 +2143,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "recovery-system-luna-recovery-redundant",
@@ -1872,7 +2169,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "recovery-system-luna-recovery-precision-recovery",
@@ -1897,7 +2195,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "return-capsule-luna-return-capsule-micro",
@@ -1922,7 +2221,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "return-capsule-luna-return-capsule-compact",
@@ -1947,7 +2247,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "return-capsule-luna-return-capsule-reinforced",
@@ -1972,7 +2273,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "return-capsule-luna-return-capsule-premium",
@@ -1997,7 +2299,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "rocket-stages-luna-staging-architecture-single",
@@ -2022,7 +2325,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "rocket-stages-luna-staging-architecture-dual",
@@ -2047,7 +2351,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "rocket-stages-luna-staging-architecture-triple",
@@ -2072,7 +2377,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "rocket-stages-luna-staging-architecture-optimized-triple",
@@ -2097,7 +2403,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-collection-luna-sampler-scoop",
@@ -2122,7 +2429,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-collection-luna-sampler-arm",
@@ -2147,7 +2455,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-collection-luna-sampler-drill",
@@ -2172,7 +2481,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-collection-luna-sampler-autonomous-drill",
@@ -2197,7 +2507,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-container-luna-sample-container-basic",
@@ -2222,7 +2533,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-container-luna-sample-container-sealed",
@@ -2247,7 +2559,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-container-luna-sample-container-sterile",
@@ -2272,7 +2585,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "sample-container-luna-sample-container-high-integrity",
@@ -2297,7 +2611,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-space-radiation-dosimeter-radfet",
@@ -2322,7 +2637,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-nanomag-magnetometer-fgm",
@@ -2347,7 +2663,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-xcam-c3d-cubesat-camera",
@@ -2372,7 +2689,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-langmuir-probe-sonda-langmuira",
@@ -2397,7 +2715,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-miniaturowy-spektrometr-vnir-swir",
@@ -2422,7 +2741,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-spire-gnss-ro-radio-occultation",
@@ -2447,7 +2767,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-dragonfly-aerospace-chameleon",
@@ -2472,7 +2793,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-simera-sense-multiscape100-cis",
@@ -2497,7 +2819,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "scientific-instruments-hyperfield-1-kuva-hyperspectral",
@@ -2522,7 +2845,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "solar-panels-endurosat-solar-panel-3u-stay",
@@ -2547,7 +2871,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "solar-panels-aac-clyde-space-3u-solar-array",
@@ -2572,7 +2897,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "solar-panels-endurosat-solar-panel-3u-rozkadany",
@@ -2597,7 +2923,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "solar-panels-dhv-technology-6u-deployable-panel",
@@ -2622,7 +2949,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "stage-separation-luna-separation-basic-pyro",
@@ -2647,7 +2975,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "stage-separation-luna-separation-redundant-pyro",
@@ -2672,7 +3001,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "stage-separation-luna-separation-pneumatic",
@@ -2697,7 +3027,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "stage-separation-luna-separation-high-reliability",
@@ -2722,7 +3053,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "thermal-protection-luna-thermal-package-basic-insulation",
@@ -2747,7 +3079,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "thermal-protection-luna-thermal-package-multilayer",
@@ -2772,7 +3105,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "thermal-protection-luna-thermal-package-advanced-tps",
@@ -2797,7 +3131,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "thermal-protection-luna-thermal-package-cryogenic-premium",
@@ -2822,7 +3157,8 @@
       "R": "",
       "S": "",
       "T": ""
-    }
+    },
+    "fuel": null
   },
   {
     "id": "upper-stage-engines-spacex-merlin-1d-vacuum",
@@ -2847,6 +3183,18 @@
       "R": "22800",
       "S": "-",
       "T": "Drugi stopień Falcon 9 / Falcon Heavy (próżnia)"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "rp-1",
+          "lox"
+        ]
+      ],
+      "sourceText": "Nafta RP-1 / LOX",
+      "sourceLocation": "Component Catalog!M119"
     }
   },
   {
@@ -2872,6 +3220,18 @@
       "R": "27200",
       "S": "-",
       "T": "Centaur V / Delta IV – wysoka wydajność na orbicie"
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "documented",
+      "systems": [
+        [
+          "lh2",
+          "lox"
+        ]
+      ],
+      "sourceText": "Ciekły wodór (LH2) / LOX",
+      "sourceLocation": "Component Catalog!M120"
     }
   },
   {
@@ -2897,6 +3257,13 @@
       "R": "",
       "S": "",
       "T": ""
+    },
+    "fuel": {
+      "role": "engine",
+      "status": "unverified",
+      "systems": [],
+      "sourceText": "",
+      "sourceLocation": "Component Catalog!E121:F121"
     }
   }
 ]
