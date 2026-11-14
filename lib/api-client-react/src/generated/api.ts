@@ -72,6 +72,160 @@ const withQueryKey = <T extends object, K>(
   return result;
 };
 
+export const getGetStoryImageUrl = (
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+) => {
+  return `/api/game/story-images/${name}`;
+};
+
+export const getStoryImage = async (
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+  options?: Parameters<typeof customFetch>[1],
+): Promise<Blob> => {
+  return customFetch<Blob>(getGetStoryImageUrl(name), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetStoryImageQueryKey = (
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+) => {
+  return [`/api/game/story-images/${name}`] as const;
+};
+
+export const getGetStoryImageQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStoryImage>>,
+  TError = ErrorType<unknown>,
+>(
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetStoryImageQueryKey(name);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getStoryImage>>> = ({
+    signal,
+  }) => getStoryImage(name, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: name !== null && name !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getStoryImage>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetStoryImageQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStoryImage>>
+>;
+export type GetStoryImageQueryError = ErrorType<unknown>;
+
+export function useGetStoryImage<
+  TData = Awaited<ReturnType<typeof getStoryImage>>,
+  TError = ErrorType<unknown>,
+>(
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStoryImage>>,
+          TError,
+          Awaited<ReturnType<typeof getStoryImage>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetStoryImage<
+  TData = Awaited<ReturnType<typeof getStoryImage>>,
+  TError = ErrorType<unknown>,
+>(
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStoryImage>>,
+          TError,
+          Awaited<ReturnType<typeof getStoryImage>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetStoryImage<
+  TData = Awaited<ReturnType<typeof getStoryImage>>,
+  TError = ErrorType<unknown>,
+>(
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetStoryImage<
+  TData = Awaited<ReturnType<typeof getStoryImage>>,
+  TError = ErrorType<unknown>,
+>(
+  name:
+    "graduation-warsaw.webp" | "nasa-internship.webp" | "nasa-engineering.webp",
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getStoryImage>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetStoryImageQueryOptions(name, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getHealthCheckUrl = () => {
   return `/api/healthz`;
 };

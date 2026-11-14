@@ -7,6 +7,16 @@
  */
 import * as zod from "zod";
 
+export const GetStoryImageParams = zod.object({
+  name: zod.enum([
+    "graduation-warsaw.webp",
+    "nasa-internship.webp",
+    "nasa-engineering.webp",
+  ]),
+});
+
+export const GetStoryImageResponse = zod.unknown();
+
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });

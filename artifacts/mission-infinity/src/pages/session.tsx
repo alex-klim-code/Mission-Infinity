@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
-import { BadgeDialog, BriefingBody, CrewDock, SessionTopBar, useSessionAct, type CrewFlag } from '@/components/session/session-shared';
+import { useState, type ReactNode } from 'react';
+import { MessageNotifications } from '@/components/session/message-notifications';
+import { BadgeDialog, SessionTopBar, useSessionAct } from '@/components/session/session-shared';
+import { CrewBar, type CrewFlag } from '@/components/session/crew-bar';
 import { Link, useParams } from 'wouter';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
@@ -91,7 +93,7 @@ type StageProps = { session: GameSession; mission?: Mission; me: string; isHost:
 
 const lobbyFlag: CrewFlag = (sp) => ({ on: sp.ready, label: sp.ready ? 'Ready' : 'Standing by' });
 const continueFlag: CrewFlag = (sp) => ({ on: sp.continueReady, label: sp.continueReady ? 'Ready' : 'Reading' });
-const acceptFlag: CrewFlag = (sp) => ({ on: sp.accepted, label: sp.accepted ? 'Signed' : 'Unsigned' });
+const launchFlag: CrewFlag = (sp) => ({ on: sp.accepted, label: sp.accepted ? 'Ready' : 'Standing by' });
 
 function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
   const { act, pending, pendingAction } = useSessionAct(session.id);
@@ -101,19 +103,19 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
   const canStart = others.filter((p) => p.connected).every((p) => p.ready);
   const slots = Array.from({ length: 4 }, (_, i) => session.players[i]);
   return (
-    <div className="grain relative min-h-[100dvh] overflow-hidden bg-background">
+    <div className="grain relative flex h-[100dvh] flex-col overflow-hidden bg-background">
       {mission && <img src={imgUrl(mission.image)} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-30" />}
       <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
       <Starfield density={0.5} />
       <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-6 md:px-8">
+      <div className="relative z-10 min-h-0 w-full flex-1 overflow-y-auto"><div className="mx-auto max-w-6xl px-4 py-6 md:px-8">
         <Link href="/play" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" data-testid="link-back-play">
           <ArrowLeft className="h-4 w-4" /> Mission board
         </Link>
         <div className="mt-6 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
             <div className="kicker mb-2">Crew lobby / Mission {mission?.number}</div>
-            <h1 className="font-display text-4xl font-bold uppercase md:text-6xl">{mission?.title ?? 'Mission'}</h1>
+            <h1 className="break-words font-display text-3xl font-bold uppercase sm:text-4xl md:text-6xl">{mission?.title ?? 'Mission'}</h1>
             <p className="mt-2 text-muted-foreground">{mission?.subtitle}</p>
           </div>
           <button
@@ -134,14 +136,9 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_340px]">
           <div>
-            <section className="relative overflow-hidden rounded-lg border border-white/10" aria-label="Crew deck" data-testid="panel-scene-window">
-              {mission && <img src={imgUrl(mission.image)} alt="" className="kenburns absolute inset-0 h-full w-full object-cover" />}
-              <div className="absolute inset-0 bg-gradient-to-t from-void via-void/70 to-void/10" />
-              <div className="scanline pointer-events-none absolute inset-0" />
-              <div className="relative flex min-h-[340px] flex-col justify-end gap-2 p-3 sm:p-5">
-                <div className="kicker absolute left-4 top-4 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-burn pulse-dot" /> Crew channel / {session.players.length} of 4 aboard</div>
-                <CrewDock session={session} flag={lobbyFlag} onOpenBadge={openBadge} meId={me} />
-              </div>
+            <section className="relative aspect-[16/9] overflow-hidden rounded-lg border border-white/10" aria-label="Mission scene" data-testid="panel-scene-window">
+              {mission && <img src={imgUrl(mission.image)} alt={mission.title} className="kenburns absolute inset-0 h-full w-full object-cover" />}
+              <div className="kicker absolute left-3 top-3 flex items-center gap-2 rounded bg-void/70 px-2 py-1"><span className="h-1.5 w-1.5 rounded-full bg-burn pulse-dot" /> {session.players.length} of 4 aboard</div>
             </section>
             <div className="glass mt-6 flex flex-col items-start justify-between gap-4 rounded-lg p-5 sm:flex-row sm:items-center">
               <div className="text-sm text-muted-foreground" data-testid="text-lobby-status">
@@ -169,188 +166,179 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
           {isHost ? <InvitePanel session={session} /> : (
             <div className="glass rounded-lg p-5 text-sm text-muted-foreground">
               <div className="kicker mb-3">Briefing note</div>
-              Only the Leader can invite crew and approve each stage. Your part: mark ready, signal when you have read each scene, and sign the mission acceptance.
+              Only the Leader can invite crew and approve each stage. Your part: mark ready, signal when you have read each scene, and signal ready to start the mission at the end.
             </div>
           )}
         </div>
-      </div>
+      </div></div>
+      <CrewBar session={session} flag={lobbyFlag} meId={me} onOpenBadge={openBadge} />
     </div>
   );
 }
 
-/* ---------------- STORY ---------------- */
+/* ---------------- STORY (scenes 0-5, acceptance and ready share the final scene) ---------------- */
+
+function StoryAction({ children }: { children: ReactNode }) {
+  return <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{children}</div>;
+}
 
 function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps & { scenes: StoryScene[] }) {
   const { act, pending, pendingAction } = useSessionAct(session.id);
-  const scene = scenes.find((s) => s.id === session.scene) ?? scenes[session.scene];
+  const finalStatus = session.status === 'MISSION_ACCEPTANCE' || session.status === 'READY_TO_START';
+  const lastIdx = Math.max(scenes.length - 1, 0);
+  const idx = finalStatus ? lastIdx : Math.min(session.scene, lastIdx);
+  const scene = scenes.find((s) => s.id === idx) ?? scenes[idx];
+  const isFinal = finalStatus || idx >= lastIdx;
   const solo = session.players.length === 1;
   const paragraphs = scene ? (solo && scene.soloParagraphs.length ? scene.soloParagraphs : scene.paragraphs) : [];
   const mine = session.players.find((p) => p.player.id === me);
   const others = session.players.filter((p) => p.player.id !== session.hostId && p.connected);
   const allContinue = others.every((p) => p.continueReady);
-  const isLast = session.scene >= scenes.length - 1 || session.status === 'MISSION_ACCEPTANCE';
-  const isBriefing = session.status === 'MISSION_BRIEFING';
-  const accepted = session.players.filter((p) => p.accepted).length;
+  const allAccepted = others.every((p) => p.accepted);
+  const signed = others.filter((p) => p.accepted).length;
+  const kind: 'story' | 'message' | 'crew' | 'launch' = isFinal ? 'launch' : idx === 3 ? 'message' : idx === 4 ? 'crew' : 'story';
+  const title = kind === 'launch' ? 'Start Mission' : kind === 'crew' ? 'Meet Your Crew' : kind === 'message' ? 'Get a Message' : scene?.title ?? SCENE_STATUS_LABEL[session.status];
   const director = scene && /director/i.test(scene.speaker);
 
-  return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-background">
-      <AnimatePresence mode="sync">
-        <motion.div key={session.scene} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.2 }}>
-          {scene && <img src={imgUrl(scene.image)} alt="" className="kenburns h-full w-full object-cover" />}
-        </motion.div>
-      </AnimatePresence>
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
-      <div className="vignette absolute inset-0" />
-      <div className="scanline pointer-events-none absolute inset-0" />
+  const status = isFinal
+    ? isHost
+      ? solo || allAccepted
+        ? 'Every connected engineer is standing by. Your command.'
+        : `Waiting for crew: ${signed} of ${others.length} ready to launch.`
+      : mine?.accepted
+        ? 'Ready recorded. Waiting for the Leader to launch.'
+        : 'Signal that you are ready to start the mission.'
+    : isHost
+      ? solo || allContinue
+        ? 'Crew is with you.'
+        : 'Waiting for connected crew to signal ready.'
+      : mine?.continueReady
+        ? 'Signal sent. The Leader will approve the next stage.'
+        : 'Signal when you are ready to continue.';
 
-      <div className="relative z-10 flex min-h-[100dvh] flex-col">
-        <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
-        <div className="flex gap-1 px-4 pt-3 md:px-8" aria-label="Scene progress">
-          {scenes.map((s) => (
-            <span key={s.id} className={cn('h-1 flex-1 rounded-full transition-colors sm:max-w-10', s.id < session.scene ? 'bg-ion/60' : s.id === session.scene ? 'bg-burn' : 'bg-white/15')} />
-          ))}
-        </div>
-
-        <div className="flex flex-1 items-end px-4 pb-6 md:px-8 md:pb-10">
-          <AnimatePresence mode="wait">
-            <motion.div key={session.scene} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="mx-auto w-full max-w-5xl">
-              <div className="kicker mb-3 flex items-center gap-3">
-                <span className="text-burn">Scene {String(session.scene + 1).padStart(2, '0')}</span>
-                <span className="h-px w-8 bg-ion/50" />
-                {scene?.label}
-              </div>
-              <h1 className="mb-5 font-display text-3xl font-bold uppercase leading-none sm:text-4xl md:text-6xl" data-testid="text-scene-title">{scene?.title ?? SCENE_STATUS_LABEL[session.status]}</h1>
-
-              <div className="glass rounded-lg">
-                {scene?.speaker && (
-                  <div className="flex items-center gap-3 border-b border-white/10 px-5 py-3">
-                    {director && <img src={imgUrl('/images/director.png')} alt="" className="h-9 w-9 rounded-md object-cover ring-1 ring-burn/50" />}
-                    <span className="font-mono text-[11px] uppercase tracking-[.25em] text-burn" data-testid="text-speaker">{scene.speaker}</span>
-                  </div>
-                )}
-                <div className={cn('scroll-thin space-y-4 overflow-y-auto px-5 py-5 text-base leading-relaxed text-foreground/90 md:text-lg', isBriefing ? 'max-h-[42dvh]' : 'max-h-[32dvh]')} data-testid="panel-scene-text">
-                  {paragraphs.map((p, i) => (
-                    <motion.p key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.25 }}>
-                      {p}
-                    </motion.p>
-                  ))}
-                  {isBriefing && mission && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="border-t border-white/10 pt-6 text-base">
-                      <BriefingBody mission={mission} />
-                    </motion.div>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-4 border-t border-white/10 px-5 py-4 sm:flex-row sm:items-center">
-                                    <div className="text-xs text-muted-foreground sm:flex-1" data-testid="text-story-status">
-                    {isLast
-                      ? `${accepted} of ${session.players.length} signatures`
-                      : isHost
-                        ? solo || allContinue
-                          ? 'Crew is with you.'
-                          : 'Waiting for connected crew to signal ready.'
-                        : mine?.continueReady
-                          ? 'Signal sent. The Leader will approve the next stage.'
-                          : 'Signal when you are ready to continue.'}
-                  </div>
-                  <div className="flex gap-2">
-                    {isLast ? (
-                      mine?.accepted ? (
-                        <HudButton variant="ghost" disabled data-testid="button-accepted">
-                          <Check className="h-4 w-4" /> Accepted
-                        </HudButton>
-                      ) : (
-                        <HudButton variant="burn" loading={pendingAction === 'accept'} onClick={() => act({ action: 'accept' })} data-testid="button-accept-mission">
-                          Accept mission
-                        </HudButton>
-                      )
-                    ) : isHost ? (
-                      <HudButton disabled={!allContinue} loading={pendingAction === 'next'} onClick={() => act({ action: 'next', expectedScene: session.scene })} data-testid="button-next-scene">
-                        Continue <ArrowRight className="h-4 w-4" />
-                      </HudButton>
-                    ) : (
-                      <HudButton variant={mine?.continueReady ? 'ghost' : 'ion'} loading={pendingAction === 'continue-ready'} onClick={() => act({ action: 'continue-ready', ready: !mine?.continueReady })} data-testid="button-continue-ready">
-                        {mine?.continueReady ? 'Ready sent' : 'Ready to continue'}
-                      </HudButton>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <CrewDock session={session} flag={isLast ? acceptFlag : continueFlag} onOpenBadge={openBadge} meId={me} />
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
+  const action = isFinal ? (
+    isHost ? (
+      <HudButton variant="burn" disabled={!(solo || allAccepted)} loading={pendingAction === 'initiate'} onClick={() => act({ action: 'initiate' })} data-testid="button-start-mission">
+        <Rocket className="h-4 w-4" /> Start Mission
+      </HudButton>
+    ) : mine?.accepted ? (
+      <HudButton variant="ghost" disabled data-testid="button-accepted">
+        <Check className="h-4 w-4" /> Waiting for Leader
+      </HudButton>
+    ) : (
+      <HudButton variant="burn" loading={pendingAction === 'accept'} onClick={() => act({ action: 'accept' })} data-testid="button-accept-mission">
+        <Check className="h-4 w-4" /> Start Mission
+      </HudButton>
+    )
+  ) : isHost ? (
+    <HudButton disabled={!(solo || allContinue)} loading={pendingAction === 'next'} onClick={() => act({ action: 'next', expectedScene: session.scene })} data-testid="button-next-scene">
+      Continue <ArrowRight className="h-4 w-4" />
+    </HudButton>
+  ) : (
+    <HudButton variant={mine?.continueReady ? 'ghost' : 'ion'} loading={pendingAction === 'continue-ready'} onClick={() => act({ action: 'continue-ready', ready: !mine?.continueReady })} data-testid="button-continue-ready">
+      {mine?.continueReady ? (<><Check className="h-4 w-4" /> Ready sent</>) : 'Ready to continue'}
+    </HudButton>
   );
-}
 
-/* ---------------- START MISSION ---------------- */
+  const facts: [string, string][] = mission
+    ? [
+        ['Budget', formatBudget(mission.budget)],
+        ['Development', `${mission.developmentMonths} months`],
+        ['Operations', `${mission.operationalYears} years`],
+        ['Destination', mission.destination],
+      ]
+    : [];
 
-function StartMission({ session, mission, me, isHost, openBadge }: StageProps) {
-  const { act, pending, pendingAction } = useSessionAct(session.id);
-  const mine = session.players.find((p) => p.player.id === me);
-  const [stamp, setStamp] = useState(true);
-  useEffect(() => {
-    const t = window.setTimeout(() => setStamp(false), 1800);
-    return () => window.clearTimeout(t);
-  }, []);
   return (
-    <div className="grain relative min-h-[100dvh] overflow-x-hidden bg-background">
-      <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-40" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/85 to-background" />
-      <Starfield density={0.8} />
-      <AnimatePresence>
-        {stamp && (
-          <motion.div key="stamp" className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }}>
-            <motion.div initial={{ scale: 1.6, opacity: 0, rotate: -6 }} animate={{ scale: 1, opacity: 1, rotate: -3 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }} className="rounded-md border-4 border-burn px-6 py-3 font-display text-3xl font-bold uppercase tracking-[.2em] text-burn md:text-6xl" data-testid="text-mission-accepted">
-              Mission accepted
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div className="relative z-10"><SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} /></div>
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col px-4 py-5 md:px-8">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
+      <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
+      <div className="flex gap-1 bg-void/80 px-3 py-1.5 md:px-8" aria-label={`Scene ${idx + 1} of ${scenes.length}`}>
+        {scenes.map((s) => (
+          <span key={s.id} className={cn('h-1 flex-1 rounded-full transition-colors', s.id < idx ? 'bg-ion/60' : s.id === idx ? 'bg-burn' : 'bg-white/15')} />
+        ))}
+      </div>
 
-        <div className="flex flex-1 flex-col justify-center py-8 text-center">
-          <div className="kicker mb-4">Mission {mission?.number} / {mission?.title}</div>
-          <h1 className="font-display text-4xl font-bold uppercase leading-none md:text-7xl" data-testid="text-start-heading">YOUR FIRST MISSION BEGINS NOW</h1>
-          <p className="mt-4 text-lg text-foreground/80 md:text-xl" data-testid="text-start-subtitle">The future of Earth observation is in your hands.</p>
-          <div className="mt-8">
-            <CrewDock session={session} flag={acceptFlag} onOpenBadge={openBadge} meId={me} />
-          </div>
-          {mission && (
-            <div className="glass mx-auto mt-10 grid w-full max-w-3xl gap-6 rounded-lg p-5 text-left md:grid-cols-[200px_1fr]">
-              <dl className="grid grid-cols-2 gap-3 md:grid-cols-1">
-                <div><dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Budget</dt><dd className="font-display text-2xl font-semibold text-ion" data-testid="text-start-budget">{formatBudget(mission.budget)}</dd></div>
-                <div><dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Timeline</dt><dd className="font-display text-2xl font-semibold text-ion" data-testid="text-start-timeline">{mission.developmentMonths} months</dd></div>
+      <main className="relative min-h-0 flex-1 overflow-hidden">
+        <AnimatePresence mode="sync">
+          <motion.div key={idx} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.1 }}>
+            {scene && <img src={imgUrl(scene.image)} alt={scene.title} className="kenburns h-full w-full object-cover" data-testid="img-scene" />}
+          </motion.div>
+        </AnimatePresence>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-void via-void/70 to-transparent" />
+
+        {kind === 'crew' && mission && (
+          <div className="absolute inset-x-0 top-0 bottom-[46%] flex items-center justify-center p-3">
+            <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass hud-corners w-full max-w-md rounded-lg p-4 text-center" data-testid="panel-mission-card">
+              <div className="kicker">Mission {mission.number}</div>
+              <div className="mt-1 break-words font-display text-2xl font-bold uppercase leading-tight sm:text-3xl" data-testid="text-crew-mission-title">{mission.title}</div>
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
+                {facts.map(([k, v]) => (
+                  <div key={k}>
+                    <dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{k}</dt>
+                    <dd className="break-words font-display text-base font-semibold text-ion">{v}</dd>
+                  </div>
+                ))}
               </dl>
-              <div>
-                <div className="kicker mb-3">Objectives</div>
-                <ul className="space-y-2 text-sm">
-                  {mission.objectives.map((o) => (
-                    <li key={o} className="flex gap-2"><span className="mt-2 h-1 w-3 shrink-0 bg-burn" /> {o}</li>
-                  ))}
-                </ul>
+            </motion.section>
+          </div>
+        )}
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-x-0 bottom-0 mx-auto flex max-h-full w-full max-w-4xl flex-col px-3 pb-3 md:px-8"
+          >
+            <div className="kicker mb-1 flex items-center gap-2 [text-shadow:0_1px_8px_hsl(224_52%_4%)]">
+              <span className="text-burn">Scene {String(idx + 1).padStart(2, '0')}</span>
+              <span className="h-px w-6 bg-ion/50" />
+              <span className="truncate">{kind === 'story' ? scene?.label : kind === 'message' ? 'Incoming transmission' : kind === 'crew' ? 'Assignment' : 'Launch authority'}</span>
+            </div>
+            <h1 className="font-display text-2xl font-bold uppercase leading-tight [overflow-wrap:anywhere] [text-shadow:0_2px_16px_hsl(224_52%_4%)] sm:text-4xl md:text-5xl" data-testid="text-scene-title">
+              {title}
+            </h1>
+            <div className="mt-2 rounded-md border border-white/10 bg-void/70 backdrop-blur-md">
+              {kind === 'story' && (
+                <div className="scroll-thin max-h-[22dvh] space-y-2 overflow-y-auto px-3 py-2.5 text-sm leading-relaxed text-foreground/90 md:text-base" data-testid="panel-scene-text">
+                  {scene?.speaker && (
+                    <div className="flex items-center gap-2">
+                      {director && <img src={imgUrl('/images/director.png')} alt="" className="h-6 w-6 rounded object-cover ring-1 ring-burn/50" />}
+                      <span className="font-mono text-[10px] uppercase tracking-[.22em] text-burn" data-testid="text-speaker">{scene.speaker}</span>
+                    </div>
+                  )}
+                  {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
+                </div>
+              )}
+              {kind === 'message' && (
+                <div className="scroll-thin max-h-[26dvh] overflow-y-auto px-3 py-3" data-testid="panel-scene-text">
+                  <div className="font-mono text-[10px] uppercase tracking-[.22em] text-burn">From: Asterion Mission Directorate</div>
+                  <p className="mt-1.5 font-display text-base font-semibold leading-snug text-foreground md:text-xl" data-testid="text-mission-description">{mission?.description}</p>
+                </div>
+              )}
+              {kind === 'crew' && (
+                <p className="px-3 py-2.5 text-sm text-foreground/85" data-testid="panel-scene-text">
+                  {solo ? 'You lead this mission alone. Full briefing is under Mission details in the top bar.' : 'This is your crew. Open any badge below to meet them. Full briefing is under Mission details in the top bar.'}
+                </p>
+              )}
+              {kind === 'launch' && (
+                <div className="px-3 py-2.5 text-sm text-foreground/85" data-testid="panel-scene-text">
+                  {mission ? `${mission.title}: ${formatBudget(mission.budget)}, ${mission.developmentMonths} months to build, ${mission.operationalYears} years in operation.` : 'Final launch authority.'}{' '}
+                  {isHost ? 'Only you, as Leader, can launch.' : 'Crew signal readiness; the Leader launches.'}
+                </div>
+              )}
+              <div className="flex flex-col gap-2 border-t border-white/10 px-3 py-2 sm:flex-row sm:items-center">
+                <div className="text-xs text-muted-foreground sm:flex-1" data-testid="text-story-status">{status}</div>
+                <StoryAction>{action}</StoryAction>
               </div>
             </div>
-          )}
-          <div className="mt-10 flex flex-col items-center gap-3">
-            {isHost ? (
-              <HudButton variant="burn" className="min-h-14 px-10 text-base" loading={pendingAction === 'initiate'} onClick={() => act({ action: 'initiate' })} data-testid="button-start-mission">
-                <Rocket className="h-5 w-5" /> START MISSION
-              </HudButton>
-            ) : (
-              <div className="flex items-center gap-3 rounded-md border border-white/10 px-5 py-3 text-sm text-muted-foreground" data-testid="text-waiting-host">
-                <span className="h-2 w-2 rounded-full bg-burn pulse-dot" /> Waiting for the Leader to start the mission
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      <CrewBar session={session} flag={isFinal ? launchFlag : continueFlag} meId={me} onOpenBadge={openBadge} />
     </div>
   );
 }
@@ -360,43 +348,45 @@ function StartMission({ session, mission, me, isHost, openBadge }: StageProps) {
 function Finale({ session, mission, me, openBadge }: StageProps) {
   const { act, pending, pendingAction } = useSessionAct(session.id);
   const mine = session.players.find((p) => p.player.id === me);
-  const words = 'MISSION INITIATED'.split('');
+  const words = ['MISSION', 'INITIATED'];
   return (
-    <div className="grain relative min-h-[100dvh] overflow-hidden bg-background">
-      <div className="relative z-20"><SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} /></div>
-      <div className="relative flex flex-col items-center justify-center px-5 py-10 text-center">
-      <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-30" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
-      <Starfield density={1.2} />
-      <div className="relative z-10">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="kicker mb-6">MISSION {mission?.number} — {mission?.title} / Room {session.roomCode}</motion.div>
-        <h1 className="font-display text-5xl font-bold uppercase tracking-wide md:text-8xl" data-testid="text-mission-initiated">
-          {words.map((ch, i) => (
-            <motion.span key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }} className={ch === ' ' ? 'inline-block w-4 md:w-8' : 'inline-block'}>
-              {ch}
-            </motion.span>
-          ))}
-        </h1>
-        <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.4, duration: 0.8 }} className="mx-auto mt-8 h-px w-64 bg-gradient-to-r from-transparent via-burn to-transparent" />
-        <motion.div initial={{ opacity: 0, letterSpacing: '0.1em' }} animate={{ opacity: 1, letterSpacing: '0.5em' }} transition={{ delay: 2, duration: 1.6 }} className="mt-8 font-mono text-sm uppercase text-burn md:text-base" data-testid="text-to-be-continued">
-          To be continued...
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.8 }} className="mt-12 flex flex-col items-center gap-8">
-          <div className="w-full">
-            <CrewDock session={session} flag={acceptFlag} onOpenBadge={openBadge} meId={me} />
-          </div>
-          <p className="max-w-md text-muted-foreground">Earth Observer's development phase begins in the next chapter of Mission: Infinity. Your crew's decision has been logged to your career.</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/profile" className="inline-flex min-h-11 items-center rounded-md border border-white/15 px-5 font-display text-sm font-semibold uppercase tracking-[.14em] hover:border-ion" data-testid="link-finale-career">
-              Career
-            </Link>
-            <HudButton loading={pendingAction === 'leave'} onClick={() => act({ action: 'leave' })} data-testid="button-finale-archive">
-              Archive and return to board <ArrowRight className="h-4 w-4" />
-            </HudButton>
-          </div>
-        </motion.div>
-      </div>
-      </div>
+    <div className="grain flex h-[100dvh] flex-col overflow-hidden bg-background">
+      <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
+      <main className="relative min-h-0 flex-1 overflow-y-auto">
+        <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+        <Starfield density={1.2} />
+        <div className="relative z-10 flex min-h-full flex-col items-center justify-center px-5 py-8 text-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="kicker mb-5">Mission {mission?.number} / {mission?.title}</motion.div>
+          <h1 className="flex flex-wrap justify-center gap-x-4 font-display text-4xl font-bold uppercase tracking-wide sm:text-6xl md:text-8xl" data-testid="text-mission-initiated">
+            {words.map((w, wi) => (
+              <span key={w} className="whitespace-nowrap">
+                {w.split('').map((ch, i) => (
+                  <motion.span key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + (wi * 8 + i) * 0.05 }} className="inline-block">
+                    {ch}
+                  </motion.span>
+                ))}
+              </span>
+            ))}
+          </h1>
+          <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.4, duration: 0.8 }} className="mx-auto mt-6 h-px w-56 bg-gradient-to-r from-transparent via-burn to-transparent" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2, duration: 1.2 }} className="mt-6 font-mono text-sm uppercase tracking-[.4em] text-burn" data-testid="text-to-be-continued">
+            To be continued...
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.6 }} className="mt-8 flex flex-col items-center gap-6">
+            <p className="max-w-md text-muted-foreground">Earth Observer's development phase begins in the next chapter of Mission: Infinity. Your crew's decision has been logged to your career.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/profile" className="inline-flex min-h-11 items-center rounded-md border border-white/15 px-5 font-display text-sm font-semibold uppercase tracking-[.14em] hover:border-ion" data-testid="link-finale-career">
+                Career
+              </Link>
+              <HudButton loading={pendingAction === 'leave'} onClick={() => act({ action: 'leave' })} data-testid="button-finale-archive">
+                Archive and return to board <ArrowRight className="h-4 w-4" />
+              </HudButton>
+            </div>
+          </motion.div>
+        </div>
+      </main>
+      <CrewBar session={session} flag={launchFlag} meId={me} onOpenBadge={openBadge} />
     </div>
   );
 }
@@ -447,7 +437,8 @@ function SessionInner({ account, id }: { account: PlayerAccount; id: string }) {
   const badgeMember = session.players.find((p) => p.player.id === badgeId) ?? null;
   return (
     <>
-      {session.status === 'MISSION_STARTED' ? <Finale {...props} /> : session.status === 'READY_TO_START' ? <StartMission {...props} /> : session.status === 'LOBBY' ? <Lobby {...props} /> : <Story {...props} scenes={scenes} />}
+      {session.status === 'MISSION_STARTED' ? <Finale {...props} /> : session.status === 'LOBBY' ? <Lobby {...props} /> : <Story {...props} scenes={scenes} />}
+      <MessageNotifications key={`${session.id}:${meId}`} session={session} meId={meId} />
       <BadgeDialog member={badgeMember} isLeader={badgeMember?.player.id === session.hostId} isSelf={badgeMember?.player.id === meId} onOpenChange={(o) => !o && setBadgeId(null)} />
     </>
   );

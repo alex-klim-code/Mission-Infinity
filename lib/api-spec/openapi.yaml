@@ -6,6 +6,22 @@ info:
 servers:
   - url: /api
 paths:
+  /game/story-images/{name}:
+    get:
+      operationId: getStoryImage
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [graduation-warsaw.webp, nasa-internship.webp, nasa-engineering.webp]
+      responses:
+        '200':
+          description: Optimized mission story illustration
+          content:
+            image/webp:
+              schema: { type: string, format: binary }
   /healthz:
     get:
       operationId: healthCheck

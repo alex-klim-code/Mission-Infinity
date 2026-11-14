@@ -13,6 +13,9 @@ A browser-based cooperative space mission story for 1–4 players.
 - No guest authentication, seeded fake players, or nonfunctional primary actions.
 - Product requirement: a single shared sign-in/sign-up entry screen with Google and Apple only; no email field or separate Sign Up link. Preserve OAuth callbacks and account completion. Hiding email/password UI does not disable that method in the authentication service.
 - Multiplayer product rule: the person who creates the mission and invites others is Leader. Only the Leader approves stage transitions; crew members choose readiness and mission acceptance, not branching decisions or votes.
+- Current story requirements: the first three scenes use the provided Warsaw graduation and NASA images, followed by Get a Message (mission description), Meet Your Crew (mission parameters), and Start Mission. Crew may signal readiness there; only Leader launches.
+- The AI advisor is currently a private text draft only. Do not connect a model, send the draft, or invent AI responses until the user asks for that integration.
+- Crew chat must be non-modal and must not block gameplay. Show live player messages as temporary notifications on the right, not as avatar speech bubbles.
 - Position the product as an educational space mission game for ages 14+, accessible without prior engineering knowledge and with planned beginner-to-advanced scenarios.
 - Monthly missions are a goal, not an established release schedule. Never invent advisers, credentials or NASA involvement.
 - Character onboarding now targets ages 14–60 (default 20), Female/Male bases, and a searchable country selector defaulting to Poland. Preserve legacy profiles and their portraits until their owner explicitly customizes them.

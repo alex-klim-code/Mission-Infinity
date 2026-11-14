@@ -54,22 +54,22 @@ export const presetDefinitions = Array.from({ length: 10 }, (_, i) => ({
 }));
 
 function scene(id: number, title: string, label: string, speaker: string, paragraphs: string[], soloParagraphs: string[], image: string) {
-  return { id, title, label, speaker, paragraphs, soloParagraphs, image: `/images/${image}.png` };
+  return { id, title, label, speaker, paragraphs, soloParagraphs, image: id < 3 ? `/api/game/story-images/${["graduation-warsaw", "nasa-internship", "nasa-engineering"][id]}.webp` : `/images/${image}.png` };
 }
 export const sceneDefinitions = [
   scene(0, "Graduation Day", "THREE YEARS AGO", "Narrator", [
-    "Three years ago, you graduated from the prestigious Aurora Institute of Aerospace Engineering, earning some of the highest honors in your class.",
+    "Three years ago, you graduated from Warsaw University of Technology, ready to put your aerospace engineering knowledge to work.",
     "Your future was full of possibilities. But none of you could have imagined what was waiting ahead.",
   ], [
-    "Three years ago, you graduated from the prestigious Aurora Institute of Aerospace Engineering, earning some of the highest honors in your class.",
+    "Three years ago, you graduated from Warsaw University of Technology, ready to put your aerospace engineering knowledge to work.",
     "Your future was full of possibilities. But you could not have imagined what was waiting ahead.",
   ], "graduation"),
-  scene(1, "The First Opportunity", "ASTERION AEROSPACE", "Narrator", [
-    "Your exceptional academic performance caught the attention of Asterion Aerospace, one of the world's leading aerospace engineering companies.",
-    "You were offered internships, and within six months, you became full-time engineers.",
+  scene(1, "The First Opportunity", "NASA INTERNSHIP", "Narrator", [
+    "Your academic work opened the door to an aerospace engineering internship at NASA.",
+    "Working alongside experienced engineers, your crew began turning classroom knowledge into real mission experience.",
   ], [
-    "Your exceptional academic performance caught the attention of Asterion Aerospace, one of the world's leading aerospace engineering companies.",
-    "You were offered an internship, and within six months, you became a full-time engineer.",
+    "Your academic work opened the door to an aerospace engineering internship at NASA.",
+    "Working alongside experienced engineers, you began turning classroom knowledge into real mission experience.",
   ], "headquarters"),
   scene(2, "Three Years of Experience", "KNOWLEDGE BECOMES CONFIDENCE", "Narrator", [
     "Over the past three years, you have supported ambitious aerospace projects and assisted experienced mission teams.",
@@ -80,16 +80,12 @@ export const sceneDefinitions = [
     "You helped prepare spacecraft, analyze engineering data, and support critical mission operations.",
     "With every project, your knowledge and confidence grew.",
   ], "laboratory"),
-  scene(3, "The Promotion", "A NEW CHAPTER", "Director Elena Voss", [
-    "Your dedication and exceptional work have not gone unnoticed.",
-    "Our company is preparing a new space mission. And after careful consideration, we have decided that you are ready to take responsibility for it.",
-    "This time, you will not be assisting another mission team. You will be leading your own.",
+  scene(3, "Get a Message", "INCOMING MISSION TRANSMISSION", "Director Elena Voss", [
+    missionDefinitions[0].description,
   ], [
-    "Your dedication and exceptional work have not gone unnoticed.",
-    "Our company is preparing a new space mission. And after careful consideration, we have decided that you are ready to take responsibility for it.",
-    "This time, you will not be assisting another mission team. You will be leading your own.",
+    missionDefinitions[0].description,
   ], "director-office"),
-  scene(4, "Mission Assignment", "MISSION ASSIGNMENT 001", "Director Elena Voss", [
+  scene(4, "Meet Your Crew", "MISSION ASSIGNMENT 001", "Director Elena Voss", [
     "Your first assignment is Project Earth Observer.",
     "You will be responsible for planning, designing, preparing, and ultimately launching an Earth observation satellite.",
     "Your decisions will determine whether this mission succeeds or fails.",
@@ -98,7 +94,7 @@ export const sceneDefinitions = [
     "You will be responsible for planning, designing, preparing, and ultimately launching an Earth observation satellite.",
     "Your decisions will determine whether this mission succeeds or fails.",
   ], "briefing-room"),
-  scene(5, "Mission Accepted", "DO YOU ACCEPT THIS MISSION?", "Director Elena Voss", [
+  scene(5, "Start Mission", "AWAITING LEADER AUTHORIZATION", "Director Elena Voss", [
     "The mission will not be easy.",
     "You will face engineering challenges, strict budgets, deadlines, and difficult decisions.",
     "But we believe you are ready.",

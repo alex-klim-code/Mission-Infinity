@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useLocation } from 'wouter';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, Crown, FileText, LogOut, Send, UserRound } from 'lucide-react';
+import { Crown, FileText, LogOut, Send, UserRound } from 'lucide-react';
 import {
   getGetGameSessionQueryKey,
   getGetPlayerQueryKey,
@@ -27,7 +26,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { LinkStatusPill } from '@/components/shell';
-import { Portrait } from '@/components/ui-kit';
 import { EmployeeBadge } from '@/components/character-avatar';
 import { errMsg, formatBudget, invalidateGame } from '@/lib/game';
 import { useToast } from '@/hooks/use-toast';
@@ -238,88 +236,6 @@ export function SessionTopBar({ session, mission, me, act, pending, onOpenBadge 
   );
 }
 
-/* ---------- Crew deck with speech bubbles ---------- */
-
-function useNow(ms = 1000) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), ms);
-    return () => window.clearInterval(t);
-  }, [ms]);
-  return now;
-}
-
-export type CrewFlag = (sp: SessionPlayer, leader: boolean) => { on: boolean; label: string };
-
-export function CrewDeck({ session, flag, onOpenBadge, meId, size = 56 }: { session: GameSession; flag: CrewFlag; onOpenBadge: (id: string) => void; meId: string; size?: number }) {
-  const now = useNow();
-  const [transmission, setTransmission] = useState<{ name: string; text: string } | null>(null);
-  return (
-    <>
-    <ul className="flex flex-wrap items-end justify-center gap-x-3 gap-y-2 sm:gap-x-6" aria-label="Crew">
-      {session.players.map((sp) => {
-        const leader = sp.player.id === session.hostId;
-        const f = flag(sp, leader);
-        const msg = sp.lastMessage && new Date(sp.lastMessage.expiresAt).getTime() > now ? sp.lastMessage : null;
-        return (
-          <li key={sp.player.id} className="flex w-[78px] flex-col items-center sm:w-[112px]" data-testid={`crew-${sp.player.id}`}>
-            <div className="flex h-[68px] w-full items-end justify-center" aria-live="polite">
-              <AnimatePresence>
-                {msg && (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.25 }}
-                    className="relative max-w-full rounded-md border border-ion/40 bg-[hsl(214_55%_12%/.95)] px-2 py-1.5 text-left text-[11px] leading-snug text-foreground shadow-[0_8px_24px_-12px_hsl(186_92%_40%/.6)]"
-                    data-testid={`bubble-message-${sp.player.id}`}
-                  >
-                    <button type="button" className="text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion"
-                      aria-label={`Read message from ${sp.player.name}`} title="Read full message"
-                      onClick={() => setTransmission({ name: sp.player.name, text: msg.text })}>
-                      <span className="line-clamp-3 break-words">{msg.text}</span>
-                    </button>
-                    <span className="absolute -bottom-[5px] left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-ion/40 bg-[hsl(214_55%_12%)]" aria-hidden />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <div className={cn('mt-2 flex max-w-full items-start justify-center gap-1 text-center text-[11px] font-semibold', leader && 'text-burn')} data-testid={`text-crew-name-${sp.player.id}`}>
-              {leader && <Crown className="h-3 w-3 shrink-0" aria-hidden />}
-              <span className="min-w-0 break-words [overflow-wrap:anywhere]">{sp.player.name}{sp.player.id === meId ? ' (you)' : ''}</span>
-            </div>
-            <button
-              onClick={() => onOpenBadge(sp.player.id)}
-              aria-label={`Open ${sp.player.name} employee badge${leader ? ', Leader' : ''}`}
-              className="relative mt-1 rounded-full transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion focus-visible:ring-offset-2 focus-visible:ring-offset-void"
-              data-testid={`button-crew-badge-${sp.player.id}`}
-            >
-              <Portrait player={sp.player} size={size} ring={leader ? 'burn' : f.on ? 'ion' : 'none'} className={cn(!sp.connected && 'opacity-40 grayscale')} />
-              {f.on && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-ion text-void" aria-hidden>
-                  <Check className="h-2.5 w-2.5" />
-                </span>
-              )}
-            </button>
-            <div className={cn('mt-1 font-mono text-[9px] uppercase tracking-widest', !sp.connected ? 'text-muted-foreground' : leader ? 'text-burn' : f.on ? 'text-ion' : 'text-muted-foreground')}>
-              {!sp.connected ? 'Offline' : leader ? 'Leader' : f.label}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-    <Dialog open={!!transmission} onOpenChange={(open) => !open && setTransmission(null)}>
-      <DialogContent className="max-h-[80dvh] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto border-white/10 bg-card">
-        <DialogTitle className="pr-6 font-display text-xl">{transmission?.name}</DialogTitle>
-        <DialogDescription>Crew transmission</DialogDescription>
-        <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{transmission?.text}</p>
-      </DialogContent>
-    </Dialog>
-    </>
-  );
-}
-
 export function MessageComposer({ sessionId }: { sessionId: string }) {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -377,12 +293,3 @@ export function MessageComposer({ sessionId }: { sessionId: string }) {
   );
 }
 
-/** Crew window: scene image with deck + composer at the bottom. */
-export function CrewDock({ session, flag, onOpenBadge, meId }: { session: GameSession; flag: CrewFlag; onOpenBadge: (id: string) => void; meId: string }) {
-  return (
-    <div className="space-y-3" data-testid="panel-crew-dock">
-      <CrewDeck session={session} flag={flag} onOpenBadge={onOpenBadge} meId={meId} />
-      <MessageComposer sessionId={session.id} />
-    </div>
-  );
-}

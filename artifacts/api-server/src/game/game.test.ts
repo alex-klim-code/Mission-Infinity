@@ -48,6 +48,8 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.equal(catalog.missions.filter(m => m.enabled).length, 1);
       assert.equal(catalog.presets.length, 10);
       assert.equal(catalog.scenes.length, 6);
+      assert.deepEqual(catalog.scenes.slice(3).map(s => s.title), ["Get a Message", "Meet Your Crew", "Start Mission"]);
+      assert.ok(catalog.scenes.slice(0, 3).every(s => s.image.startsWith("/api/game/story-images/") && s.image.endsWith(".webp")));
       const mission = catalog.missions.find(m => m.enabled)!;
       assert.equal(mission.budget, 150000000);
       assert.equal(mission.developmentMonths, 24);
@@ -278,6 +280,36 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.equal((await sessionState(s.id, b)).hostId, b);
       await updateSession(b, s.id, { action: "start" });
       assert.equal((await sessionState(s.id, b)).status, "STORY");
+    });
+    await t.test("only Leader launches from the final screen after connected crew signal ready", async () => {
+      const [leader, crew] = await players(2);
+      const session = await createSession(leader, "earth-observer", "crew");
+      await respondToInvite(crew, await invite(leader, crew, session.id), "accept");
+      await updateSession(crew, session.id, { action: "ready", ready: true });
+      await updateSession(leader, session.id, { action: "start" });
+      for (let scene = 0; scene < 5; scene++) {
+        await updateSession(crew, session.id, { action: "continue-ready", ready: true });
+        assert.equal((await sessionState(session.id, leader)).scene, scene);
+        await updateSession(leader, session.id, { action: "next", expectedScene: scene });
+      }
+      await assert.rejects(updateSession(leader, session.id, { action: "initiate" }));
+      assert.equal((await sessionState(session.id, leader)).players.find(p => p.player.id === leader)!.accepted, false);
+      await updateSession(crew, session.id, { action: "accept" });
+      assert.equal((await sessionState(session.id, leader)).status, "MISSION_ACCEPTANCE");
+      await assert.rejects(updateSession(crew, session.id, { action: "initiate" }));
+      await updateSession(leader, session.id, { action: "initiate" });
+      const started = await sessionState(session.id, crew);
+      assert.equal(started.status, "MISSION_STARTED");
+      assert.equal(started.players.find(p => p.player.id === leader)!.accepted, true);
+      await assert.rejects(updateSession(leader, session.id, { action: "initiate" }));
+
+      const [solo] = await players(1);
+      const single = await createSession(solo, "earth-observer", "solo");
+      for (let scene = 0; scene < 5; scene++) {
+        await updateSession(solo, single.id, { action: "next", expectedScene: scene });
+      }
+      await updateSession(solo, single.id, { action: "initiate" });
+      assert.equal((await sessionState(single.id, solo)).status, "MISSION_STARTED");
     });
     await t.test("host can start with one player; story persists and concurrent scene clicks cannot skip", async () => {
       const [a] = await players(1);

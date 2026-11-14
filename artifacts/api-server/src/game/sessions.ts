@@ -146,8 +146,9 @@ export async function updateSession(userId: string, id: string, input: { action:
       await maybeCompleteAcceptance(id, tx);
     } else if (input.action === "initiate") {
       requireCondition(host, 403, "Only the host can initiate the mission.");
-      requireCondition(session.status === "READY_TO_START", 409, "The mission is not ready to start.");
-      requireCondition(connected.length > 0 && connected.every(m => m.accepted), 409, "Every connected player must accept the mission.");
+      requireCondition(["MISSION_ACCEPTANCE", "READY_TO_START"].includes(session.status), 409, "The mission is not ready to start.");
+      requireCondition(connected.filter(m => m.user_id !== userId).every(m => m.accepted), 409, "Every connected crew member must be ready.");
+      await tx.updateTable("game_session_players").set({ accepted: true }).where("id", "=", me.id).execute();
       await tx.updateTable("game_sessions").set({ status: "MISSION_STARTED" }).where("id", "=", id).execute();
     } else {
       requireCondition(false, 400, "Unknown mission action.");

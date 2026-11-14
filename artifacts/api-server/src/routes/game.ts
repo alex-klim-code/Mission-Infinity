@@ -10,7 +10,7 @@ import {
   RespondToInvitationBody, RespondToInvitationResponse, GetCareerResponse,
   GetAvatarConfigResponse, RequestAvatarUploadBody, RequestAvatarUploadResponse,
   CompleteAvatarUploadParams, CompleteAvatarUploadResponse, GetAvatarFileParams,
-  SendSessionMessageBody, SendSessionMessageResponse,
+  SendSessionMessageBody, SendSessionMessageResponse, GetStoryImageParams,
 } from "@workspace/api-zod";
 import { getCatalog } from "../game/content";
 import { getAccount, getCareer, resolveUser, savePlayer } from "../game/players";
@@ -18,6 +18,7 @@ import { friendshipAction, socialState } from "../game/social";
 import { createSession, notifySession, sessionState, updateSession } from "../game/sessions";
 import { inviteToSession, respondToInvite } from "../game/invitations";
 import { sendSessionMessage } from "../game/session-messages";
+import { ObjectStorageService } from "../lib/objectStorage";
 import { GameError, requireCondition } from "../game/database";
 import { logger } from "../lib/logger";
 import { notifyUsers } from "../game/presence";
@@ -138,3 +139,10 @@ gameApi.post("/api/game/invitations/:id", async req => {
   return RespondToInvitationResponse.parse(await respondToInvite(req.playerId, idParam(req), body.action));
 });
 gameApi.get("/api/game/career", async req => GetCareerResponse.parse(await getCareer(req.playerId)));
+gameApi.get("/api/game/story-images/:name", async (req, reply) => {
+  const { name } = GetStoryImageParams.parse(req.params);
+  const file = await new ObjectStorageService().searchPublicObject(`mission-story/v1/${name}`);
+  requireCondition(file, 404, "Story illustration not found.");
+  reply.header("Cache-Control", "private, max-age=31536000, immutable").header("X-Content-Type-Options", "nosniff");
+  return reply.type("image/webp").send(file.createReadStream());
+});

@@ -4,11 +4,15 @@ A cinematic, cooperative browser game about becoming a mission leader at the fic
 
 ## Mission crew
 
+The story uses a picture-first layout between the mission header and bottom crew bar. Each client puts its own player first without changing the saved crew order. The message icon toggles a compact non-modal chat panel without dimming the screen or trapping focus. Player messages appear as temporary right-side notifications, with at most three visible and no pointer interception over the game. The AI icon is a private, player-scoped draft notepad with no AI request or response. AI drafts are kept only in memory and disappear on reload.
+
+The three introductory illustrations are optimized WebP objects in App Storage, served through the authenticated story-image endpoint rather than bundled into the frontend. Conversion outputs are excluded from Git and deployment. The remaining screens are **Get a Message**, **Meet Your Crew**, and **Start Mission**. Crew press Start Mission to signal readiness; the Leader's click accepts their own readiness and launches atomically once the connected crew are ready.
+
 The mission creator is the initial **Leader**. Crew members signal readiness and accept the mission individually; only the Leader advances scenes and initiates the mission. Existing leadership succession still applies when the Leader leaves.
 
 Every session stage has mission details, budget and timeline, live Uplink status, the current player's badge, and a confirmed exit action in its top bar. Crew avatars show their nicknames and open the corresponding employee badge.
 
-The crew channel displays a sender's latest message above their own avatar for 12 seconds. Messages are limited to 180 characters, rate-limited per sender, and visible only to active session members. Click a bubble to read the full message. Storage is bounded to one latest message per membership, not an accumulating chat log; expired messages are not returned as active bubbles. Existing realtime notifications and session polling synchronize the crew.
+The crew channel shows new messages as right-side notifications for the remainder of their 12-second display lifetime. Messages are limited to 180 characters, rate-limited per sender, and visible only to active session members. The frontend keeps a bounded temporary queue so successive received messages from the same sender can appear separately without duplicate notifications on polling. Server storage remains bounded to one latest message per membership, not an accumulating chat log. Existing realtime notifications and session polling synchronize the crew.
 
 Publishing this feature adds the nullable `game_session_players.last_message` field through the normal managed schema comparison; existing characters and memberships are preserved.
 
