@@ -63,9 +63,7 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
 
   return (
     <div className="pb-6">
-      <div className="kicker mb-1">Stage 1 / Rocket Construction</div>
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-4xl" data-testid="text-builder-title"><button type="button" onClick={openRoot} className="rounded-sm text-left transition-colors hover:text-ion focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ion" aria-label="View all Rocket Builder sections">Rocket Builder</button></h1>
+      <div className="flex justify-end">
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-nav-progress">{doneCount}/{flat.length} categories set</span>
       </div>
       {!hullBought && <p className="mt-1 text-sm text-muted-foreground">Start with the rocket body. Other parts unlock once it is bought.</p>}
