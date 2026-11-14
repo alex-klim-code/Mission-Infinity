@@ -1,12 +1,15 @@
 import type {CompatibilityIssue} from "@workspace/api-zod";
 import {componentById,rocketCatalog} from "./rocket-catalog";
 import {scientificInstruments} from "./scientific-instruments";
+import {mainPropellantIssue} from "./propellant-compatibility";
 export const ENGINEERING_DISCLAIMER="Simplified engineering training rules, not verified manufacturer compatibility. Quality tiers are game-balance values. Unverified fuel chemistry or mechanical interfaces are not treated as proven incompatibilities.";
 export const tier=(quality:number|null|undefined)=>(quality??55)>85?3:(quality??55)>65?2:1;
 
 function rawIssues(selections:Record<string,string>,instrumentIds:string[]):CompatibilityIssue[]{
   const issues:CompatibilityIssue[]=[];
   const part=(id:string)=>componentById.get(selections[id]);
+  const chemistry=mainPropellantIssue(part("main-engines"),part("fuel-tanks"));
+  if(chemistry)issues.push(chemistry);
   const mismatch=(id:string,loadId:string,supportId:string,label:string)=>{
     const load=part(loadId),support=part(supportId);
     if(load&&support&&tier(load.quality)>tier(support.quality))

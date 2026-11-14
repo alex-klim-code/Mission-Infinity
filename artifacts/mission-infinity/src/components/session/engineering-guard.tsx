@@ -53,11 +53,11 @@ export function EngineeringGuardProvider({ props, byOption, children }: { props:
       {
         onSuccess: (advice) => {
           if (n !== seq.current || p.session.id!==propsRef.current.session.id || p.me!==propsRef.current.me) return;
-          recordMissionNotifications(p.session.id,p.me,(advice.easy?advice.issues:[]).map(issue=>({
+          recordMissionNotifications(p.session.id,p.me,advice.issues.map(issue=>({
             id:`preview:${c.kind==='part'?c.optionId:[...c.instrumentIds].sort().join(',')}:${issue.id}`,
             title:issue.title,message:issue.message,category:'Purchase review',severity:'warning',scope:'event',
           })));
-          if (!advice.easy || advice.issues.length === 0) { setState({ phase: 'idle' }); run(c); }
+          if (advice.issues.length === 0) { setState({ phase: 'idle' }); run(c); }
           else setState({ phase: 'issues', c, advice });
         },
         onError: (e) => { if (n === seq.current) setState({ phase: 'error', c, message: errMsg(e, 'Engineering review unavailable.') }); },
@@ -89,7 +89,7 @@ export function EngineeringGuardProvider({ props, byOption, children }: { props:
           <div className="border-b border-white/10 p-5 pr-12">
             <div className="kicker flex items-center gap-2 text-burn"><ShieldAlert className="h-3.5 w-3.5" /> Engineering review</div>
             <DialogTitle className="mt-1 font-display text-xl font-bold uppercase leading-tight tracking-wide sm:text-2xl" data-testid="text-engineering-title">
-              {state.phase === 'checking' ? 'Checking compatibility' : state.phase === 'error' ? 'Review did not complete' : 'Integration risk found'}
+              {state.phase === 'checking' ? 'Checking compatibility' : state.phase === 'error' ? 'Review did not complete' : 'Incompatible parts'}
             </DialogTitle>
             <DialogDescription className="mt-1 text-sm text-muted-foreground">
               Candidate: <span className="text-foreground" data-testid="text-engineering-candidate">{candidateName}</span>. Nothing is charged until you decide.
@@ -125,7 +125,7 @@ export function EngineeringGuardProvider({ props, byOption, children }: { props:
                       <p className="mt-2 text-sm leading-relaxed text-foreground/85" data-testid={`text-issue-message-${issue.id}`}>{issue.message}</p>
                       {alts.length > 0 && (
                         <div className="mt-3">
-                          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Compatible alternatives</div>
+                          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Other options to review</div>
                           <ul className="mt-1.5 space-y-1.5">
                             {alts.map((id) => {
                               const o = byOption.get(id);
@@ -157,7 +157,7 @@ export function EngineeringGuardProvider({ props, byOption, children }: { props:
                   <Wrench className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ion" />
                   {state.advice.disclaimer || 'These are disclosed training-game rules, not verified manufacturer compatibility data.'}
                 </p>
-                <p className="text-[11px] text-burn/90">Buying anyway means construction will fail at integration. Repairs cost a full replacement price and extra months.</p>
+                <p className="text-sm font-semibold text-burn" data-testid="text-confirm-incompatible-purchase">Are you sure you want to buy this? This configuration will fail the integration check. Replacement parts cost money and extra months.</p>
               </>
             )}
           </Paged>

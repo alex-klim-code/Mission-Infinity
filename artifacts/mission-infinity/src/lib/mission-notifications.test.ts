@@ -35,4 +35,7 @@ test('selected-part chemistry conflicts include both names and reason, without f
   assert.match(alerts[0].message,/Hydrogen Engine/);assert.match(alerts[0].message,/Methane Tank/);
   assert.match(alerts[0].message,/cannot supply/);
   assert.equal(collectNotifications(s,[engine,part('Hydrogen Tank','fuel-tanks',[['lh2','lox']])]).length,0);
+  assert.equal(collectNotifications(s,[{...engine,categoryId:'orbital-maneuvering'},badTank]).length,0,'Dedicated maneuvering supplies are not the main tank');
+  badTank.fuel!.status='unverified';badTank.fuel!.systems=[];
+  assert.equal(collectNotifications(s,[engine,badTank]).length,0,'Unverified chemistry must not produce repetitive warnings');
 });

@@ -26,10 +26,10 @@ export function collectNotifications(session:GameSession, parts:RocketComponent[
   const add=(id:string,title:string,message:string,severity:NotificationSeed['severity']='warning',category='Engineering',scope:NotificationSeed['scope']='live')=>
     seeds.push({id,title,message,severity,category,scope});
   for(const pair of assessFuel(parts).comparisons) {
-    if(pair.status!=='conflict'&&pair.status!=='unverified')continue;
-    add(`fuel:${pair.engine.id}:${pair.tank.id}`,pair.status==='conflict'?'Propellant conflict':'Propellant compatibility unverified',
-      `${pair.engine.name} (${fuelDescription(pair.engine)}) ↔ ${pair.tank.name} (${fuelDescription(pair.tank)}). ${pair.status==='conflict'?fuelCopy.mismatch:fuelCopy.missing} ${fuelCopy.scope}`,
-      pair.status==='conflict'?'warning':'info','Propellant');
+    if(pair.engine.categoryId!=='main-engines'||pair.status!=='conflict')continue;
+    add(`fuel:${pair.engine.id}:${pair.tank.id}`,'Main engine / tank propellant mismatch',
+      `${pair.engine.name} (${fuelDescription(pair.engine)}) ↔ ${pair.tank.name} (${fuelDescription(pair.tank)}). ${fuelCopy.mismatch} In this training model, the selected main tank supplies the main engine.`,
+      'warning','Propellant');
   }
   for(const issue of session.engineering?.issues??[]) add(`engineering:${issue.id}`,issue.title,issue.message,'error');
   for(const check of session.engineering?.checks??[]) if(check.status==='FAIL')add(`integration:${session.engineering?.attempt}:${check.id}`,`${check.label} failed`,check.message,'error','Construction');

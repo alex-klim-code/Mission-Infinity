@@ -2,6 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {sql} from "kysely";
+const json=<T>(value:T)=>sql<T>`${JSON.stringify(value)}::jsonb`;
 import {pool} from "@workspace/db";
 import {gameDb} from "./database";
 import {seedGameContent} from "./content";
@@ -50,6 +51,26 @@ test("engineering training rules explain conflicts, support safe alternatives an
 test("mission engineering and funding remain transactional and persistent",async t=>{
   await seedGameContent();
   try{
+    await t.test("Known incompatibilities require explicit acknowledgement on non-Easy missions too",async()=>{
+      const f=await fixture();
+      const missionId=`compatibility-test-${randomUUID()}`;
+      try{
+        const original=await gameDb.selectFrom("missions").selectAll().where("id","=","earth-observer").executeTakeFirstOrThrow();
+        await gameDb.insertInto("missions").values({...original,id:missionId,definition:json({...original.definition as object,difficulty:"Hard"})}).execute();
+        await gameDb.updateTable("game_sessions").set({mission_id:missionId}).where("id","=",f.s.id).execute();
+        const session=await gameDb.selectFrom("game_sessions").selectAll().where("id","=",f.s.id).executeTakeFirstOrThrow();
+        const engine=strongest("main-engines");
+        const advice=await previewEngineering(gameDb,session,{optionId:engine.id});
+        assert.equal(advice.easy,false);assert.ok(advice.issues.length>0);
+        await assert.rejects(updateSession(f.u.id,f.s.id,{action:"confirm-component",optionId:engine.id}),/Compatibility warning/);
+        assert.equal((await sessionState(f.s.id,f.u.id)).build.spent,f.spent);
+        await updateSession(f.u.id,f.s.id,{action:"confirm-component",optionId:engine.id,acceptedIssueIds:advice.issues.map(i=>i.id)});
+        assert.ok((await sessionState(f.s.id,f.u.id)).assembly.selections.some(s=>s.optionId===engine.id));
+      }finally{
+        await f.cleanup();
+        await gameDb.deleteFrom("missions").where("id","=",missionId).execute();
+      }
+    });
     await t.test("Easy purchase acknowledgement, failed checks, salvage and cumulative repair time",async()=>{
       const f=await fixture();
       try{

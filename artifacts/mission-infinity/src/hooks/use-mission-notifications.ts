@@ -17,7 +17,9 @@ function read(key:string):State {
     const raw=localStorage.getItem(key);
     const value:unknown=raw?JSON.parse(raw):[];
     if(!Array.isArray(value)||!value.every(valid))return {items:[],storageWarning:true};
-    return {items:value.slice(0,200),storageWarning:false};
+    // Retire the old repeated "Unverified" diagnostics, not user messages or real risks.
+    const items=value.filter(n=>!n.id.startsWith('fuel:')||(n.id.startsWith('fuel:main-engines')&&n.severity==='warning'));
+    return {items:items.slice(0,200),storageWarning:false};
   }catch{return {items:[],storageWarning:true};}
 }
 function storeFor(sessionId:string,meId:string) {

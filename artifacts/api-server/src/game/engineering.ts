@@ -33,7 +33,7 @@ export async function previewEngineering(db:GameConnection,session:Session,input
 }
 export async function guardEngineeringPurchase(db:GameConnection,session:Session,input:EngineeringPreview,acceptedIssueIds:string[]=[]){
   const advice=await previewEngineering(db,session,input);
-  requireCondition(!advice.easy||advice.issues.every(i=>acceptedIssueIds.includes(i.id)),409,"Compatibility warning: review the current design and explicitly accept every risk before purchasing.");
+  requireCondition(advice.issues.every(i=>acceptedIssueIds.includes(i.id)),409,"Compatibility warning: review the current design and explicitly accept every risk before purchasing.");
 }
 export async function engineeringState(db:GameConnection,id:string,deadline:number):Promise<EngineeringState>{
   const row=await db.selectFrom("game_session_engineering").select("state").where("session_id","=",id).executeTakeFirst();
