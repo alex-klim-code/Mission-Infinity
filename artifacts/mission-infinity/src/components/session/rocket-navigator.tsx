@@ -73,8 +73,9 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
 
   return (
     <div className="pb-6">
-      <div className="flex justify-end">
-        <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-nav-progress">{doneCount}/{flat.length} categories set</span>
+      <div className="flex items-start justify-between gap-4">
+        <Breadcrumb items={crumbs} />
+        <span className="shrink-0 py-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-nav-progress">{doneCount}/{flat.length} categories set</span>
       </div>
       {repair && (
         <div className="mt-2 rounded-md border border-burn/40 bg-burn/[.07] p-3 text-sm" data-testid="panel-repair-banner">
@@ -84,8 +85,6 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
       )}
       {demo.enabled && <div className="mt-2"><DemoGuidePanel plan={demo.plan} loading={demo.loading} error={demo.error} refetch={demo.refetch} /></div>}
       {!hullBought && <p className="mt-1 text-sm text-muted-foreground">Start with the rocket body. Other parts unlock once it is bought.</p>}
-
-      <Breadcrumb items={crumbs} />
 
       {view === 'root' ? (
         <RootOverview sections={sections} official={official} onSection={openSection} />

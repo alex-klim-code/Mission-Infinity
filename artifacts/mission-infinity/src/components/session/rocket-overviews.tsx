@@ -9,7 +9,7 @@ export type Crumb = { label: string; onClick?: () => void; testId: string };
 
 export function Breadcrumb({ items }: { items: Crumb[] }) {
   return (
-    <nav aria-label="Builder path" className="mt-4" data-testid="nav-builder-breadcrumb">
+    <nav aria-label="Builder path" className="min-w-0 flex-1" data-testid="nav-builder-breadcrumb">
       <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 font-mono text-[11px] uppercase tracking-[.16em]">
         {items.map((c, i) => {
           const last = i === items.length - 1;
