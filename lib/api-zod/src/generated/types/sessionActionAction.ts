@@ -20,4 +20,7 @@ export const SessionActionAction = {
   "build-next": "build-next",
   "choose-hull": "choose-hull",
   "confirm-hull": "confirm-hull",
+  "choose-component": "choose-component",
+  "confirm-component": "confirm-component",
+  "finish-rocket": "finish-rocket",
 } as const;

@@ -411,8 +411,9 @@ components:
         image: { type: string }
     Catalog:
       type: object
-      required: [missions, presets, scenes]
+      required: [missions, presets, scenes, rocketCatalog]
       properties:
+        rocketCatalog: { type: array, items: { $ref: '#/components/schemas/RocketSection' } }
         missions: { type: array, items: { $ref: '#/components/schemas/Mission' } }
         presets: { type: array, items: { $ref: '#/components/schemas/CharacterPreset' } }
         scenes: { type: array, items: { $ref: '#/components/schemas/StoryScene' } }
@@ -503,6 +504,7 @@ components:
         players: { type: array, items: { $ref: '#/components/schemas/SessionPlayer' } }
         chat: { $ref: '#/components/schemas/SessionChatPage' }
         build: { $ref: '#/components/schemas/RocketBuild' }
+        assembly: { $ref: '#/components/schemas/RocketAssembly' }
         createdAt: { type: string }
     RocketBuild:
       type: object
@@ -523,10 +525,62 @@ components:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull] }
+        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket] }
+        optionId: { type: string }
         hullId: { type: string, enum: [falcon-shadow, titan-explorer, nova-prime] }
         ready: { type: boolean }
         expectedScene: { type: integer }
+    RocketComponent:
+      type: object
+      required: [id, categoryId, name, price, massKg, parameters, description, quality, dataStatus, source, originalCategory, referenceUrl, qualityMethodology]
+      properties:
+        id: { type: string }
+        categoryId: { type: string }
+        name: { type: string }
+        price: { type: number }
+        massKg: { type: [number, 'null'] }
+        parameters: { type: string }
+        description: { type: string }
+        quality: { type: [number, 'null'] }
+        dataStatus: { type: string }
+        source: { type: string }
+        originalCategory: { type: string }
+        referenceUrl: { type: string }
+        qualityMethodology: { type: string }
+    RocketCategory:
+      type: object
+      required: [id, name, options]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        options: { type: array, items: { $ref: '#/components/schemas/RocketComponent' } }
+    RocketSection:
+      type: object
+      required: [id, name, categories]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        categories: { type: array, items: { $ref: '#/components/schemas/RocketCategory' } }
+    ComponentSelection:
+      type: object
+      required: [categoryId, optionId]
+      properties:
+        categoryId: { type: string }
+        optionId: { type: string }
+    ComponentProposal:
+      allOf:
+        - { $ref: '#/components/schemas/ComponentSelection' }
+        - type: object
+          required: [playerId]
+          properties:
+            playerId: { type: string }
+    RocketAssembly:
+      type: object
+      required: [completed, selections, proposals]
+      properties:
+        completed: { type: boolean }
+        selections: { type: array, items: { $ref: '#/components/schemas/ComponentSelection' } }
+        proposals: { type: array, items: { $ref: '#/components/schemas/ComponentProposal' } }
     SessionResult:
       type: object
       required: [session]

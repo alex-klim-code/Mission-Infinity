@@ -15,7 +15,7 @@ const lunarJourney = [
 const lunaDescription = [
   "LUNA — Lunar Sample Return", "Total Budget", "$400M", "Difficulty", "Easy",
   "Preparation Time", "36 months", "Mission Duration", "4 weeks", "",
-  "Proponowany harmonogram", ...preparationSchedule, "", "4-week space mission",
+  "Proposed schedule", ...preparationSchedule, "", "4-week space mission",
   ...lunarJourney.map((text, i) => `${i + 1}. ${text}`),
 ].join("\n");
 
@@ -30,7 +30,7 @@ export const missionDefinitions = [
     objectives: lunarJourney,
     requirements: [] as string[],
     briefing: [
-      { title: "Proponowany harmonogram", text: preparationSchedule.join("\n") },
+      { title: "Proposed schedule", text: preparationSchedule.join("\n") },
       { title: "4-week space mission", text: lunarJourney.map((text, i) => `${i + 1}. ${text}`).join("\n") },
     ],
   },

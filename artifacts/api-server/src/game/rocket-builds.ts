@@ -1,9 +1,9 @@
 import { requireCondition, type GameConnection } from "./database";
 
 export const rocketHulls = {
-  "falcon-shadow": { name: "Falcon Shadow", price: 500 },
-  "titan-explorer": { name: "Titan Explorer", price: 1200 },
-  "nova-prime": { name: "Nova Prime", price: 2500 },
+  "falcon-shadow": { name: "Falcon Shadow", price: 50000000 },
+  "titan-explorer": { name: "Titan Explorer", price: 60000000 },
+  "nova-prime": { name: "Nova Prime", price: 90000000 },
 } as const;
 
 export async function rocketBuildState(sessionId: string, db: GameConnection, activeIds: string[]) {

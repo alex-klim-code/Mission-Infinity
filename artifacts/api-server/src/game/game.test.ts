@@ -14,6 +14,8 @@ import { pool } from "@workspace/db";
 import { completeAvatarUpload, getAvatarAsset, requestAvatarUpload } from "./avatars";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { avatarFixture } from "./testing/avatar";
+import { rocketCatalog, componentCategories, rocketOptions } from "./rocket-catalog";
+import { rocketHulls } from "./rocket-builds";
 
 // Domain/integration tests use disposable identities, never bypass browser auth.
 test("Mission Infinity server-authoritative game rules", async t => {
@@ -92,8 +94,8 @@ test("Mission Infinity server-authoritative game rules", async t => {
       const saved = await sessionState(session.id, crew);
       assert.equal(saved.build.screen, "HULL_CONFIRMED");
       assert.equal(saved.build.selectedHullId, "falcon-shadow");
-      assert.equal(saved.build.spent, 500);
-      assert.equal(400000000 - saved.build.spent, 399999500);
+      assert.equal(saved.build.spent, 50000000);
+      assert.equal(400000000 - saved.build.spent, 350000000);
       assert.equal(saved.build.elapsedMonths, 0, "A hull choice does not complete 12 months of spacecraft design");
       await assert.rejects(updateSession(leader, session.id, { action: "confirm-hull", hullId: "nova-prime" }));
       await assert.rejects(createSession(leader, "earth-observer", "solo"), "Started build must remain resumable until explicitly left");
@@ -102,11 +104,11 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await updateSession(leader, session.id, { action: "leave" });
       const transferred = await sessionState(session.id, crew);
       assert.equal(transferred.hostId, crew);
-      assert.equal(transferred.build.spent, 500);
+      assert.equal(transferred.build.spent, 50000000);
       assert.equal(transferred.build.votes.length, 1, "Departed members no longer count as voters");
     });
     await t.test("every hull price is deducted literally and an insufficient budget never purchases", async () => {
-      for (const [hullId, price] of [["titan-explorer", 1200], ["nova-prime", 2500]] as const) {
+      for (const [hullId, price] of [["titan-explorer", 60000000], ["nova-prime", 90000000]] as const) {
         const [player] = await players(1);
         const session = await createSession(player, "earth-observer", "solo");
         assert.equal(session.status, "STORY");
@@ -122,6 +124,89 @@ test("Mission Infinity server-authoritative game rules", async t => {
         assert.equal(purchased.build.spent, price);
         assert.equal(purchased.build.selectedHullId, hullId);
       }
+    });
+    await t.test("catalog retains all Excel categories, full details and only the three legacy hulls", async () => {
+      assert.equal(rocketCatalog.length, 7);
+      assert.equal(rocketCatalog.flatMap(s => s.categories).length, 28);
+      assert.equal(rocketOptions.length, 119);
+      assert.equal(new Set(rocketOptions.map(o => o.id)).size, 119);
+      assert.deepEqual(rocketOptions.filter(o => o.categoryId === "rocket-body").map(o => o.price), [50000000,60000000,90000000]);
+      for (const [id, hull] of Object.entries(rocketHulls)) assert.equal(rocketOptions.find(o=>o.id===id)?.price,hull.price);
+      for (const option of rocketOptions) {
+        assert.ok(option.name && option.description && option.parameters && option.source);
+        assert.ok(Number.isFinite(option.price) && option.price >= 0);
+      }
+      assert.equal(rocketOptions.find(o => o.name === "Aerojet Rocketdyne RS-25")?.price,123000000);
+      assert.equal(rocketOptions.find(o => o.name === "SpaceX Raptor 3")?.massKg,1525);
+      const visibleStrings = rocketOptions.flatMap(o=>[o.name,o.description,o.parameters,o.originalCategory,o.source,o.qualityMethodology]);
+      assert.doesNotMatch(visibleStrings.join("\n"),/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]|\b(?:Rakieta|Sonda|Miniaturowy|Spektrometr|Napęd|Konstrukcja)\b/);
+      assert.equal(rocketOptions.find(o=>o.id==="scientific-instruments-langmuir-probe-sonda-langmuira")?.name,"Langmuir Probe");
+      assert.match(rocketOptions.find(o=>o.id==="solar-panels-endurosat-solar-panel-3u-rozkadany")?.name??"",/Deployable/);
+    });
+    await t.test("full assembly preserves the hull, charges net changes once, and only finishes when complete", async () => {
+      const [leader, crew, outsider] = await players(3);
+      const session = await createSession(leader,"earth-observer","crew");
+      await respondToInvite(crew,await invite(leader,crew,session.id),"accept");
+      await updateSession(crew,session.id,{action:"ready",ready:true});
+      await updateSession(leader,session.id,{action:"start"});
+      for(let scene=0;scene<5;scene++) await updateSession(leader,session.id,{action:"next",expectedScene:scene});
+      await updateSession(crew,session.id,{action:"accept"});
+      await updateSession(leader,session.id,{action:"initiate"});
+      const parts = componentCategories[0].options;
+      const [cheap, expensive] = [...parts].sort((a,b)=>a.price-b.price);
+      await assert.rejects(updateSession(leader,session.id,{action:"confirm-component",optionId:cheap.id}),/body first/);
+      await updateSession(leader,session.id,{action:"build-next"});
+      await updateSession(leader,session.id,{action:"confirm-hull",hullId:"falcon-shadow"});
+      const legacy = await sessionState(session.id,leader);
+      assert.equal(legacy.build.spent,50000000);
+      assert.deepEqual(legacy.assembly.selections,[]);
+      await assert.rejects(updateSession(leader,session.id,{action:"finish-rocket"}),/27 component/);
+      await updateSession(crew,session.id,{action:"choose-component",optionId:expensive.id});
+      assert.equal((await sessionState(session.id,leader)).build.spent,50000000);
+      assert.equal((await sessionState(session.id,leader)).assembly.proposals[0].optionId,expensive.id);
+      await assert.rejects(updateSession(crew,session.id,{action:"confirm-component",optionId:cheap.id}),/Leader/);
+      await assert.rejects(updateSession(outsider,session.id,{action:"choose-component",optionId:cheap.id}));
+      await assert.rejects(updateSession(leader,session.id,{action:"confirm-component",optionId:"fabricated"}));
+      await Promise.all([1,2].map(()=>updateSession(leader,session.id,{action:"confirm-component",optionId:expensive.id})));
+      assert.equal((await sessionState(session.id,crew)).build.spent,50000000+expensive.price);
+      await updateSession(leader,session.id,{action:"confirm-component",optionId:cheap.id});
+      assert.equal((await sessionState(session.id,crew)).build.spent,50000000+cheap.price,"Replacement refunds the previous component, not the hull.");
+      await gameDb.updateTable("game_session_builds").set({spent:399999999}).where("session_id","=",session.id).execute();
+      const another = componentCategories.find(c=>c.id!==cheap.categoryId)!.options[0];
+      await assert.rejects(updateSession(leader,session.id,{action:"confirm-component",optionId:another.id}),/insufficient/);
+      assert.equal((await sessionState(session.id,crew)).assembly.selections.length,1);
+      await gameDb.updateTable("game_session_builds").set({spent:50000000+cheap.price}).where("session_id","=",session.id).execute();
+      let expected = 50000000;
+      for(const category of componentCategories) {
+        const option = [...category.options].sort((a,b)=>a.price-b.price)[0];
+        expected += option.price;
+        await updateSession(leader,session.id,{action:"confirm-component",optionId:option.id});
+      }
+      const configured = await sessionState(session.id,crew);
+      assert.equal(configured.assembly.selections.length,27);
+      assert.equal(configured.build.spent,expected);
+      assert.equal(configured.build.elapsedMonths,0);
+      await assert.rejects(updateSession(crew,session.id,{action:"finish-rocket"}),/Leader/);
+      await Promise.all([1,2].map(()=>updateSession(leader,session.id,{action:"finish-rocket"})));
+      const finished = await sessionState(session.id,crew);
+      assert.equal(finished.assembly.completed,true);
+      assert.equal(finished.build.elapsedMonths,12);
+      assert.equal(finished.build.spent,expected);
+      await assert.rejects(updateSession(leader,session.id,{action:"confirm-component",optionId:expensive.id}),/already built/);
+      await assert.rejects(updateSession(crew,session.id,{action:"choose-component",optionId:cheap.id}),/already built/);
+    });
+    await t.test("catalog repricing never retroactively charges a previously purchased hull", async () => {
+      const [player] = await players(1);
+      const session = await createSession(player,"earth-observer","solo");
+      for(let scene=0;scene<5;scene++) await updateSession(player,session.id,{action:"next",expectedScene:scene});
+      await updateSession(player,session.id,{action:"initiate"});
+      await updateSession(player,session.id,{action:"build-next"});
+      await updateSession(player,session.id,{action:"confirm-hull",hullId:"falcon-shadow"});
+      await gameDb.updateTable("game_session_builds").set({spent:500}).where("session_id","=",session.id).execute();
+      await updateSession(player,session.id,{action:"confirm-hull",hullId:"falcon-shadow"});
+      const restored = await sessionState(session.id,player);
+      assert.equal(restored.build.spent,500);
+      assert.equal(restored.build.selectedHullId,"falcon-shadow");
     });
     await t.test("crew messages persist privately after notification expiry and successive sends", async () => {
       const [leader, crew, outsider] = await players(3);

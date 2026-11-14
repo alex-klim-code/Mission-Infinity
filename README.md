@@ -2,7 +2,17 @@
 
 A cinematic, cooperative browser game about becoming a mission leader at the fictional **Asterion Aerospace**. Players create characters, form a 1–4-player crew, follow six introductory scenes and begin **LUNA — Lunar Sample Return**. Mission start now continues into **Etap 1 — Budowa Rakiety** and a saved rocket-hull choice.
 
-LUNA has a $400M budget, Easy difficulty, 36 months of preparation and four weeks of spaceflight. Its description contains only the supplied facts, four preparation phases (12/12/9/3 months) and four-week journey. Each crew member can propose a hull; the Leader confirms exactly one purchase. Prices are deducted literally: Falcon Shadow 500, Titan Explorer 1200, Nova Prime 2500. Confirmation is transactional and retries cannot charge twice. The top bar shows the exact remaining balance and months completed out of 36. Choosing a hull alone does not complete the full design stage, so elapsed preparation remains zero.
+LUNA has a $400M budget, Easy difficulty, 36 months of preparation and four weeks of spaceflight. Its description contains only the supplied facts, four preparation phases (12/12/9/3 months) and four-week journey.
+
+## Rocket Builder
+
+After mission start, players use a two-pane builder: component selection and full details on the left, with the rocket, selected parts, spent funds and known dry-mass subtotal alongside. The mobile layout keeps a compact summary visible. Lists show only names and prices; opening details never purchases.
+
+The supplied workbook contributes 116 non-body parts across 27 categories. Its four LUNA Frame variants are intentionally excluded, following the user's decision to keep Falcon Shadow ($50,000,000), Titan Explorer ($60,000,000) and Nova Prime ($90,000,000). This makes seven sections, 28 categories and 119 options. Run `python3 scripts/import-luna-catalog.py` to reproduce the imported catalog using Python's standard library. Original source data is preserved, while `luna-catalog.en.json` supplies English display translations without changing stable IDs, component specifications or non-body prices. All player-facing copy is English. Existing hull purchases retain their actual paid amounts and are never charged the new price retroactively.
+
+Crew proposals are free. The Leader confirms purchases and can replace non-body parts for their price difference before completion. Session-row locking makes confirmations and refunds atomic and prevents repeat charges. Existing hull purchases, funds and chat are preserved. The top bar displays the exact remaining budget.
+
+Completion requires a confirmed hull and all 27 component categories. Only the Leader can finish; this completes the 12-month design stage (12/36 months) and shows **Rocket Built**, with no next gameplay stage. Completed builds are read-only. Quality scores are gameplay values, not verified reliability or flight compatibility; mass excludes the unspecified hull mass and fuel.
 
 ## Mission crew
 

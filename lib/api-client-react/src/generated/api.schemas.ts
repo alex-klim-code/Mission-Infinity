@@ -294,7 +294,38 @@ export interface StoryScene {
   image: string;
 }
 
+export interface RocketComponent {
+  id: string;
+  categoryId: string;
+  name: string;
+  price: number;
+  /** @nullable */
+  massKg: number | null;
+  parameters: string;
+  description: string;
+  /** @nullable */
+  quality: number | null;
+  dataStatus: string;
+  source: string;
+  originalCategory: string;
+  referenceUrl: string;
+  qualityMethodology: string;
+}
+
+export interface RocketCategory {
+  id: string;
+  name: string;
+  options: RocketComponent[];
+}
+
+export interface RocketSection {
+  id: string;
+  name: string;
+  categories: RocketCategory[];
+}
+
 export interface Catalog {
+  rocketCatalog: RocketSection[];
   missions: Mission[];
   presets: CharacterPreset[];
   scenes: StoryScene[];
@@ -426,6 +457,21 @@ export interface RocketBuild {
   votes: HullVote[];
 }
 
+export interface ComponentSelection {
+  categoryId: string;
+  optionId: string;
+}
+
+export type ComponentProposal = ComponentSelection & {
+  playerId: string;
+};
+
+export interface RocketAssembly {
+  completed: boolean;
+  selections: ComponentSelection[];
+  proposals: ComponentProposal[];
+}
+
 export interface GameSession {
   id: string;
   roomCode: string;
@@ -437,6 +483,7 @@ export interface GameSession {
   players: SessionPlayer[];
   chat?: SessionChatPage;
   build?: RocketBuild;
+  assembly?: RocketAssembly;
   createdAt: string;
 }
 
@@ -454,6 +501,9 @@ export const SessionActionAction = {
   "build-next": "build-next",
   "choose-hull": "choose-hull",
   "confirm-hull": "confirm-hull",
+  "choose-component": "choose-component",
+  "confirm-component": "confirm-component",
+  "finish-rocket": "finish-rocket",
 } as const;
 
 export type SessionActionHullId =
@@ -467,6 +517,7 @@ export const SessionActionHullId = {
 
 export interface SessionAction {
   action: SessionActionAction;
+  optionId?: string;
   hullId?: SessionActionHullId;
   ready?: boolean;
   expectedScene?: number;

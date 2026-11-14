@@ -7,9 +7,11 @@
  */
 import type { CharacterPreset } from "./characterPreset";
 import type { Mission } from "./mission";
+import type { RocketSection } from "./rocketSection";
 import type { StoryScene } from "./storyScene";
 
 export interface Catalog {
+  rocketCatalog: RocketSection[];
   missions: Mission[];
   presets: CharacterPreset[];
   scenes: StoryScene[];

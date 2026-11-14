@@ -10,6 +10,7 @@ import type { SessionActionHullId } from "./sessionActionHullId";
 
 export interface SessionAction {
   action: SessionActionAction;
+  optionId?: string;
   hullId?: SessionActionHullId;
   ready?: boolean;
   expectedScene?: number;

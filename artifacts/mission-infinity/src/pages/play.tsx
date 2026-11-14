@@ -28,7 +28,7 @@ function ResumeBanner({ id, data }: { id: string; data?: GameSession }) {
         <span className="h-2 w-2 rounded-full bg-ion pulse-dot" />
         <div className="flex-1">
           <div className="kicker">Active session {data ? `/ Room ${data.roomCode}` : ''}</div>
-          <div className="mt-1 font-semibold">{data ? (data.status === 'MISSION_STARTED' ? 'Etap 1 — Budowa Rakiety' : SCENE_STATUS_LABEL[data.status]) : 'Your crew is waiting.'} {data && `/ ${data.players.length} aboard`}</div>
+          <div className="mt-1 font-semibold">{data ? (data.status === 'MISSION_STARTED' ? 'Stage 1 — Rocket Construction' : SCENE_STATUS_LABEL[data.status]) : 'Your crew is waiting.'} {data && `/ ${data.players.length} aboard`}</div>
         </div>
         <Link href={`/session/${id}`} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ion px-5 font-display text-sm font-bold uppercase tracking-[.14em] text-void" data-testid="link-resume-session">
           Resume <ArrowRight className="h-4 w-4" />

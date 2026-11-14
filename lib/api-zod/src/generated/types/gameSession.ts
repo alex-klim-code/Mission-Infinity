@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { GameSessionStatus } from "./gameSessionStatus";
+import type { RocketAssembly } from "./rocketAssembly";
 import type { RocketBuild } from "./rocketBuild";
 import type { SessionChatPage } from "./sessionChatPage";
 import type { SessionPlayer } from "./sessionPlayer";
@@ -21,5 +22,6 @@ export interface GameSession {
   players: SessionPlayer[];
   chat?: SessionChatPage;
   build?: RocketBuild;
+  assembly?: RocketAssembly;
   createdAt: string;
 }

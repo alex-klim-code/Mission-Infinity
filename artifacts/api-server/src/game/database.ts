@@ -67,6 +67,12 @@ export interface GameDatabase {
     elapsed_months: Generated<number>;
     votes: Generated<Record<string, string>>;
   };
+  game_session_rocket_assemblies: {
+    session_id: string;
+    selections: Generated<Record<string,string>>;
+    proposals: Generated<Record<string,Record<string,string>>>;
+    completed: Generated<boolean>;
+  };
   game_session_messages: {
     id: string;
     session_id: string;

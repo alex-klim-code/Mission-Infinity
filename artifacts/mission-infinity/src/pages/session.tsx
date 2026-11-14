@@ -337,17 +337,22 @@ function Build({ session, mission, me, isHost, openBadge }: StageProps) {
   const mine = session.players.find((p) => p.player.id === me);
   const screen = session.build?.screen ?? 'INTRO';
   const votes = session.build?.votes ?? [];
+  const proposals = session.assembly?.proposals ?? [];
+  const completed = !!session.assembly?.completed;
+  const hullBought = !!session.build?.selectedHullId;
   const flag: CrewFlag = (sp, leader) => {
-    if (screen === 'HULL_SELECTION') {
+    if (completed) return { on: true, label: 'Built' };
+    if (!hullBought) {
       const h = hullById(votes.find((v) => v.playerId === sp.player.id)?.hullId);
-      return { on: !!h, label: h ? h.name : 'Deciding' };
+      return { on: !!h || leader, label: h ? h.name : leader ? 'Leader' : 'Deciding' };
     }
-    return { on: leader || screen === 'HULL_CONFIRMED', label: leader ? 'Leader' : screen === 'HULL_CONFIRMED' ? 'Aboard' : 'Waiting' };
+    const n = proposals.filter((p) => p.playerId === sp.player.id).length;
+    return { on: leader || n > 0, label: leader ? 'Leader' : n ? `${n} proposed` : 'Browsing' };
   };
   return (
     <div className="grain flex h-[100dvh] flex-col overflow-hidden bg-background">
       <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
-      <main className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden" data-testid={`panel-build-${screen.toLowerCase()}`}>
+      <main className="relative min-h-0 flex-1 overflow-hidden" data-testid={`panel-build-${completed ? 'completed' : screen.toLowerCase()}`}>
         <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns pointer-events-none fixed inset-0 h-full w-full object-cover opacity-25" />
         <div className="pointer-events-none fixed inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
         <Starfield density={0.8} />

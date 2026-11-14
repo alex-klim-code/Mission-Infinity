@@ -5,16 +5,20 @@ A browser-based cooperative space mission story for 1–4 players.
 ## Product scope
 
 - The user's title is **Mission: Infinity**, overriding the title in the original attached brief.
-- `MISSION_STARTED` now continues into **Etap 1 — Budowa Rakiety**, with a Leader-controlled introduction, individual crew hull choices and one Leader-confirmed purchase. It remains an active, resumable mission until explicitly left.
-- Do not add spacecraft engineering, rocket selection, orbital calculations or mission simulation in this phase.
-- All game text is initially English; keep content outside UI components.
+- `MISSION_STARTED` opens the full **Rocket Builder** in Etap 1 — Budowa Rakiety. Crew members browse/propose parts independently; the Leader confirms shared purchases and completion. It remains an active, resumable mission until explicitly left.
+- The Rocket Builder now includes seven sections and 28 categories. Use all 116 non-body Excel options plus the three retained hulls (119 total). The user explicitly rejected replacing those hulls with the four LUNA Frame options from Excel.
+- Lists show only component names and prices. Clicking opens the full details; browsing must never purchase. Keep the rocket preview, selected parts and total spent visible alongside the selector.
+- Crew members propose components; the Leader confirms purchases and may replace non-hull parts for the price difference before completion. Preserve existing hull purchases and all spent funds.
+- The final screen is **Rocket Built**, with no further gameplay until requested. Finishing the complete design advances preparation to 12/36 months; part selection alone does not.
+- Do not claim actual lunar-flight compatibility, verified reliability or calculated performance from the catalog's gameplay quality score. Display known dry-mass subtotals, not an invented total/wet mass; legacy hull mass is unspecified.
+- All player-facing game text must be English, including imported component descriptions, technical parameters, source-category labels, section headings and completion screens. Preserve original workbook data for audit and stable IDs for saved selections; apply English display translations separately.
 - LUNA — Lunar Sample Return is the only enabled mission: $400M, Easy, 36 months of preparation, four weeks of spaceflight. Keep the legacy internal mission ID so existing rooms and chat history survive.
-- Hull prices are literal amounts deducted from mission funds: Falcon Shadow 500, Titan Explorer 1200, Nova Prime 2500. Do not apply a coin conversion or multiply prices.
+- Current hull prices are USD: Falcon Shadow $50,000,000, Titan Explorer $60,000,000, Nova Prime $90,000,000. Deduct these exact amounts from mission funds for new purchases. Never retroactively charge older purchases; preserve their saved spending and actual paid hull amount in configuration summaries.
 - Preparation time advances only after completing full stages, never with real time. A hull choice alone does not finish the 12-month design stage; the counter remains 0/36 at this point.
-- No chat or direct messages. Friends and game invitations are distinct.
+- Friends and game invitations are distinct; crew chat is session-scoped, not a direct-message system.
 - No guest authentication, seeded fake players, or nonfunctional primary actions.
 - Product requirement: a single shared sign-in/sign-up entry screen with Google and Apple only; no email field or separate Sign Up link. Preserve OAuth callbacks and account completion. Hiding email/password UI does not disable that method in the authentication service.
-- Multiplayer product rule: the person who creates the mission and invites others is Leader. Only the Leader approves stage transitions; crew members choose readiness and mission acceptance, not branching decisions or votes.
+- Multiplayer product rule: the person who creates the mission and invites others is Leader. Only the Leader approves stage transitions and purchases; crew members can propose builder parts and choose readiness/mission acceptance.
 - Current story requirements: the first three scenes use the provided Warsaw graduation and NASA images, followed by Get a Message (mission description), Meet Your Crew (mission parameters), and Start Mission. Crew may signal readiness there; only Leader launches.
 - The AI advisor is currently a private text draft only. Do not connect a model, send the draft, or invent AI responses until the user asks for that integration.
 - Crew chat must be non-modal and must not block gameplay. Show live player messages as temporary notifications on the right, not as avatar speech bubbles.

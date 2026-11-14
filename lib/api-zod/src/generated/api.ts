@@ -25,6 +25,35 @@ export const HealthCheckResponse = zod.object({
 });
 
 export const GetGameCatalogResponse = zod.object({
+  rocketCatalog: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      categories: zod.array(
+        zod.object({
+          id: zod.string(),
+          name: zod.string(),
+          options: zod.array(
+            zod.object({
+              id: zod.string(),
+              categoryId: zod.string(),
+              name: zod.string(),
+              price: zod.number(),
+              massKg: zod.number().nullable(),
+              parameters: zod.string(),
+              description: zod.string(),
+              quality: zod.number().nullable(),
+              dataStatus: zod.string(),
+              source: zod.string(),
+              originalCategory: zod.string(),
+              referenceUrl: zod.string(),
+              qualityMethodology: zod.string(),
+            }),
+          ),
+        }),
+      ),
+    }),
+  ),
   missions: zod.array(
     zod.object({
       id: zod.string(),
@@ -1208,6 +1237,29 @@ export const CreateGameSessionResponse = zod.object({
       ),
     })
     .optional(),
+  assembly: zod
+    .object({
+      completed: zod.boolean(),
+      selections: zod.array(
+        zod.object({
+          categoryId: zod.string(),
+          optionId: zod.string(),
+        }),
+      ),
+      proposals: zod.array(
+        zod
+          .object({
+            categoryId: zod.string(),
+            optionId: zod.string(),
+          })
+          .and(
+            zod.object({
+              playerId: zod.string(),
+            }),
+          ),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1388,6 +1440,29 @@ export const GetGameSessionResponse = zod.object({
       ),
     })
     .optional(),
+  assembly: zod
+    .object({
+      completed: zod.boolean(),
+      selections: zod.array(
+        zod.object({
+          categoryId: zod.string(),
+          optionId: zod.string(),
+        }),
+      ),
+      proposals: zod.array(
+        zod
+          .object({
+            categoryId: zod.string(),
+            optionId: zod.string(),
+          })
+          .and(
+            zod.object({
+              playerId: zod.string(),
+            }),
+          ),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1407,7 +1482,11 @@ export const UpdateGameSessionBody = zod.object({
     "build-next",
     "choose-hull",
     "confirm-hull",
+    "choose-component",
+    "confirm-component",
+    "finish-rocket",
   ]),
+  optionId: zod.string().optional(),
   hullId: zod
     .enum(["falcon-shadow", "titan-explorer", "nova-prime"])
     .optional(),
@@ -1587,6 +1666,29 @@ export const UpdateGameSessionResponse = zod.object({
               playerId: zod.string(),
               hullId: zod.string(),
             }),
+          ),
+        })
+        .optional(),
+      assembly: zod
+        .object({
+          completed: zod.boolean(),
+          selections: zod.array(
+            zod.object({
+              categoryId: zod.string(),
+              optionId: zod.string(),
+            }),
+          ),
+          proposals: zod.array(
+            zod
+              .object({
+                categoryId: zod.string(),
+                optionId: zod.string(),
+              })
+              .and(
+                zod.object({
+                  playerId: zod.string(),
+                }),
+              ),
           ),
         })
         .optional(),
@@ -1806,6 +1908,29 @@ export const SendSessionMessageResponse = zod.object({
       ),
     })
     .optional(),
+  assembly: zod
+    .object({
+      completed: zod.boolean(),
+      selections: zod.array(
+        zod.object({
+          categoryId: zod.string(),
+          optionId: zod.string(),
+        }),
+      ),
+      proposals: zod.array(
+        zod
+          .object({
+            categoryId: zod.string(),
+            optionId: zod.string(),
+          })
+          .and(
+            zod.object({
+              playerId: zod.string(),
+            }),
+          ),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -2002,6 +2127,29 @@ export const RespondToInvitationResponse = zod.object({
               playerId: zod.string(),
               hullId: zod.string(),
             }),
+          ),
+        })
+        .optional(),
+      assembly: zod
+        .object({
+          completed: zod.boolean(),
+          selections: zod.array(
+            zod.object({
+              categoryId: zod.string(),
+              optionId: zod.string(),
+            }),
+          ),
+          proposals: zod.array(
+            zod
+              .object({
+                categoryId: zod.string(),
+                optionId: zod.string(),
+              })
+              .and(
+                zod.object({
+                  playerId: zod.string(),
+                }),
+              ),
           ),
         })
         .optional(),
