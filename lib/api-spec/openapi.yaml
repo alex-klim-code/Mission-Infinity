@@ -160,6 +160,22 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SessionResult' }
+  /game/sessions/{id}/messages:
+    post:
+      operationId: sendSessionMessage
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionMessageInput' }
+      responses:
+        '200':
+          description: Session with the sender's updated speech bubble
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameSession' }
   /game/sessions/{id}/invitations:
     post:
       operationId: invitePlayer
@@ -405,6 +421,19 @@ components:
       properties:
         missionId: { type: string }
         mode: { type: string, enum: [solo, crew] }
+    SessionMessageInput:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 180 }
+    SessionMessage:
+      type: object
+      required: [id, text, createdAt, expiresAt]
+      properties:
+        id: { type: string }
+        text: { type: string }
+        createdAt: { type: string }
+        expiresAt: { type: string }
     SessionPlayer:
       type: object
       required: [player, ready, continueReady, accepted, connected]
@@ -414,6 +443,10 @@ components:
         continueReady: { type: boolean }
         accepted: { type: boolean }
         connected: { type: boolean }
+        lastMessage:
+          anyOf:
+            - { $ref: '#/components/schemas/SessionMessage' }
+            - { type: 'null' }
     GameSession:
       type: object
       required: [id, roomCode, hostId, missionId, status, scene, players, createdAt, revision]

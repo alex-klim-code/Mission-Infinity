@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { gameDb } from "./database";
 import { seedGameContent, getCatalog } from "./content";
 import { getAccount, savePlayer, getCareer } from "./players";
+import { sendSessionMessage } from "./session-messages";
 import { friendshipAction, socialState } from "./social";
 import { createSession, sessionState, updateSession, reconcilePresence } from "./sessions";
 import { inviteToSession, respondToInvite } from "./invitations";
@@ -53,6 +54,42 @@ test("Mission Infinity server-authoritative game rules", async t => {
       assert.equal(mission.operationalYears, 3);
       assert.equal(mission.requirements.length, 10);
       assert.equal(mission.briefing.length, 10);
+    });
+    await t.test("crew speech bubbles are private, bounded, rate-limited and expire without changing leadership", async () => {
+      const [leader, crew, outsider] = await players(3);
+      const mission = (await getCatalog()).missions.find(m => m.enabled)!;
+      const session = await createSession(leader, mission.id, "crew");
+      await respondToInvite(crew, await invite(leader, crew, session.id), "accept");
+      await assert.rejects(sendSessionMessage(outsider, session.id, { text: "Not my channel" }));
+      await assert.rejects(sendSessionMessage(leader, session.id, { text: "   " }));
+      await assert.rejects(sendSessionMessage(leader, session.id, { text: "x".repeat(181) }));
+
+      const posted = await sendSessionMessage(leader, session.id, { text: "  Welcome aboard!  " });
+      const bubble = posted.players.find(p => p.player.id === leader)!.lastMessage!;
+      assert.equal(bubble.text, "Welcome aboard!");
+      assert.equal(Date.parse(bubble.expiresAt) - Date.parse(bubble.createdAt), 12_000);
+      assert.equal(posted.hostId, leader);
+      assert.equal(posted.scene, session.scene);
+      await assert.rejects(sendSessionMessage(leader, session.id, { text: "Too fast" }),
+        (error: unknown) => (error as { statusCode: number }).statusCode === 429);
+
+      const attempts = await Promise.allSettled([
+        sendSessionMessage(crew, session.id, { text: "Crew speaking" }),
+        sendSessionMessage(crew, session.id, { text: "Duplicate burst" }),
+      ]);
+      assert.equal(attempts.filter(a => a.status === "fulfilled").length, 1);
+      assert.equal(attempts.filter(a => a.status === "rejected").length, 1);
+      const received = await sessionState(session.id, leader);
+      assert.ok(received.players.find(p => p.player.id === crew)!.lastMessage);
+      assert.equal(received.hostId, leader);
+      await assert.rejects(sessionState(session.id, outsider));
+
+      await gameDb.updateTable("game_session_players").set({
+        last_message: { ...bubble, expiresAt: new Date(Date.now() - 1).toISOString() },
+      }).where("session_id", "=", session.id).where("user_id", "=", leader).execute();
+      assert.equal((await sessionState(session.id, crew)).players.find(p => p.player.id === leader)!.lastMessage, null);
+      await updateSession(crew, session.id, { action: "leave" });
+      await assert.rejects(sendSessionMessage(crew, session.id, { text: "Already left" }));
     });
     await t.test("character saves, reloads, edits and rejects unknown presets and duplicate names", async () => {
       const [a, b] = await players(2);

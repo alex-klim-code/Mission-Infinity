@@ -51,6 +51,8 @@ export * from "./sessionAction";
 export * from "./sessionActionAction";
 export * from "./sessionInput";
 export * from "./sessionInputMode";
+export * from "./sessionMessage";
+export * from "./sessionMessageInput";
 export * from "./sessionPlayer";
 export * from "./sessionResult";
 export * from "./social";

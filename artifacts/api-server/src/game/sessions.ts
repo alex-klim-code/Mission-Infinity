@@ -19,6 +19,7 @@ export async function sessionState(id: string, userId: string, db: GameConnectio
     if (player) players.push({
       player, ready: member.ready, continueReady: member.continue_ready, accepted: member.accepted,
       connected: isOnline(member.user_id),
+      lastMessage: member.last_message && Date.parse(member.last_message.expiresAt) > Date.now() ? member.last_message : null,
     });
   }
   return {

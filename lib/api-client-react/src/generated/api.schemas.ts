@@ -355,12 +355,28 @@ export interface SessionInput {
   mode: SessionInputMode;
 }
 
+export interface SessionMessageInput {
+  /**
+   * @minLength 1
+   * @maxLength 180
+   */
+  text: string;
+}
+
+export interface SessionMessage {
+  id: string;
+  text: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
 export interface SessionPlayer {
   player: Player;
   ready: boolean;
   continueReady: boolean;
   accepted: boolean;
   connected: boolean;
+  lastMessage?: SessionMessage | null;
 }
 
 export type GameSessionStatus =

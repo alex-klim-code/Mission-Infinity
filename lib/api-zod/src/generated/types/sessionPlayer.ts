@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { Player } from "./player";
+import type { SessionMessage } from "./sessionMessage";
 
 export interface SessionPlayer {
   player: Player;
@@ -13,4 +14,5 @@ export interface SessionPlayer {
   continueReady: boolean;
   accepted: boolean;
   connected: boolean;
+  lastMessage?: SessionMessage | null;
 }

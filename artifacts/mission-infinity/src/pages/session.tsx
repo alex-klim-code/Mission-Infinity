@@ -1,187 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useParams } from 'wouter';
+import { BadgeDialog, BriefingBody, CrewDock, SessionTopBar, useSessionAct, type CrewFlag } from '@/components/session/session-shared';
+import { Link, useParams } from 'wouter';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Check, Copy, Crown, FileText, LogOut, Rocket, Send, UserPlus, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Copy, Rocket, Send, UserPlus, Users } from 'lucide-react';
 import {
   getGetGameSessionQueryKey,
-  getGetPlayerQueryKey,
   getGetSocialQueryKey,
   useGetGameCatalog,
   useGetGameSession,
   useGetSocial,
   useInvitePlayer,
-  useUpdateGameSession,
   type GameSession,
   type Mission,
   type PlayerAccount,
-  type SessionAction,
   type StoryScene,
 } from '@workspace/api-client-react';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Starfield } from '@/components/starfield';
-import { FullScreenLoader, LinkStatusPill, RequireCharacter } from '@/components/shell';
-import { EmptyState, ErrorState, HudButton, PlayerPortrait, Portrait } from '@/components/ui-kit';
-import { SCENE_STATUS_LABEL, errMsg, errStatus, formatBudget, imgUrl, invalidateGame, invalidateSocial } from '@/lib/game';
+import { FullScreenLoader, RequireCharacter } from '@/components/shell';
+import { EmptyState, ErrorState, HudButton, Portrait } from '@/components/ui-kit';
+import { SCENE_STATUS_LABEL, errMsg, errStatus, formatBudget, imgUrl, invalidateSocial } from '@/lib/game';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-
-type ActFn = (data: SessionAction, after?: () => void) => void;
-
-function useSessionAct(id: string) {
-  const mut = useUpdateGameSession();
-  const qc = useQueryClient();
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const act: ActFn = (data, after) =>
-    mut.mutate(
-      { id, data },
-      {
-        onSuccess: async (res) => {
-          if (!res.session) {
-            await invalidateGame(qc);
-            setLocation('/play');
-            return;
-          }
-          qc.setQueryData(getGetGameSessionQueryKey(id), res.session);
-          if (data.action === 'initiate') void invalidateGame(qc);
-          else void qc.invalidateQueries({ queryKey: getGetPlayerQueryKey() });
-          after?.();
-        },
-        onError: (e) => {
-          toast({ title: 'Command rejected', description: errMsg(e), variant: 'destructive' });
-          void qc.invalidateQueries({ queryKey: getGetGameSessionQueryKey(id) });
-        },
-      },
-    );
-  return { act, pending: mut.isPending, pendingAction: mut.isPending ? mut.variables?.data.action : undefined };
-}
-
-function CrewStrip({ session, mode }: { session: GameSession; mode: 'lobby' | 'continue' | 'accept' }) {
-  return (
-    <div className="flex items-center gap-2">
-      {session.players.map((sp) => {
-        const host = sp.player.id === session.hostId;
-        const flag = mode === 'lobby' ? sp.ready || host : mode === 'continue' ? sp.continueReady || host : sp.accepted;
-        return (
-          <div key={sp.player.id} className="group relative" title={`${sp.player.name}${host ? ' (host)' : ''}`} data-testid={`crew-${sp.player.id}`}>
-            <Portrait player={sp.player} size={40} ring={flag ? 'ion' : 'none'} className={cn(!sp.connected && 'opacity-40')} />
-            {host && <Crown className="absolute -top-2 left-1/2 h-3.5 w-3.5 -translate-x-1/2 text-burn" />}
-            {flag && !host && (
-              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-ion text-void">
-                <Check className="h-2.5 w-2.5" />
-              </span>
-            )}
-            {mode === 'accept' && host && sp.accepted && (
-              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-ion text-void">
-                <Check className="h-2.5 w-2.5" />
-              </span>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function BriefingBody({ mission }: { mission: Mission }) {
-  return (
-    <div className="space-y-8">
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-white/10 bg-white/10 sm:grid-cols-4">
-        {[
-          ['Budget', formatBudget(mission.budget)],
-          ['Development', `${mission.developmentMonths} months`],
-          ['Operations', `${mission.operationalYears} years`],
-          ['Destination', mission.destination],
-        ].map(([k, v]) => (
-          <div key={k} className="bg-void p-4">
-            <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{k}</dt>
-            <dd className="mt-1 font-display text-xl font-semibold text-ion">{v}</dd>
-          </div>
-        ))}
-      </dl>
-      {mission.briefing.map((b, i) => (
-        <section key={i}>
-          <h3 className="mb-2 flex items-baseline gap-3 font-display text-lg font-bold uppercase tracking-wider">
-            <span className="font-mono text-xs text-burn">{String(i + 1).padStart(2, '0')}</span>
-            {b.title}
-          </h3>
-          <p className="whitespace-pre-line leading-relaxed text-foreground/80">{b.text}</p>
-        </section>
-      ))}
-      <div className="grid gap-6 sm:grid-cols-2">
-        {[
-          ['Objectives', mission.objectives],
-          ['Requirements', mission.requirements],
-        ].map(([t, list]) => (
-          <section key={t as string}>
-            <h3 className="kicker mb-3">{t as string}</h3>
-            <ul className="space-y-2 text-sm">
-              {(list as string[]).map((o) => (
-                <li key={o} className="flex gap-2">
-                  <span className="mt-2 h-1 w-3 shrink-0 bg-burn" /> {o}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function BriefingDialog({ mission, open, onOpenChange }: { mission: Mission; open: boolean; onOpenChange: (o: boolean) => void }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88dvh] max-w-3xl overflow-hidden border-white/10 bg-card p-0">
-        <div className="border-b border-white/10 p-6">
-          <div className="kicker">Classified / Mission {mission.number}</div>
-          <DialogTitle className="mt-1 font-display text-3xl font-bold uppercase">{mission.title} briefing</DialogTitle>
-          <DialogDescription className="text-muted-foreground">{mission.subtitle}</DialogDescription>
-        </div>
-        <div className="scroll-thin max-h-[calc(88dvh-130px)] overflow-y-auto p-6" data-testid="panel-briefing-dialog">
-          <BriefingBody mission={mission} />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function LeaveButton({ act, pending, compact }: { act: ActFn; pending: boolean; compact?: boolean }) {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <button className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/15 bg-void/50 px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground backdrop-blur hover:border-destructive/60 hover:text-destructive" data-testid="button-leave">
-          <LogOut className="h-4 w-4" />
-          {!compact && 'Leave'}
-        </button>
-      </AlertDialogTrigger>
-      <AlertDialogContent className="border-white/10 bg-card">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="font-display uppercase tracking-wider">Leave this session?</AlertDialogTitle>
-          <AlertDialogDescription>Your crew will continue without you. If you're the host, command passes to a connected crew member (or another member if everyone is offline). The session only closes once nobody is left aboard.</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel data-testid="button-cancel-leave">Stay</AlertDialogCancel>
-          <AlertDialogAction disabled={pending} onClick={() => act({ action: 'leave' })} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="button-confirm-leave">
-            Leave session
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
 
 /* ---------------- LOBBY ---------------- */
 
@@ -247,7 +87,13 @@ function InvitePanel({ session }: { session: GameSession }) {
   );
 }
 
-function Lobby({ session, mission, me, isHost }: { session: GameSession; mission?: Mission; me: string; isHost: boolean }) {
+type StageProps = { session: GameSession; mission?: Mission; me: string; isHost: boolean; openBadge: (id: string) => void };
+
+const lobbyFlag: CrewFlag = (sp) => ({ on: sp.ready, label: sp.ready ? 'Ready' : 'Standing by' });
+const continueFlag: CrewFlag = (sp) => ({ on: sp.continueReady, label: sp.continueReady ? 'Ready' : 'Reading' });
+const acceptFlag: CrewFlag = (sp) => ({ on: sp.accepted, label: sp.accepted ? 'Signed' : 'Unsigned' });
+
+function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
   const { act, pending, pendingAction } = useSessionAct(session.id);
   const { toast } = useToast();
   const mine = session.players.find((p) => p.player.id === me);
@@ -259,17 +105,12 @@ function Lobby({ session, mission, me, isHost }: { session: GameSession; mission
       {mission && <img src={imgUrl(mission.image)} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-30" />}
       <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
       <Starfield density={0.5} />
+      <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-6 md:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/play" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" data-testid="link-back-play">
-            <ArrowLeft className="h-4 w-4" /> Mission board
-          </Link>
-          <div className="flex items-center gap-2">
-            <LinkStatusPill />
-            <LeaveButton act={act} pending={pending} compact />
-          </div>
-        </header>
-        <div className="mt-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <Link href="/play" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" data-testid="link-back-play">
+          <ArrowLeft className="h-4 w-4" /> Mission board
+        </Link>
+        <div className="mt-6 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
             <div className="kicker mb-2">Crew lobby / Mission {mission?.number}</div>
             <h1 className="font-display text-4xl font-bold uppercase md:text-6xl">{mission?.title ?? 'Mission'}</h1>
@@ -293,31 +134,15 @@ function Lobby({ session, mission, me, isHost }: { session: GameSession; mission
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_340px]">
           <div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {slots.map((sp, i) => (
-                <motion.div key={sp?.player.id ?? `empty-${i}`} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-                  {sp ? (
-                    <div className={cn('relative overflow-hidden rounded-lg border', sp.ready || sp.player.id === session.hostId ? 'border-ion/50' : 'border-white/10')} data-testid={`slot-player-${sp.player.id}`}>
-                      <PlayerPortrait player={sp.player} className={cn('aspect-[3/4]', !sp.connected && 'grayscale opacity-50')} />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-void via-void/80 to-transparent p-3">
-                        <div className="flex items-center gap-1.5 truncate font-semibold">
-                          {sp.player.id === session.hostId && <Crown className="h-3.5 w-3.5 shrink-0 text-burn" />}
-                          {sp.player.name}
-                        </div>
-                        <div className={cn('font-mono text-[10px] uppercase tracking-widest', !sp.connected ? 'text-muted-foreground' : sp.player.id === session.hostId ? 'text-burn' : sp.ready ? 'text-ion' : 'text-muted-foreground')}>
-                          {!sp.connected ? 'Disconnected' : sp.player.id === session.hostId ? 'Host' : sp.ready ? 'Ready' : 'Standing by'}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-white/10 text-muted-foreground">
-                      <UserPlus className="h-5 w-5" />
-                      <span className="font-mono text-[10px] uppercase tracking-widest">Open seat</span>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
+            <section className="relative overflow-hidden rounded-lg border border-white/10" aria-label="Crew deck" data-testid="panel-scene-window">
+              {mission && <img src={imgUrl(mission.image)} alt="" className="kenburns absolute inset-0 h-full w-full object-cover" />}
+              <div className="absolute inset-0 bg-gradient-to-t from-void via-void/70 to-void/10" />
+              <div className="scanline pointer-events-none absolute inset-0" />
+              <div className="relative flex min-h-[340px] flex-col justify-end gap-2 p-3 sm:p-5">
+                <div className="kicker absolute left-4 top-4 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-burn pulse-dot" /> Crew channel / {session.players.length} of 4 aboard</div>
+                <CrewDock session={session} flag={lobbyFlag} onOpenBadge={openBadge} meId={me} />
+              </div>
+            </section>
             <div className="glass mt-6 flex flex-col items-start justify-between gap-4 rounded-lg p-5 sm:flex-row sm:items-center">
               <div className="text-sm text-muted-foreground" data-testid="text-lobby-status">
                 {isHost
@@ -327,7 +152,7 @@ function Lobby({ session, mission, me, isHost }: { session: GameSession; mission
                       : 'Every connected crew member is ready.'
                     : 'Waiting for connected crew to mark ready.'
                   : mine?.ready
-                    ? 'You are ready. The host will start the mission.'
+                    ? 'You are ready. The Leader will start the mission.'
                     : 'Mark ready when you are set.'}
               </div>
               {isHost ? (
@@ -344,7 +169,7 @@ function Lobby({ session, mission, me, isHost }: { session: GameSession; mission
           {isHost ? <InvitePanel session={session} /> : (
             <div className="glass rounded-lg p-5 text-sm text-muted-foreground">
               <div className="kicker mb-3">Briefing note</div>
-              Only the host can invite crew and advance scenes. You will move through the story together.
+              Only the Leader can invite crew and approve each stage. Your part: mark ready, signal when you have read each scene, and sign the mission acceptance.
             </div>
           )}
         </div>
@@ -355,9 +180,8 @@ function Lobby({ session, mission, me, isHost }: { session: GameSession; mission
 
 /* ---------------- STORY ---------------- */
 
-function Story({ session, mission, scenes, me, isHost }: { session: GameSession; mission?: Mission; scenes: StoryScene[]; me: string; isHost: boolean }) {
+function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps & { scenes: StoryScene[] }) {
   const { act, pending, pendingAction } = useSessionAct(session.id);
-  const [briefOpen, setBriefOpen] = useState(false);
   const scene = scenes.find((s) => s.id === session.scene) ?? scenes[session.scene];
   const solo = session.players.length === 1;
   const paragraphs = scene ? (solo && scene.soloParagraphs.length ? scene.soloParagraphs : scene.paragraphs) : [];
@@ -381,25 +205,12 @@ function Story({ session, mission, scenes, me, isHost }: { session: GameSession;
       <div className="scanline pointer-events-none absolute inset-0" />
 
       <div className="relative z-10 flex min-h-[100dvh] flex-col">
-        <header className="flex flex-wrap items-center gap-3 px-4 py-4 md:px-8">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-[.25em] text-ion">Room {session.roomCode}</span>
-            <div className="flex gap-1" aria-label="Scene progress">
-              {scenes.map((s) => (
-                <span key={s.id} className={cn('h-1 w-6 rounded-full transition-colors md:w-10', s.id < session.scene ? 'bg-ion/60' : s.id === session.scene ? 'bg-burn' : 'bg-white/15')} />
-              ))}
-            </div>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="hidden sm:block"><LinkStatusPill /></div>
-            {mission && (
-              <button onClick={() => setBriefOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/15 bg-void/50 px-3 text-xs font-semibold uppercase tracking-widest backdrop-blur hover:border-ion" data-testid="button-open-briefing">
-                <FileText className="h-4 w-4" /> <span className="hidden sm:inline">Briefing</span>
-              </button>
-            )}
-            <LeaveButton act={act} pending={pending} compact />
-          </div>
-        </header>
+        <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
+        <div className="flex gap-1 px-4 pt-3 md:px-8" aria-label="Scene progress">
+          {scenes.map((s) => (
+            <span key={s.id} className={cn('h-1 flex-1 rounded-full transition-colors sm:max-w-10', s.id < session.scene ? 'bg-ion/60' : s.id === session.scene ? 'bg-burn' : 'bg-white/15')} />
+          ))}
+        </div>
 
         <div className="flex flex-1 items-end px-4 pb-6 md:px-8 md:pb-10">
           <AnimatePresence mode="wait">
@@ -409,7 +220,7 @@ function Story({ session, mission, scenes, me, isHost }: { session: GameSession;
                 <span className="h-px w-8 bg-ion/50" />
                 {scene?.label}
               </div>
-              <h1 className="mb-6 font-display text-4xl font-bold uppercase leading-none md:text-7xl" data-testid="text-scene-title">{scene?.title ?? SCENE_STATUS_LABEL[session.status]}</h1>
+              <h1 className="mb-5 font-display text-3xl font-bold uppercase leading-none sm:text-4xl md:text-6xl" data-testid="text-scene-title">{scene?.title ?? SCENE_STATUS_LABEL[session.status]}</h1>
 
               <div className="glass rounded-lg">
                 {scene?.speaker && (
@@ -418,7 +229,7 @@ function Story({ session, mission, scenes, me, isHost }: { session: GameSession;
                     <span className="font-mono text-[11px] uppercase tracking-[.25em] text-burn" data-testid="text-speaker">{scene.speaker}</span>
                   </div>
                 )}
-                <div className={cn('scroll-thin space-y-4 overflow-y-auto px-5 py-5 text-base leading-relaxed text-foreground/90 md:text-lg', isBriefing ? 'max-h-[52dvh]' : 'max-h-[40dvh]')} data-testid="panel-scene-text">
+                <div className={cn('scroll-thin space-y-4 overflow-y-auto px-5 py-5 text-base leading-relaxed text-foreground/90 md:text-lg', isBriefing ? 'max-h-[42dvh]' : 'max-h-[32dvh]')} data-testid="panel-scene-text">
                   {paragraphs.map((p, i) => (
                     <motion.p key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.25 }}>
                       {p}
@@ -432,16 +243,15 @@ function Story({ session, mission, scenes, me, isHost }: { session: GameSession;
                 </div>
 
                 <div className="flex flex-col gap-4 border-t border-white/10 px-5 py-4 sm:flex-row sm:items-center">
-                  <CrewStrip session={session} mode={isLast ? 'accept' : 'continue'} />
-                  <div className="text-xs text-muted-foreground sm:flex-1" data-testid="text-story-status">
+                                    <div className="text-xs text-muted-foreground sm:flex-1" data-testid="text-story-status">
                     {isLast
                       ? `${accepted} of ${session.players.length} signatures`
                       : isHost
                         ? solo || allContinue
                           ? 'Crew is with you.'
-                          : 'Waiting for the crew to signal ready.'
+                          : 'Waiting for connected crew to signal ready.'
                         : mine?.continueReady
-                          ? 'Signal sent. The host will advance.'
+                          ? 'Signal sent. The Leader will approve the next stage.'
                           : 'Signal when you are ready to continue.'}
                   </div>
                   <div className="flex gap-2">
@@ -467,20 +277,22 @@ function Story({ session, mission, scenes, me, isHost }: { session: GameSession;
                   </div>
                 </div>
               </div>
+              <div className="mt-4">
+                <CrewDock session={session} flag={isLast ? acceptFlag : continueFlag} onOpenBadge={openBadge} meId={me} />
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
-      {mission && <BriefingDialog mission={mission} open={briefOpen} onOpenChange={setBriefOpen} />}
     </div>
   );
 }
 
 /* ---------------- START MISSION ---------------- */
 
-function StartMission({ session, mission, isHost }: { session: GameSession; mission?: Mission; isHost: boolean }) {
+function StartMission({ session, mission, me, isHost, openBadge }: StageProps) {
   const { act, pending, pendingAction } = useSessionAct(session.id);
-  const [briefOpen, setBriefOpen] = useState(false);
+  const mine = session.players.find((p) => p.player.id === me);
   const [stamp, setStamp] = useState(true);
   useEffect(() => {
     const t = window.setTimeout(() => setStamp(false), 1800);
@@ -500,31 +312,15 @@ function StartMission({ session, mission, isHost }: { session: GameSession; miss
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-5xl flex-col px-4 py-5 md:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[.25em] text-ion">Room {session.roomCode}</span>
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:block"><LinkStatusPill /></div>
-            {mission && (
-              <button onClick={() => setBriefOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/15 bg-void/50 px-3 text-xs font-semibold uppercase tracking-widest backdrop-blur hover:border-ion" data-testid="button-open-briefing">
-                <FileText className="h-4 w-4" /> <span className="hidden sm:inline">Briefing</span>
-              </button>
-            )}
-            <LeaveButton act={act} pending={pending} compact />
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col justify-center py-10 text-center">
+      <div className="relative z-10"><SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} /></div>
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col px-4 py-5 md:px-8">
+
+        <div className="flex flex-1 flex-col justify-center py-8 text-center">
           <div className="kicker mb-4">Mission {mission?.number} / {mission?.title}</div>
           <h1 className="font-display text-4xl font-bold uppercase leading-none md:text-7xl" data-testid="text-start-heading">YOUR FIRST MISSION BEGINS NOW</h1>
           <p className="mt-4 text-lg text-foreground/80 md:text-xl" data-testid="text-start-subtitle">The future of Earth observation is in your hands.</p>
-          <div className="mt-10 flex flex-wrap justify-center gap-5">
-            {session.players.map((sp) => (
-              <div key={sp.player.id} className="flex w-20 flex-col items-center gap-2" data-testid={`start-crew-${sp.player.id}`}>
-                <Portrait player={sp.player} size={72} ring={sp.player.id === session.hostId ? 'burn' : 'ion'} />
-                <span className="w-full truncate text-xs font-semibold">{sp.player.name}</span>
-                {sp.player.id === session.hostId && <span className="font-mono text-[9px] uppercase tracking-widest text-burn">Host</span>}
-              </div>
-            ))}
+          <div className="mt-8">
+            <CrewDock session={session} flag={acceptFlag} onOpenBadge={openBadge} meId={me} />
           </div>
           {mission && (
             <div className="glass mx-auto mt-10 grid w-full max-w-3xl gap-6 rounded-lg p-5 text-left md:grid-cols-[200px_1fr]">
@@ -549,25 +345,26 @@ function StartMission({ session, mission, isHost }: { session: GameSession; miss
               </HudButton>
             ) : (
               <div className="flex items-center gap-3 rounded-md border border-white/10 px-5 py-3 text-sm text-muted-foreground" data-testid="text-waiting-host">
-                <span className="h-2 w-2 rounded-full bg-burn pulse-dot" /> Waiting for the host to start the mission
+                <span className="h-2 w-2 rounded-full bg-burn pulse-dot" /> Waiting for the Leader to start the mission
               </div>
             )}
           </div>
         </div>
       </div>
-      {mission && <BriefingDialog mission={mission} open={briefOpen} onOpenChange={setBriefOpen} />}
     </div>
   );
 }
 
 /* ---------------- FINALE ---------------- */
 
-function Finale({ session, mission }: { session: GameSession; mission?: Mission }) {
-  const [briefOpen, setBriefOpen] = useState(false);
-  const { act, pendingAction } = useSessionAct(session.id);
+function Finale({ session, mission, me, openBadge }: StageProps) {
+  const { act, pending, pendingAction } = useSessionAct(session.id);
+  const mine = session.players.find((p) => p.player.id === me);
   const words = 'MISSION INITIATED'.split('');
   return (
-    <div className="grain relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-background px-5 text-center">
+    <div className="grain relative min-h-[100dvh] overflow-hidden bg-background">
+      <div className="relative z-20"><SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} /></div>
+      <div className="relative flex flex-col items-center justify-center px-5 py-10 text-center">
       <img src={imgUrl('/images/mission-control.png')} alt="" className="kenburns absolute inset-0 h-full w-full object-cover opacity-30" />
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
       <Starfield density={1.2} />
@@ -585,21 +382,11 @@ function Finale({ session, mission }: { session: GameSession; mission?: Mission 
           To be continued...
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.8 }} className="mt-12 flex flex-col items-center gap-8">
-          <div className="flex flex-wrap justify-center gap-4">
-            {session.players.map((sp) => (
-              <div key={sp.player.id} className="flex flex-col items-center gap-2">
-                <Portrait player={sp.player} size={64} ring={sp.player.id === session.hostId ? 'burn' : 'ion'} />
-                <span className="text-xs font-semibold">{sp.player.name}</span>
-              </div>
-            ))}
+          <div className="w-full">
+            <CrewDock session={session} flag={acceptFlag} onOpenBadge={openBadge} meId={me} />
           </div>
           <p className="max-w-md text-muted-foreground">Earth Observer's development phase begins in the next chapter of Mission: Infinity. Your crew's decision has been logged to your career.</p>
           <div className="flex flex-wrap justify-center gap-3">
-            {mission && (
-              <HudButton variant="ghost" onClick={() => setBriefOpen(true)} data-testid="button-finale-briefing">
-                <FileText className="h-4 w-4" /> Review briefing
-              </HudButton>
-            )}
             <Link href="/profile" className="inline-flex min-h-11 items-center rounded-md border border-white/15 px-5 font-display text-sm font-semibold uppercase tracking-[.14em] hover:border-ion" data-testid="link-finale-career">
               Career
             </Link>
@@ -609,7 +396,7 @@ function Finale({ session, mission }: { session: GameSession; mission?: Mission 
           </div>
         </motion.div>
       </div>
-      {mission && <BriefingDialog mission={mission} open={briefOpen} onOpenChange={setBriefOpen} />}
+      </div>
     </div>
   );
 }
@@ -631,8 +418,9 @@ function CenterMessage({ title, text }: { title: string; text: string }) {
 }
 
 function SessionInner({ account, id }: { account: PlayerAccount; id: string }) {
+  const [badgeId, setBadgeId] = useState<string | null>(null);
   const { data: session, isLoading, error, refetch } = useGetGameSession(id, {
-    query: { queryKey: getGetGameSessionQueryKey(id), refetchInterval: 5000, retry: (n, e) => errStatus(e) !== 404 && errStatus(e) !== 403 && n < 2 },
+    query: { queryKey: getGetGameSessionQueryKey(id), refetchInterval: 2000, retry: (n, e) => errStatus(e) !== 404 && errStatus(e) !== 403 && n < 2 },
   });
   const catalog = useGetGameCatalog();
   if (isLoading || catalog.isLoading) return <FullScreenLoader label="Joining crew channel" />;
@@ -653,11 +441,16 @@ function SessionInner({ account, id }: { account: PlayerAccount; id: string }) {
   const scenes = catalog.data?.scenes ?? [];
   const me = account.character?.id ?? account.id;
   const isHost = session.hostId === me || session.hostId === account.id;
-  if (session.status === 'CLOSED') return <CenterMessage title="Session closed" text="The host closed this session. Start a new mission from the board." />;
-  if (session.status === 'MISSION_STARTED') return <Finale session={session} mission={mission} />;
-  if (session.status === 'READY_TO_START') return <StartMission session={session} mission={mission} isHost={isHost} />;
-  if (session.status === 'LOBBY') return <Lobby session={session} mission={mission} me={me} isHost={isHost} />;
-  return <Story session={session} mission={mission} scenes={scenes} me={me} isHost={isHost} />;
+  if (session.status === 'CLOSED') return <CenterMessage title="Session closed" text="The Leader closed this session. Start a new mission from the board." />;
+  const meId = session.players.some((p) => p.player.id === me) ? me : account.id;
+  const props: StageProps = { session, mission, me: meId, isHost, openBadge: setBadgeId };
+  const badgeMember = session.players.find((p) => p.player.id === badgeId) ?? null;
+  return (
+    <>
+      {session.status === 'MISSION_STARTED' ? <Finale {...props} /> : session.status === 'READY_TO_START' ? <StartMission {...props} /> : session.status === 'LOBBY' ? <Lobby {...props} /> : <Story {...props} scenes={scenes} />}
+      <BadgeDialog member={badgeMember} isLeader={badgeMember?.player.id === session.hostId} isSelf={badgeMember?.player.id === meId} onOpenChange={(o) => !o && setBadgeId(null)} />
+    </>
+  );
 }
 
 export default function SessionPage() {

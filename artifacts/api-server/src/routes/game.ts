@@ -10,12 +10,14 @@ import {
   RespondToInvitationBody, RespondToInvitationResponse, GetCareerResponse,
   GetAvatarConfigResponse, RequestAvatarUploadBody, RequestAvatarUploadResponse,
   CompleteAvatarUploadParams, CompleteAvatarUploadResponse, GetAvatarFileParams,
+  SendSessionMessageBody, SendSessionMessageResponse,
 } from "@workspace/api-zod";
 import { getCatalog } from "../game/content";
 import { getAccount, getCareer, resolveUser, savePlayer } from "../game/players";
 import { friendshipAction, socialState } from "../game/social";
 import { createSession, notifySession, sessionState, updateSession } from "../game/sessions";
 import { inviteToSession, respondToInvite } from "../game/invitations";
+import { sendSessionMessage } from "../game/session-messages";
 import { GameError, requireCondition } from "../game/database";
 import { logger } from "../lib/logger";
 import { notifyUsers } from "../game/presence";
@@ -120,6 +122,11 @@ gameApi.get("/api/game/sessions/:id", async req => GetGameSessionResponse.parse(
 gameApi.post("/api/game/sessions/:id/actions", async req => {
   const result = await updateSession(req.playerId, idParam(req), UpdateGameSessionBody.parse(req.body));
   return UpdateGameSessionResponse.parse(result);
+});
+gameApi.post("/api/game/sessions/:id/messages", async req => {
+  return SendSessionMessageResponse.parse(await sendSessionMessage(
+    req.playerId, idParam(req), SendSessionMessageBody.parse(req.body),
+  ));
 });
 gameApi.post("/api/game/sessions/:id/invitations", async req => {
   const body = InvitePlayerBody.parse(req.body);

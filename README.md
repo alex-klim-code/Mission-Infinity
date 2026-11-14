@@ -2,6 +2,16 @@
 
 A cinematic, cooperative browser game about becoming a mission leader at the fictional **Asterion Aerospace**. Phase 1 covers sign-in, character creation, friends, invitations, a 1–4-player lobby, six introductory scenes, a mission briefing and synchronized acceptance. It ends at **MISSION INITIATED — TO BE CONTINUED**.
 
+## Mission crew
+
+The mission creator is the initial **Leader**. Crew members signal readiness and accept the mission individually; only the Leader advances scenes and initiates the mission. Existing leadership succession still applies when the Leader leaves.
+
+Every session stage has mission details, budget and timeline, live Uplink status, the current player's badge, and a confirmed exit action in its top bar. Crew avatars show their nicknames and open the corresponding employee badge.
+
+The crew channel displays a sender's latest message above their own avatar for 12 seconds. Messages are limited to 180 characters, rate-limited per sender, and visible only to active session members. Click a bubble to read the full message. Storage is bounded to one latest message per membership, not an accumulating chat log; expired messages are not returned as active bubbles. Existing realtime notifications and session polling synchronize the crew.
+
+Publishing this feature adds the nullable `game_session_players.last_message` field through the normal managed schema comparison; existing characters and memberships are preserved.
+
 ## Custom characters
 
 ### In-game character creation

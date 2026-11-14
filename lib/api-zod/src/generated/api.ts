@@ -1147,6 +1147,17 @@ export const CreateGameSessionResponse = zod.object({
       continueReady: zod.boolean(),
       accepted: zod.boolean(),
       connected: zod.boolean(),
+      lastMessage: zod
+        .union([
+          zod.object({
+            id: zod.string(),
+            text: zod.string(),
+            createdAt: zod.string(),
+            expiresAt: zod.string(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
     }),
   ),
   createdAt: zod.string(),
@@ -1282,6 +1293,17 @@ export const GetGameSessionResponse = zod.object({
       continueReady: zod.boolean(),
       accepted: zod.boolean(),
       connected: zod.boolean(),
+      lastMessage: zod
+        .union([
+          zod.object({
+            id: zod.string(),
+            text: zod.string(),
+            createdAt: zod.string(),
+            expiresAt: zod.string(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
     }),
   ),
   createdAt: zod.string(),
@@ -1433,12 +1455,175 @@ export const UpdateGameSessionResponse = zod.object({
           continueReady: zod.boolean(),
           accepted: zod.boolean(),
           connected: zod.boolean(),
+          lastMessage: zod
+            .union([
+              zod.object({
+                id: zod.string(),
+                text: zod.string(),
+                createdAt: zod.string(),
+                expiresAt: zod.string(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
         }),
       ),
       createdAt: zod.string(),
     }),
     zod.null(),
   ]),
+});
+
+export const SendSessionMessageParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const sendSessionMessageBodyTextMax = 180;
+
+export const SendSessionMessageBody = zod.object({
+  text: zod.string().min(1).max(sendSessionMessageBodyTextMax),
+});
+
+export const sendSessionMessageResponsePlayersItemPlayerAppearanceOneCountryCodeRegExp =
+  new RegExp("^[A-Z]{2}$");
+export const sendSessionMessageResponsePlayersItemPlayerAppearanceOneAvatarSeedMax = 100;
+
+export const sendSessionMessageResponsePlayersItemPlayerAppearanceOneAvatarSeedRegExp =
+  new RegExp("^[A-Za-z0-9:_-]+$");
+export const sendSessionMessageResponsePlayersItemPlayerAvatar3dOneOneAvatarIdMax = 128;
+
+export const sendSessionMessageResponsePlayersItemPlayerAvatar3dOneOneBodyIdMax = 128;
+
+export const SendSessionMessageResponse = zod.object({
+  id: zod.string(),
+  roomCode: zod.string(),
+  hostId: zod.string(),
+  missionId: zod.string(),
+  status: zod.enum([
+    "LOBBY",
+    "STORY",
+    "MISSION_BRIEFING",
+    "MISSION_ACCEPTANCE",
+    "READY_TO_START",
+    "MISSION_STARTED",
+    "CLOSED",
+  ]),
+  scene: zod.number().int(),
+  revision: zod.number().int(),
+  players: zod.array(
+    zod.object({
+      player: zod.object({
+        id: zod.string(),
+        name: zod.string(),
+        age: zod.number().int(),
+        gender: zod.enum(["female", "male", "unspecified"]),
+        presetId: zod.string(),
+        countryCode: zod.string().nullish(),
+        appearance: zod
+          .union([
+            zod.object({
+              version: zod.literal(1),
+              base: zod.enum(["female", "male"]),
+              face: zod.enum(["calm", "focused", "bright", "confident"]),
+              skinTone: zod.enum([
+                "614335",
+                "d08b5b",
+                "ae5d29",
+                "edb98a",
+                "ffdbb4",
+              ]),
+              hairstyle: zod.enum([
+                "shortFlat",
+                "shortCurly",
+                "theCaesar",
+                "bob",
+                "bun",
+                "curly",
+                "straight01",
+                "fro",
+                "shavedSides",
+                "longButNotTooLong",
+              ]),
+              hairColor: zod.enum([
+                "2c1b18",
+                "4a312c",
+                "724133",
+                "a55728",
+                "b58143",
+                "d6b370",
+                "ecdcbf",
+                "e8e1e1",
+              ]),
+              countryCode: zod
+                .string()
+                .regex(
+                  sendSessionMessageResponsePlayersItemPlayerAppearanceOneCountryCodeRegExp,
+                ),
+              avatarSeed: zod
+                .string()
+                .min(1)
+                .max(
+                  sendSessionMessageResponsePlayersItemPlayerAppearanceOneAvatarSeedMax,
+                )
+                .regex(
+                  sendSessionMessageResponsePlayersItemPlayerAppearanceOneAvatarSeedRegExp,
+                ),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        avatar3d: zod
+          .union([
+            zod
+              .object({
+                modelUploadId: zod.string().uuid(),
+                portraitUploadId: zod.string().uuid().optional(),
+                avatarId: zod
+                  .string()
+                  .min(1)
+                  .max(
+                    sendSessionMessageResponsePlayersItemPlayerAvatar3dOneOneAvatarIdMax,
+                  ),
+                bodyId: zod
+                  .string()
+                  .min(1)
+                  .max(
+                    sendSessionMessageResponsePlayersItemPlayerAvatar3dOneOneBodyIdMax,
+                  ),
+                gender: zod.enum(["female", "male"]),
+                avatarSupportsFaceAnimations: zod.boolean(),
+              })
+              .and(
+                zod.object({
+                  version: zod.literal(1),
+                  provider: zod.enum(["avaturn"]),
+                  modelUrl: zod.string(),
+                  portraitUrl: zod.string().nullable(),
+                }),
+              ),
+            zod.null(),
+          ])
+          .optional(),
+        online: zod.boolean(),
+      }),
+      ready: zod.boolean(),
+      continueReady: zod.boolean(),
+      accepted: zod.boolean(),
+      connected: zod.boolean(),
+      lastMessage: zod
+        .union([
+          zod.object({
+            id: zod.string(),
+            text: zod.string(),
+            createdAt: zod.string(),
+            expiresAt: zod.string(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+    }),
+  ),
+  createdAt: zod.string(),
 });
 
 export const InvitePlayerParams = zod.object({
@@ -1590,6 +1775,17 @@ export const RespondToInvitationResponse = zod.object({
           continueReady: zod.boolean(),
           accepted: zod.boolean(),
           connected: zod.boolean(),
+          lastMessage: zod
+            .union([
+              zod.object({
+                id: zod.string(),
+                text: zod.string(),
+                createdAt: zod.string(),
+                expiresAt: zod.string(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
         }),
       ),
       createdAt: zod.string(),

@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect, type Generated, type ColumnType, type Transaction } from "kysely";
 import { pool } from "@workspace/db";
-import type { CharacterAppearance, Avatar3D } from "@workspace/api-zod";
+import type { CharacterAppearance, Avatar3D, SessionMessage } from "@workspace/api-zod";
 
 type Time = ColumnType<Date, Date | string | undefined, Date | string>;
 interface Users {
@@ -38,6 +38,7 @@ interface Members {
   ready: Generated<boolean>;
   continue_ready: Generated<boolean>;
   accepted: Generated<boolean>;
+  last_message: SessionMessage | null;
   joined_at: Time;
 }
 interface Friends {

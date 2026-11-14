@@ -12,6 +12,7 @@ A browser-based cooperative space mission story for 1–4 players.
 - No chat or direct messages. Friends and game invitations are distinct.
 - No guest authentication, seeded fake players, or nonfunctional primary actions.
 - Product requirement: a single shared sign-in/sign-up entry screen with Google and Apple only; no email field or separate Sign Up link. Preserve OAuth callbacks and account completion. Hiding email/password UI does not disable that method in the authentication service.
+- Multiplayer product rule: the person who creates the mission and invites others is Leader. Only the Leader approves stage transitions; crew members choose readiness and mission acceptance, not branching decisions or votes.
 - Position the product as an educational space mission game for ages 14+, accessible without prior engineering knowledge and with planned beginner-to-advanced scenarios.
 - Monthly missions are a goal, not an established release schedule. Never invent advisers, credentials or NASA involvement.
 - Character onboarding now targets ages 14–60 (default 20), Female/Male bases, and a searchable country selector defaulting to Poland. Preserve legacy profiles and their portraits until their owner explicitly customizes them.

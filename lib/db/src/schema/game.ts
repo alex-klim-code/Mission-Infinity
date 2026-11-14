@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, uniqueIndex, index, check } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, uniqueIndex, index, check, foreignKey } from "drizzle-orm/pg-core";
 
 const created = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
@@ -33,13 +33,14 @@ export const userCharacters = pgTable("user_characters", {
 
 export const avatarUploads = pgTable("avatar_uploads", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
   kind: text("kind").notNull(),
   size: integer("size").notNull(),
   uploadPath: text("upload_path").notNull(),
   assetPath: text("asset_path"),
   createdAt: created(),
 }, t => [
+  foreignKey({ name: "avatar_uploads_user_id_fkey", columns: [t.userId], foreignColumns: [users.id] }).onDelete("cascade"),
   index("avatar_uploads_owner_idx").on(t.userId, t.createdAt),
   check("avatar_upload_kind", sql`${t.kind} in ('model','portrait')`),
   check("avatar_upload_size", sql`${t.size} >= 20 and ${t.size} <= 20971520`),
@@ -93,6 +94,7 @@ export const gameSessionPlayers = pgTable("game_session_players", {
   ready: boolean("ready").notNull().default(false),
   continueReady: boolean("continue_ready").notNull().default(false),
   accepted: boolean("accepted").notNull().default(false),
+  lastMessage: jsonb("last_message"),
   joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => [
   uniqueIndex("session_player_unique").on(t.sessionId, t.userId),
