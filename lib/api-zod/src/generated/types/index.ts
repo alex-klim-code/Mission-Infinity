@@ -105,6 +105,7 @@ export * from "./rocketSection";
 export * from "./scienceEquipmentCredit";
 export * from "./scienceEquipmentCreditGroup";
 export * from "./scienceLoadout";
+export * from "./scienceScoring";
 export * from "./scientificInstrument";
 export * from "./scientificInstrumentGroup";
 export * from "./sessionAction";

@@ -332,6 +332,18 @@ export interface PayloadProfile {
 
 export type CatalogPayloadProfiles = { [key: string]: PayloadProfile };
 
+/**
+ * Rules shared with the Stage 8 report. Forecasts assume all selected science points are earned.
+ */
+export interface ScienceScoring {
+  /** @minimum 1 */
+  maxSciencePoints: number;
+  /** @minimum 0 */
+  objectiveWeight: number;
+  /** @minimum 1 */
+  totalMissionWeight: number;
+}
+
 export type RocketFuelRole =
   (typeof RocketFuelRole)[keyof typeof RocketFuelRole];
 
@@ -423,6 +435,7 @@ export interface ScientificInstrument {
 }
 
 export interface Catalog {
+  scienceScoring?: ScienceScoring;
   payloadProfiles?: CatalogPayloadProfiles;
   rocketCatalog: RocketSection[];
   scientificInstruments?: ScientificInstrument[];

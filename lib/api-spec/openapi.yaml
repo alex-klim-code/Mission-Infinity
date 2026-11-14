@@ -440,6 +440,7 @@ components:
       type: object
       required: [missions, presets, scenes, rocketCatalog]
       properties:
+        scienceScoring: { $ref: '#/components/schemas/ScienceScoring' }
         payloadProfiles:
           type: object
           additionalProperties: { $ref: '#/components/schemas/PayloadProfile' }
@@ -448,6 +449,14 @@ components:
         missions: { type: array, items: { $ref: '#/components/schemas/Mission' } }
         presets: { type: array, items: { $ref: '#/components/schemas/CharacterPreset' } }
         scenes: { type: array, items: { $ref: '#/components/schemas/StoryScene' } }
+    ScienceScoring:
+      type: object
+      description: Rules shared with the Stage 8 report. Forecasts assume all selected science points are earned.
+      required: [maxSciencePoints, objectiveWeight, totalMissionWeight]
+      properties:
+        maxSciencePoints: { type: number, minimum: 1 }
+        objectiveWeight: { type: number, minimum: 0 }
+        totalMissionWeight: { type: number, minimum: 1 }
     Invitation:
       type: object
       required: [id, sessionId, from, to, missionTitle, expiresAt, direction, status]

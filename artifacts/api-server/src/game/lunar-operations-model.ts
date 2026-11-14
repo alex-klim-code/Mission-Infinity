@@ -1,6 +1,7 @@
 import type { InstrumentDiagnostic, MissionFlightPlan, MissionJourney, MissionOperations, MissionResults } from "@workspace/api-zod";
 import { componentById } from "./rocket-catalog";
 import { scientificInstruments } from "./scientific-instruments";
+import { missionObjectiveWeights as weights, scienceScoring } from "./mission-scoring";
 
 export type JourneyPhase = MissionJourney["phase"];
 export const COLLECTION_MS=8000, RETURN_MS=20000, REENTRY_MS=12000, RECOVERY_MS=6000;
@@ -162,15 +163,15 @@ export function advanceOperations(phase:JourneyPhase,saved:MissionOperations,pla
 
 export function missionResults(o:MissionOperations,plan:MissionFlightPlan,budget:number,outboundReached=true):MissionResults {
   const recovered=o.returnManeuver==="LANDED_ON_EARTH"&&!o.failure;
-  const scienceMax=scientificInstruments.reduce((s,i)=>s+i.maxSciencePoints,0);
+  const scienceMax=scienceScoring.maxSciencePoints;
   const objectives=[
-    {id:"moon",label:"Reach the Moon",weight:10,completion:outboundReached?1:0,detail:outboundReached?"Outbound transfer completed.":"Spacecraft never reached the Moon."},
-    {id:"landing",label:"Land safely on the Moon",weight:20,completion:o.landing.status==="LANDED"?1:0,detail:`Lander: ${o.landing.status.toLowerCase()}.`},
-    {id:"samples",label:"Collect samples from three locations",weight:20,completion:o.collectedSites.length/3,detail:`${o.collectedSites.length}/3 locations; ${o.sampleMassKg} kg collected.`},
-    {id:"science",label:"Complete the full science program",weight:10,completion:o.scienceEarned/scienceMax,detail:`${o.scienceEarned}/${scienceMax} Science Points earned; missing or failed instruments reduced this objective.`},
-    {id:"return",label:"Reach Earth on the return trajectory",weight:20,completion:o.returnProgress>=1?1:0,detail:o.returnProgress>=1?"Earth arrival confirmed.":"Earth was not reached."},
-    {id:"entry",label:"Survive atmospheric re-entry",weight:10,completion:o.recoveryStartedAt?1:0,detail:o.recoveryStartedAt?"Heat shield protected the capsule.":"Atmospheric entry was not completed."},
-    {id:"recovery",label:"Recover the capsule and lunar samples",weight:10,completion:recovered&&o.sampleMassKg>=1?1:0,detail:recovered?`${o.sampleMassKg} kg recovered on Earth.`:"Capsule and samples were not recovered."},
+    {id:"moon",label:"Reach the Moon",weight:weights.moon,completion:outboundReached?1:0,detail:outboundReached?"Outbound transfer completed.":"Spacecraft never reached the Moon."},
+    {id:"landing",label:"Land safely on the Moon",weight:weights.landing,completion:o.landing.status==="LANDED"?1:0,detail:`Lander: ${o.landing.status.toLowerCase()}.`},
+    {id:"samples",label:"Collect samples from three locations",weight:weights.samples,completion:o.collectedSites.length/3,detail:`${o.collectedSites.length}/3 locations; ${o.sampleMassKg} kg collected.`},
+    {id:"science",label:"Complete the full science program",weight:weights.science,completion:o.scienceEarned/scienceMax,detail:`${o.scienceEarned}/${scienceMax} Science Points earned; missing or failed instruments reduced this objective.`},
+    {id:"return",label:"Reach Earth on the return trajectory",weight:weights.return,completion:o.returnProgress>=1?1:0,detail:o.returnProgress>=1?"Earth arrival confirmed.":"Earth was not reached."},
+    {id:"entry",label:"Survive atmospheric re-entry",weight:weights.entry,completion:o.recoveryStartedAt?1:0,detail:o.recoveryStartedAt?"Heat shield protected the capsule.":"Atmospheric entry was not completed."},
+    {id:"recovery",label:"Recover the capsule and lunar samples",weight:weights.recovery,completion:recovered&&o.sampleMassKg>=1?1:0,detail:recovered?`${o.sampleMassKg} kg recovered on Earth.`:"Capsule and samples were not recovered."},
   ];
   return {success:recovered&&o.sampleMassKg>=1,completionPercent:Math.round(objectives.reduce((s,i)=>s+i.weight*clamp(i.completion),0)),
     sampleMassKg:o.sampleMassKg,recoveredSampleMassKg:recovered?o.sampleMassKg:0,scienceEarned:o.scienceEarned,

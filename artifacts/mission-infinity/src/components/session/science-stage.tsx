@@ -9,6 +9,7 @@ import { fmtKg, formatExact, useCalm, type Props } from './rocket-shared';
 import { useEngineeringGuard } from './engineering-guard';
 import { useDemoGuide } from '@/hooks/use-demo-guide';
 import { DemoChoiceBadge, DemoGuidePanel } from './demo-guide';
+import { ScienceForecast } from './science-forecast';
 import { usePayloadCapacity } from '@/hooks/use-payload-capacity';
 import { PayloadCapacityPanel } from './payload-capacity-panel';
 import { usePayloadDraft } from './payload-draft';
@@ -130,7 +131,8 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
             <Stat label="Power" value={powerText(t)} testid="text-science-final-power" />
             <Stat label="Remaining" value={formatExact(budget - (session.build?.spent ?? 0))} tone="text-ion" testid="text-science-final-remaining" />
           </dl>
-          <div className="mt-2 font-mono text-xs text-muted-foreground" data-testid="text-science-final-points">Max science potential: <span className="text-ion">{fmtPts(t.pts)}</span> pts</div>
+          <div className="mt-2 font-mono text-xs text-muted-foreground" data-testid="text-science-final-points">Max science potential: <span className="text-ion">{fmtPts(t.pts)}</span> pts (not yet earned)</div>
+          <ScienceForecast points={t.pts} rules={catalog.data?.scienceScoring} />
           {legacyMissing.length > 0 && (
             <div className="mt-4 space-y-1.5" data-testid="panel-science-legacy-missing">
               {legacyMissing.map((m) => <Warning key={m.id} text={m.warning} testid={`text-science-missing-${m.id}`} />)}
@@ -350,6 +352,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
               })}
             </ul>
             <div className="mt-2 font-mono text-xs text-muted-foreground">Max science potential <span className="text-ion" data-testid="text-science-points">{fmtPts(t.pts)}</span> pts</div>
+            <ScienceForecast points={t.pts} rules={catalog.data?.scienceScoring} />
             <div className="mt-1 font-mono text-[11px] text-muted-foreground" data-testid="text-science-available">Available now {formatExact(budget - spentBefore)}</div>
             {over && <p className="mt-2 flex gap-2 text-xs text-destructive" data-testid="text-science-overbudget"><AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Over budget by {formatExact(-after)}.{isHost ? ' Remove instruments to purchase.' : ''}</p>}
             <div className="mt-3 space-y-2">

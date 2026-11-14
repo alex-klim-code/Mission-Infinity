@@ -24,6 +24,8 @@ export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
 
+export const getGameCatalogResponseScienceScoringObjectiveWeightMin = 0;
+
 export const getGameCatalogResponsePayloadProfilesStagesItemFuelFractionMin = 0;
 export const getGameCatalogResponsePayloadProfilesStagesItemFuelFractionMax = 1;
 
@@ -33,6 +35,18 @@ export const getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDam
 export const getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDamageRiskMax = 100;
 
 export const GetGameCatalogResponse = zod.object({
+  scienceScoring: zod
+    .object({
+      maxSciencePoints: zod.number().min(1),
+      objectiveWeight: zod
+        .number()
+        .min(getGameCatalogResponseScienceScoringObjectiveWeightMin),
+      totalMissionWeight: zod.number().min(1),
+    })
+    .optional()
+    .describe(
+      "Rules shared with the Stage 8 report. Forecasts assume all selected science points are earned.",
+    ),
   payloadProfiles: zod
     .record(
       zod.string(),
