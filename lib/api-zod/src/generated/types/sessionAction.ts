@@ -11,11 +11,26 @@ import type { SessionActionSiteId } from "./sessionActionSiteId";
 
 export interface SessionAction {
   action: SessionActionAction;
+  /** @maxItems 20 */
+  acceptedIssueIds?: string[];
+  requestId?: string;
+  /**
+   * @minimum 1000000
+   * @maximum 400000000
+   */
+  amount?: number;
+  /**
+   * @minLength 10
+   * @maxLength 600
+   */
+  reason?: string;
   /**
    * @minimum 0
    * @maximum 100
    */
   thrust?: number;
+  /** Explicit Leader confirmation after opening the pre-return hardware check. */
+  confirmReturn?: boolean;
   siteId?: SessionActionSiteId;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   briefingDate?: string;

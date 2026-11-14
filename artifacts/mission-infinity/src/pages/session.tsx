@@ -1,3 +1,4 @@
+import { Paged } from '@/components/session/paged';
 import { useState, type ReactNode } from 'react';
 import { MessageNotifications } from '@/components/session/message-notifications';
 import { BadgeDialog, SessionTopBar, useSessionAct } from '@/components/session/session-shared';
@@ -53,7 +54,7 @@ function InvitePanel({ session }: { session: GameSession }) {
           action={<Link href="/friends" className="text-sm text-ion hover:underline" data-testid="link-find-friends">Find engineers</Link>}
         />
       ) : (
-        <div className="scroll-thin max-h-72 space-y-2 overflow-y-auto pr-1">
+        <Paged className="max-h-72" innerClassName="space-y-2  pr-1" label="Friends">
           {friends.map((f) => {
             const on = aboard.has(f.id);
             const was = pendingOut.has(f.id);
@@ -85,7 +86,7 @@ function InvitePanel({ session }: { session: GameSession }) {
               </div>
             );
           })}
-        </div>
+        </Paged>
       )}
     </div>
   );
@@ -110,7 +111,7 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
       <Starfield density={0.5} />
       <SessionTopBar session={session} mission={mission} me={mine} act={act} pending={pending} onOpenBadge={openBadge} />
-      <div className="relative z-10 min-h-0 w-full flex-1 overflow-y-auto"><div className="mx-auto max-w-6xl px-4 py-6 md:px-8">
+      <Paged className="relative z-10 w-full flex-1" label="Lobby" testid="panel-lobby-paged"><div className="mx-auto max-w-6xl px-4 py-4 md:px-8">
         <Link href="/play" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" data-testid="link-back-play">
           <ArrowLeft className="h-4 w-4" /> Mission board
         </Link>
@@ -136,9 +137,9 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
           </button>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_340px]">
           <div>
-            <section className="relative aspect-[16/9] overflow-hidden rounded-lg border border-white/10" aria-label="Mission scene" data-testid="panel-scene-window">
+            <section className="relative aspect-[16/9] max-h-[38dvh] w-full overflow-hidden rounded-lg border border-white/10" aria-label="Mission scene" data-testid="panel-scene-window">
               {mission && <img src={imgUrl(mission.image)} alt={mission.title} className="kenburns absolute inset-0 h-full w-full object-cover" />}
               <div className="kicker absolute left-3 top-3 flex items-center gap-2 rounded bg-void/70 px-2 py-1"><span className="h-1.5 w-1.5 rounded-full bg-burn pulse-dot" /> {session.players.length} of 4 aboard</div>
             </section>
@@ -172,7 +173,7 @@ function Lobby({ session, mission, me, isHost, openBadge }: StageProps) {
             </div>
           )}
         </div>
-      </div></div>
+      </div></Paged>
       <CrewBar session={session} flag={lobbyFlag} meId={me} onOpenBadge={openBadge} />
     </div>
   );
@@ -289,7 +290,7 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
             </h1>
             <div className="mt-2 rounded-md border border-white/10 bg-void/70 backdrop-blur-md">
               {kind === 'story' && (
-                <div className="scroll-thin max-h-[22dvh] space-y-2 overflow-y-auto px-3 py-2.5 text-sm leading-relaxed text-foreground/90 md:text-base" data-testid="panel-scene-text">
+                <Paged className="max-h-[26dvh]" innerClassName="space-y-2  px-3 py-2.5 text-sm leading-relaxed text-foreground/90 md:text-base" label="Scene text" testid="panel-scene-text">
                   {scene?.speaker && (
                     <div className="flex items-center gap-2">
                       {director && <img src={imgUrl('/images/director.png')} alt="" className="h-6 w-6 rounded object-cover ring-1 ring-burn/50" />}
@@ -297,13 +298,13 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
                     </div>
                   )}
                   {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
-                </div>
+                </Paged>
               )}
               {kind === 'message' && (
-                <div className="scroll-thin max-h-[40dvh] overflow-y-auto px-3 py-3" data-testid="panel-scene-text">
+                <Paged className="max-h-[40dvh]" innerClassName="px-3 py-3" label="Message" testid="panel-scene-text">
                   <div className="font-mono text-[10px] uppercase tracking-[.22em] text-burn">From: Asterion Mission Directorate</div>
                   {mission && <div className="mt-2" data-testid="text-mission-description"><div className="mb-3 font-display text-lg font-semibold uppercase">{mission.title}</div><MissionSummary mission={mission} /></div>}
-                </div>
+                </Paged>
               )}
               {kind === 'crew' && (
                 <p className="px-3 py-2.5 text-sm text-foreground/85" data-testid="panel-scene-text">
@@ -407,7 +408,9 @@ function SessionInner({ account, id }: { account: PlayerAccount; id: string }) {
       </div>
     );
   }
-  const mission = catalog.data?.missions.find((m) => m.id === session.missionId);
+  const baseMission = catalog.data?.missions.find((m) => m.id === session.missionId);
+  const mission=baseMission?{...baseMission,budget:session.finance?.totalBudget??baseMission.budget,
+    developmentMonths:session.engineering?.deadlineMonths??baseMission.developmentMonths}:undefined;
   const scenes = catalog.data?.scenes ?? [];
   const me = account.character?.id ?? account.id;
   const isHost = session.hostId === me || session.hostId === account.id;

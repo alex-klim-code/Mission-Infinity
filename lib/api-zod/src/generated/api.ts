@@ -24,6 +24,9 @@ export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
 
+export const getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDamageRiskMin = 0;
+export const getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDamageRiskMax = 100;
+
 export const GetGameCatalogResponse = zod.object({
   rocketCatalog: zod.array(
     zod.object({
@@ -35,6 +38,17 @@ export const GetGameCatalogResponse = zod.object({
           name: zod.string(),
           options: zod.array(
             zod.object({
+              damageRisk: zod
+                .number()
+                .min(
+                  getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDamageRiskMin,
+                )
+                .max(
+                  getGameCatalogResponseRocketCatalogItemCategoriesItemOptionsItemDamageRiskMax,
+                )
+                .describe(
+                  "Gameplay damage chance in percent, resolved once after lunar arrival.",
+                ),
               fuel: zod
                 .union([
                   zod.object({
@@ -1105,6 +1119,15 @@ export const createGameSessionResponsePlayersItemPlayerAvatar3dOneOneAvatarIdMax
 
 export const createGameSessionResponsePlayersItemPlayerAvatar3dOneOneBodyIdMax = 128;
 
+export const createGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMin = 0;
+export const createGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMax = 1;
+
+export const createGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const createGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax = 1;
+
+export const createGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const createGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMax = 1;
+
 export const CreateGameSessionResponse = zod.object({
   id: zod.string(),
   roomCode: zod.string(),
@@ -1322,6 +1345,44 @@ export const CreateGameSessionResponse = zod.object({
     .optional(),
   journey: zod
     .object({
+      launchFailure: zod
+        .union([
+          zod.object({
+            id: zod.string().uuid(),
+            startedAt: zod.string(),
+            briefingDate: zod.string(),
+            weather: zod.string(),
+            failed: zod.boolean(),
+            repairCost: zod.number().int(),
+            repairBaseCost: zod.number().int(),
+            repairedAt: zod.string().nullable(),
+            initialFuelKg: zod.number(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      flightAlerts: zod
+        .array(
+          zod.object({
+            detectedAtProgress: zod
+              .number()
+              .min(
+                createGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMin,
+              )
+              .max(
+                createGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMax,
+              )
+              .optional(),
+            id: zod.string(),
+            categoryId: zod.string(),
+            name: zod.string(),
+            quality: zod.number().nullable(),
+            damageRisk: zod.number(),
+            status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+            critical: zod.boolean(),
+          }),
+        )
+        .optional(),
       construction: zod.object({
         opened: zod.boolean(),
         startedAt: zod.string().nullable(),
@@ -1351,10 +1412,34 @@ export const CreateGameSessionResponse = zod.object({
         "REENTRY",
         "RECOVERY",
         "RESULTS",
+        "LAUNCH_FAILURE",
       ]),
       operations: zod
         .union([
           zod.object({
+            hardwareChecks: zod
+              .array(
+                zod.object({
+                  detectedAtProgress: zod
+                    .number()
+                    .min(
+                      createGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin,
+                    )
+                    .max(
+                      createGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax,
+                    )
+                    .optional(),
+                  id: zod.string(),
+                  categoryId: zod.string(),
+                  name: zod.string(),
+                  quality: zod.number().nullable(),
+                  damageRisk: zod.number(),
+                  status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                  critical: zod.boolean(),
+                }),
+              )
+              .optional(),
+            returnCheckOpened: zod.boolean().optional(),
             landing: zod.object({
               status: zod.enum(["READY", "DESCENDING", "LANDED", "CRASHED"]),
               altitudeM: zod.number(),
@@ -1452,6 +1537,43 @@ export const CreateGameSessionResponse = zod.object({
       briefingDate: zod.string().nullable(),
       plan: zod.union([
         zod.object({
+          launchAttempts: zod
+            .array(
+              zod.object({
+                id: zod.string().uuid(),
+                startedAt: zod.string(),
+                briefingDate: zod.string(),
+                weather: zod.string(),
+                failed: zod.boolean(),
+                repairCost: zod.number().int(),
+                repairBaseCost: zod.number().int(),
+                repairedAt: zod.string().nullable(),
+                initialFuelKg: zod.number(),
+              }),
+            )
+            .optional(),
+          hardwareChecks: zod
+            .array(
+              zod.object({
+                detectedAtProgress: zod
+                  .number()
+                  .min(
+                    createGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMin,
+                  )
+                  .max(
+                    createGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMax,
+                  )
+                  .optional(),
+                id: zod.string(),
+                categoryId: zod.string(),
+                name: zod.string(),
+                quality: zod.number().nullable(),
+                damageRisk: zod.number(),
+                status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                critical: zod.boolean(),
+              }),
+            )
+            .optional(),
           routeId: zod.string(),
           routeLabel: zod.string(),
           distanceKm: zod.number(),
@@ -1516,6 +1638,75 @@ export const CreateGameSessionResponse = zod.object({
       maxSciencePoints: zod.number().int(),
     })
     .optional(),
+  engineering: zod
+    .object({
+      status: zod.enum(["DESIGN", "BUILDING", "FAILED", "PASSED"]),
+      attempt: zod.number().int(),
+      repairing: zod.boolean(),
+      failedCategoryIds: zod.array(zod.string()),
+      elapsedBefore: zod.number().int(),
+      deadlineMonths: zod.number().int(),
+      issues: zod.array(
+        zod.object({
+          id: zod.string(),
+          title: zod.string(),
+          message: zod.string(),
+          categoryIds: zod.array(zod.string()),
+          optionIds: zod.array(zod.string()),
+          repairCategoryId: zod.string(),
+          alternatives: zod.array(zod.string()),
+          source: zod.enum(["GAME_RULE"]),
+        }),
+      ),
+      checks: zod.array(
+        zod.object({
+          id: zod.string(),
+          label: zod.string(),
+          status: zod.enum(["PENDING", "DONE", "FAIL"]),
+          message: zod.string(),
+        }),
+      ),
+      history: zod.array(
+        zod.object({
+          number: zod.number().int(),
+          status: zod.enum(["BUILDING", "FAILED", "PASSED"]),
+          months: zod.number().int(),
+          elapsedBefore: zod.number().int(),
+          issues: zod.array(
+            zod.object({
+              id: zod.string(),
+              title: zod.string(),
+              message: zod.string(),
+              categoryIds: zod.array(zod.string()),
+              optionIds: zod.array(zod.string()),
+              repairCategoryId: zod.string(),
+              alternatives: zod.array(zod.string()),
+              source: zod.enum(["GAME_RULE"]),
+            }),
+          ),
+        }),
+      ),
+    })
+    .optional(),
+  finance: zod
+    .object({
+      baseBudget: zod.number().int(),
+      totalBudget: zod.number().int(),
+      approvedFunding: zod.number().int(),
+      maxRequests: zod.number().int(),
+      requests: zod.array(
+        zod.object({
+          id: zod.string(),
+          amount: zod.number().int(),
+          reason: zod.string(),
+          status: zod.enum(["SUBMITTED", "UNDER_REVIEW", "APPROVED", "DENIED"]),
+          submittedAt: zod.string(),
+          decidedAt: zod.string().nullable(),
+          progress: zod.number(),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -1532,6 +1723,15 @@ export const getGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedRegEx
 export const getGameSessionResponsePlayersItemPlayerAvatar3dOneOneAvatarIdMax = 128;
 
 export const getGameSessionResponsePlayersItemPlayerAvatar3dOneOneBodyIdMax = 128;
+
+export const getGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMin = 0;
+export const getGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMax = 1;
+
+export const getGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const getGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax = 1;
+
+export const getGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const getGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMax = 1;
 
 export const GetGameSessionResponse = zod.object({
   id: zod.string(),
@@ -1750,6 +1950,44 @@ export const GetGameSessionResponse = zod.object({
     .optional(),
   journey: zod
     .object({
+      launchFailure: zod
+        .union([
+          zod.object({
+            id: zod.string().uuid(),
+            startedAt: zod.string(),
+            briefingDate: zod.string(),
+            weather: zod.string(),
+            failed: zod.boolean(),
+            repairCost: zod.number().int(),
+            repairBaseCost: zod.number().int(),
+            repairedAt: zod.string().nullable(),
+            initialFuelKg: zod.number(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      flightAlerts: zod
+        .array(
+          zod.object({
+            detectedAtProgress: zod
+              .number()
+              .min(
+                getGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMin,
+              )
+              .max(
+                getGameSessionResponseJourneyFlightAlertsItemDetectedAtProgressMax,
+              )
+              .optional(),
+            id: zod.string(),
+            categoryId: zod.string(),
+            name: zod.string(),
+            quality: zod.number().nullable(),
+            damageRisk: zod.number(),
+            status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+            critical: zod.boolean(),
+          }),
+        )
+        .optional(),
       construction: zod.object({
         opened: zod.boolean(),
         startedAt: zod.string().nullable(),
@@ -1779,10 +2017,34 @@ export const GetGameSessionResponse = zod.object({
         "REENTRY",
         "RECOVERY",
         "RESULTS",
+        "LAUNCH_FAILURE",
       ]),
       operations: zod
         .union([
           zod.object({
+            hardwareChecks: zod
+              .array(
+                zod.object({
+                  detectedAtProgress: zod
+                    .number()
+                    .min(
+                      getGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin,
+                    )
+                    .max(
+                      getGameSessionResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax,
+                    )
+                    .optional(),
+                  id: zod.string(),
+                  categoryId: zod.string(),
+                  name: zod.string(),
+                  quality: zod.number().nullable(),
+                  damageRisk: zod.number(),
+                  status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                  critical: zod.boolean(),
+                }),
+              )
+              .optional(),
+            returnCheckOpened: zod.boolean().optional(),
             landing: zod.object({
               status: zod.enum(["READY", "DESCENDING", "LANDED", "CRASHED"]),
               altitudeM: zod.number(),
@@ -1880,6 +2142,43 @@ export const GetGameSessionResponse = zod.object({
       briefingDate: zod.string().nullable(),
       plan: zod.union([
         zod.object({
+          launchAttempts: zod
+            .array(
+              zod.object({
+                id: zod.string().uuid(),
+                startedAt: zod.string(),
+                briefingDate: zod.string(),
+                weather: zod.string(),
+                failed: zod.boolean(),
+                repairCost: zod.number().int(),
+                repairBaseCost: zod.number().int(),
+                repairedAt: zod.string().nullable(),
+                initialFuelKg: zod.number(),
+              }),
+            )
+            .optional(),
+          hardwareChecks: zod
+            .array(
+              zod.object({
+                detectedAtProgress: zod
+                  .number()
+                  .min(
+                    getGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMin,
+                  )
+                  .max(
+                    getGameSessionResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMax,
+                  )
+                  .optional(),
+                id: zod.string(),
+                categoryId: zod.string(),
+                name: zod.string(),
+                quality: zod.number().nullable(),
+                damageRisk: zod.number(),
+                status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                critical: zod.boolean(),
+              }),
+            )
+            .optional(),
           routeId: zod.string(),
           routeLabel: zod.string(),
           distanceKm: zod.number(),
@@ -1944,12 +2243,89 @@ export const GetGameSessionResponse = zod.object({
       maxSciencePoints: zod.number().int(),
     })
     .optional(),
+  engineering: zod
+    .object({
+      status: zod.enum(["DESIGN", "BUILDING", "FAILED", "PASSED"]),
+      attempt: zod.number().int(),
+      repairing: zod.boolean(),
+      failedCategoryIds: zod.array(zod.string()),
+      elapsedBefore: zod.number().int(),
+      deadlineMonths: zod.number().int(),
+      issues: zod.array(
+        zod.object({
+          id: zod.string(),
+          title: zod.string(),
+          message: zod.string(),
+          categoryIds: zod.array(zod.string()),
+          optionIds: zod.array(zod.string()),
+          repairCategoryId: zod.string(),
+          alternatives: zod.array(zod.string()),
+          source: zod.enum(["GAME_RULE"]),
+        }),
+      ),
+      checks: zod.array(
+        zod.object({
+          id: zod.string(),
+          label: zod.string(),
+          status: zod.enum(["PENDING", "DONE", "FAIL"]),
+          message: zod.string(),
+        }),
+      ),
+      history: zod.array(
+        zod.object({
+          number: zod.number().int(),
+          status: zod.enum(["BUILDING", "FAILED", "PASSED"]),
+          months: zod.number().int(),
+          elapsedBefore: zod.number().int(),
+          issues: zod.array(
+            zod.object({
+              id: zod.string(),
+              title: zod.string(),
+              message: zod.string(),
+              categoryIds: zod.array(zod.string()),
+              optionIds: zod.array(zod.string()),
+              repairCategoryId: zod.string(),
+              alternatives: zod.array(zod.string()),
+              source: zod.enum(["GAME_RULE"]),
+            }),
+          ),
+        }),
+      ),
+    })
+    .optional(),
+  finance: zod
+    .object({
+      baseBudget: zod.number().int(),
+      totalBudget: zod.number().int(),
+      approvedFunding: zod.number().int(),
+      maxRequests: zod.number().int(),
+      requests: zod.array(
+        zod.object({
+          id: zod.string(),
+          amount: zod.number().int(),
+          reason: zod.string(),
+          status: zod.enum(["SUBMITTED", "UNDER_REVIEW", "APPROVED", "DENIED"]),
+          submittedAt: zod.string(),
+          decidedAt: zod.string().nullable(),
+          progress: zod.number(),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
 export const UpdateGameSessionParams = zod.object({
   id: zod.coerce.string(),
 });
+
+export const updateGameSessionBodyAcceptedIssueIdsMax = 20;
+
+export const updateGameSessionBodyAmountMin = 1000000;
+export const updateGameSessionBodyAmountMax = 400000000;
+
+export const updateGameSessionBodyReasonMin = 10;
+export const updateGameSessionBodyReasonMax = 600;
 
 export const updateGameSessionBodyThrustMin = 0;
 export const updateGameSessionBodyThrustMax = 100;
@@ -2001,12 +2377,38 @@ export const UpdateGameSessionBody = zod.object({
     "collect-site",
     "start-return",
     "view-results",
+    "rebuild-rocket",
+    "request-funding",
+    "funding-tick",
+    "repair-weather-launch",
   ]),
+  acceptedIssueIds: zod
+    .array(zod.string())
+    .max(updateGameSessionBodyAcceptedIssueIdsMax)
+    .optional(),
+  requestId: zod.string().uuid().optional(),
+  amount: zod
+    .number()
+    .int()
+    .min(updateGameSessionBodyAmountMin)
+    .max(updateGameSessionBodyAmountMax)
+    .optional(),
+  reason: zod
+    .string()
+    .min(updateGameSessionBodyReasonMin)
+    .max(updateGameSessionBodyReasonMax)
+    .optional(),
   thrust: zod
     .number()
     .min(updateGameSessionBodyThrustMin)
     .max(updateGameSessionBodyThrustMax)
     .optional(),
+  confirmReturn: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Explicit Leader confirmation after opening the pre-return hardware check.",
+    ),
   siteId: zod.enum(["regolith", "crater", "ridge"]).optional(),
   briefingDate: zod
     .string()
@@ -2039,6 +2441,15 @@ export const updateGameSessionResponseSessionOnePlayersItemPlayerAppearanceOneAv
 export const updateGameSessionResponseSessionOnePlayersItemPlayerAvatar3dOneOneAvatarIdMax = 128;
 
 export const updateGameSessionResponseSessionOnePlayersItemPlayerAvatar3dOneOneBodyIdMax = 128;
+
+export const updateGameSessionResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMin = 0;
+export const updateGameSessionResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMax = 1;
+
+export const updateGameSessionResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const updateGameSessionResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax = 1;
+
+export const updateGameSessionResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const updateGameSessionResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMax = 1;
 
 export const UpdateGameSessionResponse = zod.object({
   session: zod.union([
@@ -2259,6 +2670,44 @@ export const UpdateGameSessionResponse = zod.object({
         .optional(),
       journey: zod
         .object({
+          launchFailure: zod
+            .union([
+              zod.object({
+                id: zod.string().uuid(),
+                startedAt: zod.string(),
+                briefingDate: zod.string(),
+                weather: zod.string(),
+                failed: zod.boolean(),
+                repairCost: zod.number().int(),
+                repairBaseCost: zod.number().int(),
+                repairedAt: zod.string().nullable(),
+                initialFuelKg: zod.number(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
+          flightAlerts: zod
+            .array(
+              zod.object({
+                detectedAtProgress: zod
+                  .number()
+                  .min(
+                    updateGameSessionResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMin,
+                  )
+                  .max(
+                    updateGameSessionResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMax,
+                  )
+                  .optional(),
+                id: zod.string(),
+                categoryId: zod.string(),
+                name: zod.string(),
+                quality: zod.number().nullable(),
+                damageRisk: zod.number(),
+                status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                critical: zod.boolean(),
+              }),
+            )
+            .optional(),
           construction: zod.object({
             opened: zod.boolean(),
             startedAt: zod.string().nullable(),
@@ -2288,10 +2737,34 @@ export const UpdateGameSessionResponse = zod.object({
             "REENTRY",
             "RECOVERY",
             "RESULTS",
+            "LAUNCH_FAILURE",
           ]),
           operations: zod
             .union([
               zod.object({
+                hardwareChecks: zod
+                  .array(
+                    zod.object({
+                      detectedAtProgress: zod
+                        .number()
+                        .min(
+                          updateGameSessionResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin,
+                        )
+                        .max(
+                          updateGameSessionResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax,
+                        )
+                        .optional(),
+                      id: zod.string(),
+                      categoryId: zod.string(),
+                      name: zod.string(),
+                      quality: zod.number().nullable(),
+                      damageRisk: zod.number(),
+                      status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                      critical: zod.boolean(),
+                    }),
+                  )
+                  .optional(),
+                returnCheckOpened: zod.boolean().optional(),
                 landing: zod.object({
                   status: zod.enum([
                     "READY",
@@ -2394,6 +2867,43 @@ export const UpdateGameSessionResponse = zod.object({
           briefingDate: zod.string().nullable(),
           plan: zod.union([
             zod.object({
+              launchAttempts: zod
+                .array(
+                  zod.object({
+                    id: zod.string().uuid(),
+                    startedAt: zod.string(),
+                    briefingDate: zod.string(),
+                    weather: zod.string(),
+                    failed: zod.boolean(),
+                    repairCost: zod.number().int(),
+                    repairBaseCost: zod.number().int(),
+                    repairedAt: zod.string().nullable(),
+                    initialFuelKg: zod.number(),
+                  }),
+                )
+                .optional(),
+              hardwareChecks: zod
+                .array(
+                  zod.object({
+                    detectedAtProgress: zod
+                      .number()
+                      .min(
+                        updateGameSessionResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMin,
+                      )
+                      .max(
+                        updateGameSessionResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMax,
+                      )
+                      .optional(),
+                    id: zod.string(),
+                    categoryId: zod.string(),
+                    name: zod.string(),
+                    quality: zod.number().nullable(),
+                    damageRisk: zod.number(),
+                    status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                    critical: zod.boolean(),
+                  }),
+                )
+                .optional(),
               routeId: zod.string(),
               routeLabel: zod.string(),
               distanceKm: zod.number(),
@@ -2458,10 +2968,115 @@ export const UpdateGameSessionResponse = zod.object({
           maxSciencePoints: zod.number().int(),
         })
         .optional(),
+      engineering: zod
+        .object({
+          status: zod.enum(["DESIGN", "BUILDING", "FAILED", "PASSED"]),
+          attempt: zod.number().int(),
+          repairing: zod.boolean(),
+          failedCategoryIds: zod.array(zod.string()),
+          elapsedBefore: zod.number().int(),
+          deadlineMonths: zod.number().int(),
+          issues: zod.array(
+            zod.object({
+              id: zod.string(),
+              title: zod.string(),
+              message: zod.string(),
+              categoryIds: zod.array(zod.string()),
+              optionIds: zod.array(zod.string()),
+              repairCategoryId: zod.string(),
+              alternatives: zod.array(zod.string()),
+              source: zod.enum(["GAME_RULE"]),
+            }),
+          ),
+          checks: zod.array(
+            zod.object({
+              id: zod.string(),
+              label: zod.string(),
+              status: zod.enum(["PENDING", "DONE", "FAIL"]),
+              message: zod.string(),
+            }),
+          ),
+          history: zod.array(
+            zod.object({
+              number: zod.number().int(),
+              status: zod.enum(["BUILDING", "FAILED", "PASSED"]),
+              months: zod.number().int(),
+              elapsedBefore: zod.number().int(),
+              issues: zod.array(
+                zod.object({
+                  id: zod.string(),
+                  title: zod.string(),
+                  message: zod.string(),
+                  categoryIds: zod.array(zod.string()),
+                  optionIds: zod.array(zod.string()),
+                  repairCategoryId: zod.string(),
+                  alternatives: zod.array(zod.string()),
+                  source: zod.enum(["GAME_RULE"]),
+                }),
+              ),
+            }),
+          ),
+        })
+        .optional(),
+      finance: zod
+        .object({
+          baseBudget: zod.number().int(),
+          totalBudget: zod.number().int(),
+          approvedFunding: zod.number().int(),
+          maxRequests: zod.number().int(),
+          requests: zod.array(
+            zod.object({
+              id: zod.string(),
+              amount: zod.number().int(),
+              reason: zod.string(),
+              status: zod.enum([
+                "SUBMITTED",
+                "UNDER_REVIEW",
+                "APPROVED",
+                "DENIED",
+              ]),
+              submittedAt: zod.string(),
+              decidedAt: zod.string().nullable(),
+              progress: zod.number(),
+            }),
+          ),
+        })
+        .optional(),
       createdAt: zod.string(),
     }),
     zod.null(),
   ]),
+});
+
+export const PreviewEngineeringParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const previewEngineeringBodyInstrumentIdsMax = 7;
+
+export const PreviewEngineeringBody = zod.object({
+  optionId: zod.string().optional(),
+  instrumentIds: zod
+    .array(zod.string())
+    .max(previewEngineeringBodyInstrumentIdsMax)
+    .optional(),
+});
+
+export const PreviewEngineeringResponse = zod.object({
+  easy: zod.boolean(),
+  issues: zod.array(
+    zod.object({
+      id: zod.string(),
+      title: zod.string(),
+      message: zod.string(),
+      categoryIds: zod.array(zod.string()),
+      optionIds: zod.array(zod.string()),
+      repairCategoryId: zod.string(),
+      alternatives: zod.array(zod.string()),
+      source: zod.enum(["GAME_RULE"]),
+    }),
+  ),
+  disclaimer: zod.string(),
 });
 
 export const GetSessionMessagesParams = zod.object({
@@ -2510,6 +3125,15 @@ export const sendSessionMessageResponsePlayersItemPlayerAppearanceOneAvatarSeedR
 export const sendSessionMessageResponsePlayersItemPlayerAvatar3dOneOneAvatarIdMax = 128;
 
 export const sendSessionMessageResponsePlayersItemPlayerAvatar3dOneOneBodyIdMax = 128;
+
+export const sendSessionMessageResponseJourneyFlightAlertsItemDetectedAtProgressMin = 0;
+export const sendSessionMessageResponseJourneyFlightAlertsItemDetectedAtProgressMax = 1;
+
+export const sendSessionMessageResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const sendSessionMessageResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax = 1;
+
+export const sendSessionMessageResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const sendSessionMessageResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMax = 1;
 
 export const SendSessionMessageResponse = zod.object({
   id: zod.string(),
@@ -2728,6 +3352,44 @@ export const SendSessionMessageResponse = zod.object({
     .optional(),
   journey: zod
     .object({
+      launchFailure: zod
+        .union([
+          zod.object({
+            id: zod.string().uuid(),
+            startedAt: zod.string(),
+            briefingDate: zod.string(),
+            weather: zod.string(),
+            failed: zod.boolean(),
+            repairCost: zod.number().int(),
+            repairBaseCost: zod.number().int(),
+            repairedAt: zod.string().nullable(),
+            initialFuelKg: zod.number(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      flightAlerts: zod
+        .array(
+          zod.object({
+            detectedAtProgress: zod
+              .number()
+              .min(
+                sendSessionMessageResponseJourneyFlightAlertsItemDetectedAtProgressMin,
+              )
+              .max(
+                sendSessionMessageResponseJourneyFlightAlertsItemDetectedAtProgressMax,
+              )
+              .optional(),
+            id: zod.string(),
+            categoryId: zod.string(),
+            name: zod.string(),
+            quality: zod.number().nullable(),
+            damageRisk: zod.number(),
+            status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+            critical: zod.boolean(),
+          }),
+        )
+        .optional(),
       construction: zod.object({
         opened: zod.boolean(),
         startedAt: zod.string().nullable(),
@@ -2757,10 +3419,34 @@ export const SendSessionMessageResponse = zod.object({
         "REENTRY",
         "RECOVERY",
         "RESULTS",
+        "LAUNCH_FAILURE",
       ]),
       operations: zod
         .union([
           zod.object({
+            hardwareChecks: zod
+              .array(
+                zod.object({
+                  detectedAtProgress: zod
+                    .number()
+                    .min(
+                      sendSessionMessageResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin,
+                    )
+                    .max(
+                      sendSessionMessageResponseJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax,
+                    )
+                    .optional(),
+                  id: zod.string(),
+                  categoryId: zod.string(),
+                  name: zod.string(),
+                  quality: zod.number().nullable(),
+                  damageRisk: zod.number(),
+                  status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                  critical: zod.boolean(),
+                }),
+              )
+              .optional(),
+            returnCheckOpened: zod.boolean().optional(),
             landing: zod.object({
               status: zod.enum(["READY", "DESCENDING", "LANDED", "CRASHED"]),
               altitudeM: zod.number(),
@@ -2858,6 +3544,43 @@ export const SendSessionMessageResponse = zod.object({
       briefingDate: zod.string().nullable(),
       plan: zod.union([
         zod.object({
+          launchAttempts: zod
+            .array(
+              zod.object({
+                id: zod.string().uuid(),
+                startedAt: zod.string(),
+                briefingDate: zod.string(),
+                weather: zod.string(),
+                failed: zod.boolean(),
+                repairCost: zod.number().int(),
+                repairBaseCost: zod.number().int(),
+                repairedAt: zod.string().nullable(),
+                initialFuelKg: zod.number(),
+              }),
+            )
+            .optional(),
+          hardwareChecks: zod
+            .array(
+              zod.object({
+                detectedAtProgress: zod
+                  .number()
+                  .min(
+                    sendSessionMessageResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMin,
+                  )
+                  .max(
+                    sendSessionMessageResponseJourneyPlanOneHardwareChecksItemDetectedAtProgressMax,
+                  )
+                  .optional(),
+                id: zod.string(),
+                categoryId: zod.string(),
+                name: zod.string(),
+                quality: zod.number().nullable(),
+                damageRisk: zod.number(),
+                status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                critical: zod.boolean(),
+              }),
+            )
+            .optional(),
           routeId: zod.string(),
           routeLabel: zod.string(),
           distanceKm: zod.number(),
@@ -2922,6 +3645,75 @@ export const SendSessionMessageResponse = zod.object({
       maxSciencePoints: zod.number().int(),
     })
     .optional(),
+  engineering: zod
+    .object({
+      status: zod.enum(["DESIGN", "BUILDING", "FAILED", "PASSED"]),
+      attempt: zod.number().int(),
+      repairing: zod.boolean(),
+      failedCategoryIds: zod.array(zod.string()),
+      elapsedBefore: zod.number().int(),
+      deadlineMonths: zod.number().int(),
+      issues: zod.array(
+        zod.object({
+          id: zod.string(),
+          title: zod.string(),
+          message: zod.string(),
+          categoryIds: zod.array(zod.string()),
+          optionIds: zod.array(zod.string()),
+          repairCategoryId: zod.string(),
+          alternatives: zod.array(zod.string()),
+          source: zod.enum(["GAME_RULE"]),
+        }),
+      ),
+      checks: zod.array(
+        zod.object({
+          id: zod.string(),
+          label: zod.string(),
+          status: zod.enum(["PENDING", "DONE", "FAIL"]),
+          message: zod.string(),
+        }),
+      ),
+      history: zod.array(
+        zod.object({
+          number: zod.number().int(),
+          status: zod.enum(["BUILDING", "FAILED", "PASSED"]),
+          months: zod.number().int(),
+          elapsedBefore: zod.number().int(),
+          issues: zod.array(
+            zod.object({
+              id: zod.string(),
+              title: zod.string(),
+              message: zod.string(),
+              categoryIds: zod.array(zod.string()),
+              optionIds: zod.array(zod.string()),
+              repairCategoryId: zod.string(),
+              alternatives: zod.array(zod.string()),
+              source: zod.enum(["GAME_RULE"]),
+            }),
+          ),
+        }),
+      ),
+    })
+    .optional(),
+  finance: zod
+    .object({
+      baseBudget: zod.number().int(),
+      totalBudget: zod.number().int(),
+      approvedFunding: zod.number().int(),
+      maxRequests: zod.number().int(),
+      requests: zod.array(
+        zod.object({
+          id: zod.string(),
+          amount: zod.number().int(),
+          reason: zod.string(),
+          status: zod.enum(["SUBMITTED", "UNDER_REVIEW", "APPROVED", "DENIED"]),
+          submittedAt: zod.string(),
+          decidedAt: zod.string().nullable(),
+          progress: zod.number(),
+        }),
+      ),
+    })
+    .optional(),
   createdAt: zod.string(),
 });
 
@@ -2955,6 +3747,15 @@ export const respondToInvitationResponseSessionOnePlayersItemPlayerAppearanceOne
 export const respondToInvitationResponseSessionOnePlayersItemPlayerAvatar3dOneOneAvatarIdMax = 128;
 
 export const respondToInvitationResponseSessionOnePlayersItemPlayerAvatar3dOneOneBodyIdMax = 128;
+
+export const respondToInvitationResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMin = 0;
+export const respondToInvitationResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMax = 1;
+
+export const respondToInvitationResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const respondToInvitationResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax = 1;
+
+export const respondToInvitationResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMin = 0;
+export const respondToInvitationResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMax = 1;
 
 export const RespondToInvitationResponse = zod.object({
   session: zod.union([
@@ -3175,6 +3976,44 @@ export const RespondToInvitationResponse = zod.object({
         .optional(),
       journey: zod
         .object({
+          launchFailure: zod
+            .union([
+              zod.object({
+                id: zod.string().uuid(),
+                startedAt: zod.string(),
+                briefingDate: zod.string(),
+                weather: zod.string(),
+                failed: zod.boolean(),
+                repairCost: zod.number().int(),
+                repairBaseCost: zod.number().int(),
+                repairedAt: zod.string().nullable(),
+                initialFuelKg: zod.number(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
+          flightAlerts: zod
+            .array(
+              zod.object({
+                detectedAtProgress: zod
+                  .number()
+                  .min(
+                    respondToInvitationResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMin,
+                  )
+                  .max(
+                    respondToInvitationResponseSessionOneJourneyFlightAlertsItemDetectedAtProgressMax,
+                  )
+                  .optional(),
+                id: zod.string(),
+                categoryId: zod.string(),
+                name: zod.string(),
+                quality: zod.number().nullable(),
+                damageRisk: zod.number(),
+                status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                critical: zod.boolean(),
+              }),
+            )
+            .optional(),
           construction: zod.object({
             opened: zod.boolean(),
             startedAt: zod.string().nullable(),
@@ -3204,10 +4043,34 @@ export const RespondToInvitationResponse = zod.object({
             "REENTRY",
             "RECOVERY",
             "RESULTS",
+            "LAUNCH_FAILURE",
           ]),
           operations: zod
             .union([
               zod.object({
+                hardwareChecks: zod
+                  .array(
+                    zod.object({
+                      detectedAtProgress: zod
+                        .number()
+                        .min(
+                          respondToInvitationResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMin,
+                        )
+                        .max(
+                          respondToInvitationResponseSessionOneJourneyOperationsOneHardwareChecksItemDetectedAtProgressMax,
+                        )
+                        .optional(),
+                      id: zod.string(),
+                      categoryId: zod.string(),
+                      name: zod.string(),
+                      quality: zod.number().nullable(),
+                      damageRisk: zod.number(),
+                      status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                      critical: zod.boolean(),
+                    }),
+                  )
+                  .optional(),
+                returnCheckOpened: zod.boolean().optional(),
                 landing: zod.object({
                   status: zod.enum([
                     "READY",
@@ -3310,6 +4173,43 @@ export const RespondToInvitationResponse = zod.object({
           briefingDate: zod.string().nullable(),
           plan: zod.union([
             zod.object({
+              launchAttempts: zod
+                .array(
+                  zod.object({
+                    id: zod.string().uuid(),
+                    startedAt: zod.string(),
+                    briefingDate: zod.string(),
+                    weather: zod.string(),
+                    failed: zod.boolean(),
+                    repairCost: zod.number().int(),
+                    repairBaseCost: zod.number().int(),
+                    repairedAt: zod.string().nullable(),
+                    initialFuelKg: zod.number(),
+                  }),
+                )
+                .optional(),
+              hardwareChecks: zod
+                .array(
+                  zod.object({
+                    detectedAtProgress: zod
+                      .number()
+                      .min(
+                        respondToInvitationResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMin,
+                      )
+                      .max(
+                        respondToInvitationResponseSessionOneJourneyPlanOneHardwareChecksItemDetectedAtProgressMax,
+                      )
+                      .optional(),
+                    id: zod.string(),
+                    categoryId: zod.string(),
+                    name: zod.string(),
+                    quality: zod.number().nullable(),
+                    damageRisk: zod.number(),
+                    status: zod.enum(["OPERATIONAL", "DAMAGED"]),
+                    critical: zod.boolean(),
+                  }),
+                )
+                .optional(),
               routeId: zod.string(),
               routeLabel: zod.string(),
               distanceKm: zod.number(),
@@ -3372,6 +4272,80 @@ export const RespondToInvitationResponse = zod.object({
           diagnosticsComplete: zod.boolean(),
           availableSciencePoints: zod.number(),
           maxSciencePoints: zod.number().int(),
+        })
+        .optional(),
+      engineering: zod
+        .object({
+          status: zod.enum(["DESIGN", "BUILDING", "FAILED", "PASSED"]),
+          attempt: zod.number().int(),
+          repairing: zod.boolean(),
+          failedCategoryIds: zod.array(zod.string()),
+          elapsedBefore: zod.number().int(),
+          deadlineMonths: zod.number().int(),
+          issues: zod.array(
+            zod.object({
+              id: zod.string(),
+              title: zod.string(),
+              message: zod.string(),
+              categoryIds: zod.array(zod.string()),
+              optionIds: zod.array(zod.string()),
+              repairCategoryId: zod.string(),
+              alternatives: zod.array(zod.string()),
+              source: zod.enum(["GAME_RULE"]),
+            }),
+          ),
+          checks: zod.array(
+            zod.object({
+              id: zod.string(),
+              label: zod.string(),
+              status: zod.enum(["PENDING", "DONE", "FAIL"]),
+              message: zod.string(),
+            }),
+          ),
+          history: zod.array(
+            zod.object({
+              number: zod.number().int(),
+              status: zod.enum(["BUILDING", "FAILED", "PASSED"]),
+              months: zod.number().int(),
+              elapsedBefore: zod.number().int(),
+              issues: zod.array(
+                zod.object({
+                  id: zod.string(),
+                  title: zod.string(),
+                  message: zod.string(),
+                  categoryIds: zod.array(zod.string()),
+                  optionIds: zod.array(zod.string()),
+                  repairCategoryId: zod.string(),
+                  alternatives: zod.array(zod.string()),
+                  source: zod.enum(["GAME_RULE"]),
+                }),
+              ),
+            }),
+          ),
+        })
+        .optional(),
+      finance: zod
+        .object({
+          baseBudget: zod.number().int(),
+          totalBudget: zod.number().int(),
+          approvedFunding: zod.number().int(),
+          maxRequests: zod.number().int(),
+          requests: zod.array(
+            zod.object({
+              id: zod.string(),
+              amount: zod.number().int(),
+              reason: zod.string(),
+              status: zod.enum([
+                "SUBMITTED",
+                "UNDER_REVIEW",
+                "APPROVED",
+                "DENIED",
+              ]),
+              submittedAt: zod.string(),
+              decidedAt: zod.string().nullable(),
+              progress: zod.number(),
+            }),
+          ),
         })
         .optional(),
       createdAt: zod.string(),

@@ -59,6 +59,11 @@ interface Invites {
   created_at: Time;
 }
 export interface GameDatabase {
+  game_session_engineering: {session_id:string;state:import("@workspace/api-zod").EngineeringState};
+  game_session_funding_requests: {
+    id:string;session_id:string;user_id:string|null;amount:number;reason:string;approved:boolean;
+    submitted_at:Time;decided_at:Date|null;
+  };
   game_session_mission_journeys: {
     operations: Generated<import("@workspace/api-zod").MissionOperations | null>;
     session_id: string;

@@ -26,7 +26,12 @@ export const rocketOptions = [
     fuel: null,
   })),
   ...imported.map(option => ({...option, ...(translations as Record<string, Partial<typeof option>>)[option.id]})),
-];
+].map(option => ({
+  ...option,
+  // Gameplay reliability only. The catalog's least expensive tier has Q55:
+  // 50% damage risk; Q96 has 4%. Unspecified hull quality uses a 25% estimate.
+  damageRisk: option.quality === null ? 25 : Math.max(2,Math.min(50,Math.round((100-option.quality)*50/45))),
+}));
 export const rocketCatalog = definitions.map(([id,name,categories]) => ({
   id, name, categories: categories.map(([id,name]) => ({
     id, name, options: rocketOptions.filter(option => option.categoryId === id),

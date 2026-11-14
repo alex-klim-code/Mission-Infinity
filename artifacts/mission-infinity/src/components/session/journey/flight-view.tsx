@@ -4,7 +4,7 @@ import type { MissionFlightTelemetryManeuver } from '@workspace/api-client-react
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { HullVisual, useCalm, type Props } from '../rocket-shared';
-import { Earth, ModelNote, Moon, Stat, TickError, WEATHER, Waiting, bez, bezAngle, clamp01, fmtUtcDate, kg, num, useNow, type Pt } from './shared';
+import { Earth, ModelNote, Moon, Stat, TickError, Waiting, bez, bezAngle, clamp01, fmtUtcDate, kg, num, useNow, type Pt } from './shared';
 
 const E: Pt = { x: 120, y: 220 }, M: Pt = { x: 700, y: 110 }, C: Pt = { x: 360, y: -40 };
 const W = 800, H = 300;
@@ -13,26 +13,8 @@ export const MANEUVER: Record<MissionFlightTelemetryManeuver, string> = {
   PAD: 'On the pad', LAUNCH_BURN: 'Launch burn', COAST: 'Coasting', LUNAR_INSERTION: 'Lunar orbit insertion', COMPLETE: 'Arrived', FAILED: 'Out of fuel',
 };
 
-export function MissionDayView({ session, isHost, act, pending, pendingAction }: Props) {
-  const j = session.journey;
-  const wx = j?.weather.find((w) => w.date === j.briefingDate);
-  const m = wx ? WEATHER[wx.condition] : null;
-  return (
-    <div className="mx-auto grid max-w-5xl gap-6 px-4 py-6 md:grid-cols-[200px_1fr] md:px-8" data-testid="panel-journey-missionday">
-      <HullVisual hullId={session.build?.selectedHullId} className="mx-auto h-64 w-full md:h-96" />
-      <div className="min-w-0 self-center">
-        <div className="kicker mb-2" data-testid="text-missionday-date">{fmtUtcDate(j?.briefingDate)} / UTC</div>
-        <h1 className="font-display text-5xl font-bold uppercase leading-none sm:text-7xl" data-testid="text-missionday-title">Mission Day 1</h1>
-        {m && wx && <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><m.icon className={cn('h-5 w-5', m.tone)} /> Launch site weather: {m.label}</p>}
-        <p className="mt-2 max-w-lg text-sm text-muted-foreground">Fuel sealed, crew strapped in, Mission Control polling every station. The flight replays in accelerated time: days pass in seconds.</p>
-        <div className="mt-6">
-          {isHost
-            ? <HudButton variant="burn" className="px-8 py-4 text-base" loading={pendingAction === 'launch-flight'} disabled={pending} onClick={() => act({ action: 'launch-flight' })} data-testid="button-launch"><Rocket className="h-5 w-5" /> Launch</HudButton>
-            : <Waiting testid="text-launch-guest">Waiting for the Leader to launch</Waiting>}
-        </div>
-      </div>
-    </div>
-  );
+export function MissionDayView(props: Props) {
+  return <FlightView {...props} tickError={false} onRetry={() => {}} />;
 }
 
 export function FlightView({ session, isHost, act, pending, pendingAction, tickError, onRetry }: Props & { tickError: boolean; onRetry: () => void }) {
@@ -41,12 +23,14 @@ export function FlightView({ session, isHost, act, pending, pendingAction, tickE
   const f = j.flight;
   const plan = j.plan;
   const phase = j.phase;
+  const ready = phase === 'MISSION_DAY';
+  const weather = ready ? j.weather.find(w => w.date === j.briefingDate) : undefined;
   const live = phase === 'FLIGHT';
   const now = useNow(live && !calm, 50);
   const started = f.startedAt ? new Date(f.startedAt).getTime() : 0;
   const local = started && plan ? clamp01((now - started) / Math.max(1, plan.animationDurationMs)) : 0;
   // Visual position only; telemetry numbers always come from the server.
-  const vp = phase === 'MOON_ARRIVAL' ? 1 : phase === 'FAILED' ? f.progress : calm ? f.progress : Math.max(f.progress, Math.min(local, f.progress + 0.08, 1));
+  const vp = ready || !f.startedAt ? 0 : phase === 'MOON_ARRIVAL' ? 1 : phase === 'FAILED' ? f.progress : calm ? f.progress : Math.max(f.progress, Math.min(local, f.progress + 0.08, 1));
   const pos = bez(E, C, M, vp);
   const ang = bezAngle(E, C, M, Math.min(0.999, Math.max(0.001, vp)));
   const failed = phase === 'FAILED';
@@ -59,12 +43,14 @@ export function FlightView({ session, isHost, act, pending, pendingAction, tickE
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="kicker mb-1">{plan?.routeLabel ?? 'Earth / Moon / Earth'} / outbound leg</div>
-          <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-5xl">{failed ? 'Mission aborted' : arrived ? 'Moon arrival' : 'In flight'}</h1>
+          <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-5xl">{ready ? 'Ready for launch' : failed ? 'Mission aborted' : arrived ? 'Moon arrival' : 'In flight'}</h1>
+          {ready && <p className="mt-1 text-xs text-muted-foreground" data-testid="text-launch-hold">{fmtUtcDate(j.briefingDate)} / Mission Day 1 — Engines off. Waiting for Start.</p>}
+          {ready && weather && <p className="mt-1 text-xs text-muted-foreground">Launch site weather: {weather.condition.replaceAll('_', ' ').toLowerCase()}.{weather.condition === 'RAIN' && ' Rain gives a 25% chance of a failed launch needing repairs (game balance rule, not a real forecast).'}</p>}
         </div>
-        <div className="text-right">
+        {ready ? isHost ? <HudButton variant="burn" disabled={pending} loading={pendingAction === 'launch-flight'} onClick={() => act({ action: 'launch-flight' })} data-testid="button-launch"><Rocket className="h-4 w-4" /> Start</HudButton> : <Waiting testid="text-launch-guest">Waiting for the Leader to press Start</Waiting> : <div className="text-right">
           <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Mission day</div>
           <div className="font-display text-4xl font-bold tabular-nums text-ion" data-testid="text-flight-day">{f.currentDay}<span className="text-lg text-muted-foreground"> / {days}</span></div>
-        </div>
+        </div>}
       </div>
 
       <div className={cn('glass hud-corners relative mt-4 overflow-hidden rounded-lg', failed && 'border-destructive/50')} style={{ aspectRatio: `${W} / ${H}` }} data-testid="panel-flight-trajectory">

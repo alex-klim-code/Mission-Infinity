@@ -5,7 +5,9 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { HardwareCheck } from "./hardwareCheck";
 import type { InstrumentDiagnostic } from "./instrumentDiagnostic";
+import type { LaunchAttempt } from "./launchAttempt";
 import type { MissionConstruction } from "./missionConstruction";
 import type { MissionFlightPlan } from "./missionFlightPlan";
 import type { MissionFlightTelemetry } from "./missionFlightTelemetry";
@@ -14,6 +16,8 @@ import type { MissionOperations } from "./missionOperations";
 import type { MissionWeather } from "./missionWeather";
 
 export interface MissionJourney {
+  launchFailure?: LaunchAttempt | null;
+  flightAlerts?: HardwareCheck[];
   construction: MissionConstruction;
   phase: MissionJourneyPhase;
   operations?: MissionOperations | null;

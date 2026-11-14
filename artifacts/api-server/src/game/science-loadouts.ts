@@ -1,6 +1,8 @@
 import { requireCondition, type GameConnection } from "./database";
 import { scientificInstruments } from "./scientific-instruments";
 import { sql } from "kysely";
+import {guardEngineeringPurchase} from "./engineering";
+import {effectiveMissionBudget} from "./mission-finance";
 
 export async function scienceState(db: GameConnection, sessionId: string, activeIds: string[]) {
   const row = await db.selectFrom("game_session_science_loadouts").selectAll().where("session_id", "=", sessionId).executeTakeFirst();
@@ -15,7 +17,7 @@ export async function scienceState(db: GameConnection, sessionId: string, active
 // Caller holds the session FOR UPDATE lock. Selection, receipt and budget are atomic.
 export async function updateScience(
   db: GameConnection, session: { id: string; host_id: string; mission_id: string; status: string },
-  userId: string, action: string, instrumentIds?: string[],
+  userId: string, action: string, instrumentIds?: string[],acceptedIssueIds:string[]=[],
 ) {
   requireCondition(session.status === "MISSION_STARTED", 409, "Start the mission first.");
   const assembly = await db.selectFrom("game_session_rocket_assemblies").select("completed").where("session_id", "=", session.id).executeTakeFirst();
@@ -47,8 +49,9 @@ export async function updateScience(
   }
   const cost = scientificInstruments.filter(item => ids.includes(item.id)).reduce((sum, item) => sum + item.price, 0);
   const build = await db.selectFrom("game_session_builds").selectAll().where("session_id", "=", session.id).executeTakeFirstOrThrow();
-  const mission = await db.selectFrom("missions").select("definition").where("id", "=", session.mission_id).executeTakeFirstOrThrow();
-  requireCondition(build.spent + cost <= (mission.definition as { budget: number }).budget, 409, "The mission budget is insufficient.");
+  const budget=await effectiveMissionBudget(db,session);
+  requireCondition(build.spent + cost <= budget, 409, "The mission budget is insufficient.");
+  await guardEngineeringPurchase(db,session,{instrumentIds:ids},acceptedIssueIds);
   await db.updateTable("game_session_builds").set({ spent: build.spent + cost }).where("session_id", "=", session.id).execute();
   await db.updateTable("game_session_science_loadouts").set({ completed: true, instrument_ids: sql<string[]>`${JSON.stringify(ids)}::jsonb`, spent: cost })
     .where("session_id", "=", session.id).execute();

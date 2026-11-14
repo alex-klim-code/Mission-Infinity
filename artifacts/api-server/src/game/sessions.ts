@@ -10,6 +10,8 @@ import { scienceState, updateScience } from "./science-loadouts";
 import { fuelingState, updateFueling } from "./fuel-loads";
 import { journeyState, openConstruction, updateJourney } from "./mission-journeys";
 import { updateLunarOperations } from "./lunar-operations";
+import { engineeringState,rebuildRocket } from "./engineering";
+import { financeState,updateFunding } from "./mission-finance";
 
 export async function sessionMembers(id: string, db: GameConnection = gameDb) {
   return db.selectFrom("game_session_players").selectAll()
@@ -31,6 +33,10 @@ export async function sessionState(id: string, userId: string, db: GameConnectio
   }
   const journey = await journeyState(db, id);
   const build = await rocketBuildState(id, db, members.map(m => m.user_id));
+  const missionRecord=await db.selectFrom("missions").select("definition").where("id","=",session.mission_id).executeTakeFirstOrThrow();
+  const definition=missionRecord.definition as {budget:number;developmentMonths:number};
+  const finance=await financeState(db,id,definition.budget);
+  const engineering=await engineeringState(db,id,definition.developmentMonths);
   return {
     id: session.id, roomCode: session.room_code, hostId: session.host_id, missionId: session.mission_id,
     status: session.status, scene: session.scene, revision: session.revision,
@@ -39,7 +45,7 @@ export async function sessionState(id: string, userId: string, db: GameConnectio
     assembly: await assemblyState(db, id, members.map(m => m.user_id)),
     science: await scienceState(db, id, members.map(m => m.user_id)),
     fueling: await fuelingState(db, id),
-    journey,
+    journey,finance,engineering,
   };
 }
 export async function notifySession(id: string, extraIds: string[] = []) {
@@ -103,7 +109,7 @@ export async function maybeCompleteAcceptance(id: string, tx: GameConnection) {
   }
 }
 
-export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number; hullId?: string; optionId?: string; instrumentIds?: string[]; quantityKg?: number; briefingDate?: string; thrust?: number; siteId?: "regolith"|"crater"|"ridge" }) {
+export async function updateSession(userId: string, id: string, input: { action: string; ready?: boolean; expectedScene?: number; hullId?: string; optionId?: string; instrumentIds?: string[]; quantityKg?: number; briefingDate?: string; thrust?: number; confirmReturn?:boolean; siteId?: "regolith"|"crater"|"ridge"; acceptedIssueIds?:string[];requestId?:string;amount?:number;reason?:string }) {
   await gameDb.transaction().execute(async tx => {
     const session = await tx.selectFrom("game_sessions").selectAll().where("id", "=", id).forUpdate().executeTakeFirst();
     requireCondition(session, 404, "Mission session not found.");
@@ -128,16 +134,20 @@ export async function updateSession(userId: string, id: string, input: { action:
       await maybeCompleteAcceptance(id, tx);
     } else if (input.action === "open-fueling") {
       await openConstruction(tx,session,userId);
+    } else if(input.action==="request-funding"||input.action==="funding-tick"){
+      await updateFunding(tx,session,userId,input);
+    } else if(input.action==="rebuild-rocket"){
+      await rebuildRocket(tx,session,userId);
     } else if (["start-landing","set-landing-thrust","collect-site","start-return","view-results"].includes(input.action)) {
       await updateLunarOperations(tx,session,userId,input);
-    } else if (["start-construction", "journey-tick", "open-briefing", "briefing-continue", "confirm-briefing-date", "launch-flight", "check-instruments", "continue-lunar"].includes(input.action)) {
-      await updateJourney(tx,session,userId,input.action,input.briefingDate);
+    } else if (["start-construction", "journey-tick", "open-briefing", "briefing-continue", "confirm-briefing-date", "launch-flight", "check-instruments", "continue-lunar", "repair-weather-launch"].includes(input.action)) {
+      await updateJourney(tx,session,userId,input.action,input.briefingDate,input.requestId);
     } else if (["set-fuel-target", "connect-fuel-hose", "disconnect-fuel-hose", "start-fueling", "fuel-tick", "pause-fueling", "confirm-fuel"].includes(input.action)) {
       await updateFueling(tx, session, userId, input.action, input.quantityKg);
     } else if (["open-science", "propose-instruments", "purchase-instruments"].includes(input.action)) {
-      await updateScience(tx, session, userId, input.action, input.instrumentIds);
+      await updateScience(tx, session, userId, input.action, input.instrumentIds,input.acceptedIssueIds);
     } else if (["choose-component", "confirm-component", "finish-rocket"].includes(input.action)) {
-      await updateAssembly(tx, session, userId, input.action, input.optionId);
+      await updateAssembly(tx, session, userId, input.action, input.optionId,input.acceptedIssueIds);
     } else if (["build-next", "choose-hull", "confirm-hull"].includes(input.action)) {
       await updateRocketBuild(tx, session, userId, input.action, input.hullId);
     } else if (input.action === "ready") {

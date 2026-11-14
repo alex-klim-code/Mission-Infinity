@@ -8,6 +8,12 @@
 import type { RocketFuel } from "./rocketFuel";
 
 export interface RocketComponent {
+  /**
+   * Gameplay damage chance in percent, resolved once after lunar arrival.
+   * @minimum 0
+   * @maximum 100
+   */
+  damageRisk: number;
   fuel?: RocketFuel | null;
   id: string;
   categoryId: string;

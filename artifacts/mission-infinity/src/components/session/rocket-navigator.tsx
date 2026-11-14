@@ -3,8 +3,8 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Lock, Rocket, ShoppingCart } from 
 import type { RocketCategory, RocketComponent, RocketSection } from '@workspace/api-client-react';
 import { imgUrl } from '@/lib/game';
 import { cn } from '@/lib/utils';
-import { purchaseRocketPart } from '@/lib/rocket-purchase';
-import { BODY_CATEGORY, categoryIcon, fmtKg, fmtSigned, formatExact, hullById, shortDescription, type Props } from './rocket-shared';
+import { useEngineeringGuard } from './engineering-guard';
+import { BODY_CATEGORY, categoryIcon, damageRiskOf, fmtKg, fmtRisk, fmtSigned, formatExact, hullById, isRepairLocked, shortDescription, type Props } from './rocket-shared';
 import { OptionDialog } from './rocket-option-dialog';
 import { Breadcrumb, RootOverview, SectionOverview, type Crumb } from './rocket-overviews';
 
@@ -14,7 +14,10 @@ const READY = '__ready__';
 export function Navigator({ sections, official, byOption, props, remaining }: NavProps) {
   const flat = useMemo(() => sections.flatMap((s) => s.categories.map((c) => ({ sec: s, cat: c }))), [sections]);
   const hullBought = !!props.session.build?.selectedHullId;
+  const { guard } = useEngineeringGuard();
+  const repair = props.session.engineering?.repairing ? props.session.engineering : undefined;
   const [catId, setCatId] = useState<string>(() => {
+    if (repair) { const f = flat.find((x) => repair.failedCategoryIds.includes(x.cat.id) && !official.has(x.cat.id)) ?? flat.find((x) => repair.failedCategoryIds.includes(x.cat.id)); if (f) return f.cat.id; }
     if (!hullBought) return flat.find((x) => x.cat.id === BODY_CATEGORY)?.cat.id ?? flat[0]?.cat.id ?? READY;
     return flat.find((x) => !official.has(x.cat.id))?.cat.id ?? flat.find((x) => x.cat.id === BODY_CATEGORY)?.cat.id ?? flat[0]?.cat.id ?? READY;
   });
@@ -45,7 +48,9 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
   const step = (d: number) => { const n = flat[idx + d]; if (n) goto(n.cat.id); };
   const advanceFrom = (fromCat: string) => {
     const i = flat.findIndex((x) => x.cat.id === fromCat);
-    setCatId(flat[i + 1]?.cat.id ?? READY);
+    const needsRepair=(x:typeof flat[number])=>x.cat.id!==fromCat&&!!repair?.failedCategoryIds.includes(x.cat.id)&&!official.has(x.cat.id);
+    const next=repair?(flat.slice(i+1).find(needsRepair)??flat.find(needsRepair)):flat[i+1];
+    setCatId(next?.cat.id ?? READY);
     setView('category');
   };
   const onSelected = (forOpt: string, fromCat: string) => () => {
@@ -66,6 +71,12 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
       <div className="flex justify-end">
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground" data-testid="text-nav-progress">{doneCount}/{flat.length} categories set</span>
       </div>
+      {repair && (
+        <div className="mt-2 rounded-md border border-burn/40 bg-burn/[.07] p-3 text-sm" data-testid="panel-repair-banner">
+          <div className="kicker text-burn">Repair / attempt {repair.attempt}</div>
+          <p className="mt-1 text-muted-foreground">Replace the failed parts: <span className="text-foreground" data-testid="text-repair-categories">{flat.filter((x) => repair.failedCategoryIds.includes(x.cat.id)).map((x) => x.cat.name).join(', ') || 'none'}</span>. Working parts and the hull are kept and locked. Replacements are charged at full price; broken parts are not refunded.</p>
+        </div>
+      )}
       {!hullBought && <p className="mt-1 text-sm text-muted-foreground">Start with the rocket body. Other parts unlock once it is bought.</p>}
 
       <Breadcrumb items={crumbs} />
@@ -82,11 +93,11 @@ export function Navigator({ sections, official, byOption, props, remaining }: Na
           official={official} byOption={byOption} remaining={remaining} props={props} hullBought={hullBought} headRef={headRef}
           onPrev={idx > 0 ? () => step(-1) : undefined} onNext={() => (flat[idx + 1] ? step(1) : goto(READY))}
           onOpen={(id) => { openerRef.current = document.activeElement as HTMLElement; setOptId(id); }}
-          onPurchase={(id) => purchaseRocketPart(props, cat.id, id, () => {
+          onPurchase={(id) => guard({ kind: 'part', categoryId: cat.id, optionId: id, after: () => {
             if (currentCategoryRef.current !== cat.id || viewRef.current !== 'category') return;
             advanceFrom(cat.id);
             requestAnimationFrame(() => headRef.current?.focus());
-          })}
+          } })}
         />
       )}
 
@@ -136,10 +147,11 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
           const hull = body ? hullById(o.id) : undefined;
           const price = hull?.price ?? o.price;
           const currentPrice = byOption.get(official.get(cat.id) ?? '')?.price ?? 0;
-          const locked = !!props.session.assembly?.completed || (body ? hullBought : !hullBought);
+          const repairLocked = isRepairLocked(props.session, cat.id);
+          const locked = !!props.session.assembly?.completed || repairLocked || (body ? hullBought : !hullBought);
           const overBudget = price - currentPrice > remaining;
           const purchaseDisabled = !props.isHost || props.pending || locked || sel || overBudget;
-          const purchaseReason = sel ? 'Purchased' : locked ? 'Locked' : !props.isHost ? 'Leader only' : overBudget ? 'Insufficient budget' : undefined;
+          const purchaseReason = repairLocked ? 'Working part kept' : sel ? 'Purchased' : locked ? 'Locked' : !props.isHost ? 'Leader only' : overBudget ? 'Insufficient budget' : undefined;
           const desc = shortDescription(o);
           return (
             <li key={o.id} className="flex min-w-0 flex-col">
@@ -165,6 +177,7 @@ function CategoryPanel({ cat, secName, pos, of, official, byOption, remaining, p
                   {desc && <p className={cn('mt-1.5 text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere]', hull ? 'line-clamp-2' : 'line-clamp-3')} data-testid={`text-option-card-desc-${o.id}`}>{desc}</p>}
                   <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-3">
                     <span className="font-mono text-xs text-ion" data-testid={`text-option-card-price-${o.id}`}>{formatExact(price)}</span>
+                    {damageRiskOf(o, cat) != null && <span className="w-full font-mono text-[10px] text-[hsl(44_95%_60%)]" title="Game damage risk, rolled once after lunar arrival" data-testid={`text-option-card-risk-${o.id}`}>Game risk {fmtRisk(damageRiskOf(o, cat)!)}{o.quality == null ? ' (est.)' : ''}</span>}
                     {!hull && <span className="font-mono text-[10px] text-muted-foreground">{o.massKg == null ? 'Mass: no data' : fmtKg(o.massKg)}</span>}
                   </div>
                   {(sel || mine) && (

@@ -3,13 +3,15 @@ import type { SessionAction } from "@workspace/api-zod";
 import { requireCondition, type GameConnection } from "./database";
 import { advanceOperations, makeOperations, missionResults, returnFuelRequirement, sites, type JourneyPhase } from "./lunar-operations-model";
 import { flightTelemetry } from "./mission-flight-model";
+import {effectiveMissionBudget} from "./mission-finance";
+import { resolveHardwareHealth, returnBlockers } from "./hardware-health";
 
 export const lunarPhases:JourneyPhase[]=["LUNAR_OPERATIONS","LANDING","SAMPLE_COLLECTION","LANDING_FAILED","RETURN_FLIGHT","RETURN_FAILED","REENTRY","RECOVERY","RESULTS"];
 const json=<T>(v:T)=>sql<T>`${JSON.stringify(v)}::jsonb`;
 type Session={id:string;host_id:string;mission_id:string;status:string};
 
 /** Called only inside the existing session lock; all progress and rewards persist together. */
-export async function updateLunarOperations(db:GameConnection,session:Session,userId:string,input:Pick<SessionAction,"thrust"|"siteId">&{action:string}) {
+export async function updateLunarOperations(db:GameConnection,session:Session,userId:string,input:Pick<SessionAction,"thrust"|"siteId"|"confirmReturn">&{action:string}) {
   requireCondition(session.status==="MISSION_STARTED",409,"Start the mission first.");
   requireCondition(session.host_id===userId,403,"Only the Leader can control the spacecraft.");
   const row=await db.selectFrom("game_session_mission_journeys").selectAll().where("session_id","=",session.id).executeTakeFirst();
@@ -21,10 +23,20 @@ export async function updateLunarOperations(db:GameConnection,session:Session,us
   const advanced=advanceOperations(row.phase,initial,row.plan,now);
   let phase=advanced.phase;
   const o=advanced.operations;
+  if (!o.hardwareChecks && row.plan.hardwareChecks) {
+    const reached=flightTelemetry(row.plan,row.flight_started_at,now).progress;
+    o.hardwareChecks=row.plan.hardwareChecks.map(c=>c.detectedAtProgress!==undefined&&c.detectedAtProgress>reached?{...c,status:"OPERATIONAL" as const}:c);
+  }
   const action=input.action;
   if(phase==="RESULTS") {
     requireCondition(["view-results","journey-tick"].includes(action),409,"Mission results are final.");
     return;
+  }
+  // Backfill in-progress lunar saves on their next write, without touching
+  // completed reports or already-departed legacy return flights.
+  if (phase !== "FAILED") {
+    const build = await db.selectFrom("game_session_builds").select("selected_hull_id").where("session_id","=",session.id).executeTakeFirstOrThrow();
+    resolveHardwareHealth(o,{...assembly.selections,...(build.selected_hull_id?{"rocket-body":build.selected_hull_id}:{})});
   }
   if(action==="start-landing") {
     requireCondition(phase==="LUNAR_OPERATIONS"||o.landing.status==="DESCENDING"||o.landing.status==="LANDED",409,"Lunar landing is not available.");
@@ -50,6 +62,16 @@ export async function updateLunarOperations(db:GameConnection,session:Session,us
   }else if(action==="start-return") {
     requireCondition(o.returnStartedAt||phase==="SAMPLE_COLLECTION"||phase==="LUNAR_OPERATIONS",409,"Return departure is not available.");
     requireCondition(!o.siteId,409,"Finish the current collection before departure.");
+    if (!o.returnStartedAt && !input.confirmReturn) {
+      // Explicit false means the Leader chose to stay. An omitted value opens
+      // the check; retries of either command can never launch the spacecraft.
+      o.returnCheckOpened=input.confirmReturn !== false;
+      await db.updateTable("game_session_mission_journeys").set({operations:json(o)}).where("session_id","=",session.id).execute();
+      return;
+    }
+    requireCondition(o.returnStartedAt || o.returnCheckOpened,409,"Open the pre-return hardware check before confirming departure.");
+    const blockers=returnBlockers(o);
+    requireCondition(o.returnStartedAt || blockers.length===0,409,`RETURN BLOCKED — Critical return hardware damaged: ${blockers.map(c=>c.name).join(", ")}. The spacecraft cannot safely depart for Earth.`);
     if(!o.returnStartedAt) {
       phase="RETURN_FLIGHT";o.returnStartedAt=new Date(now).toISOString();
       o.returnInitialFuelKg=o.remainingFuelKg;o.returnManeuver="ASCENT";
@@ -61,17 +83,22 @@ export async function updateLunarOperations(db:GameConnection,session:Session,us
       }
     }
   }else requireCondition(["journey-tick","view-results"].includes(action),400,"Unknown lunar mission action.");
+  if (action==="view-results" && o.returnCheckOpened && !o.returnStartedAt && returnBlockers(o).length) {
+    phase="RETURN_FAILED";
+    o.returnManeuver="HARDWARE_FAILURE";
+    o.failure=`RETURN IMPOSSIBLE — Critical return hardware damaged: ${returnBlockers(o).map(c=>c.name).join(", ")}. Earth departure was blocked; the spacecraft and samples remain at the Moon.`;
+  }
   if(action==="view-results"||(phase==="RECOVERY"&&o.returnManeuver==="LANDED_ON_EARTH")) {
     requireCondition(["FAILED","LANDING_FAILED","RETURN_FAILED"].includes(phase)||(phase==="RECOVERY"&&o.returnManeuver==="LANDED_ON_EARTH"),409,"Finish the mission before viewing results.");
     if(phase==="FAILED") {
       o.failure="OUTBOUND FLIGHT FAILED — Fuel was exhausted before reaching the Moon. No lunar samples were returned.";
       o.missionDay=flightTelemetry(row.plan,row.flight_started_at,now).currentDay;
     }
-    const [build,mission]=await Promise.all([
+    const [build,budget]=await Promise.all([
       db.selectFrom("game_session_builds").select("spent").where("session_id","=",session.id).executeTakeFirstOrThrow(),
-      db.selectFrom("missions").select("definition").where("id","=",session.mission_id).executeTakeFirstOrThrow(),
+      effectiveMissionBudget(db,session),
     ]);
-    o.results=missionResults(o,row.plan,(mission.definition as {budget:number}).budget-build.spent,phase!=="FAILED");
+    o.results=missionResults(o,row.plan,budget-build.spent,phase!=="FAILED");
     phase="RESULTS";
   }
   await db.updateTable("game_session_mission_journeys").set({phase,operations:json(o)}).where("session_id","=",session.id).execute();

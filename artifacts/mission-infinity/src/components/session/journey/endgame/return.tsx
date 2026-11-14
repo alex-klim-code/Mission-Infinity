@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { HullVisual, formatExact, useCalm, type Props } from '../../rocket-shared';
 import { Earth, ModelNote, Moon, Stat, TickError, Waiting, bez, bezAngle, clamp01, kg, num, useNow, type Pt } from '../shared';
 import { compOf } from './common';
+import { HardwareCheckList } from './hardware-checks';
 
 type Extra = { tickError?: boolean; onRetry?: () => void };
 const M: Pt = { x: 110, y: 90 }, E: Pt = { x: 690, y: 210 }, C: Pt = { x: 420, y: -30 };
@@ -175,6 +176,18 @@ function Results(p: Props & { ops: MissionOperations }) {
         <Stat label="Mission duration" value={`${r.durationDays} days`} testid="text-results-duration" />
         <Stat label="Remaining budget" value={formatExact(r.remainingBudget)} testid="text-results-budget" />
       </dl>
+      {(p.ops.hardwareChecks?.length ?? 0) > 0 ? (
+        <section className="mt-4 rounded-md border border-white/10 bg-white/5 p-3" data-testid="panel-results-hardware" data-atomic="">
+          <h3 className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Hardware check after lunar arrival (game risk)</h3>
+          <HardwareCheckList checks={p.ops.hardwareChecks!} testid="list-results-hardware" />
+        </section>
+      ) : p.ops.equipment.filter(e => e.id.startsWith('scientific-instruments-')).map(e => (
+        <div key={e.id} className={cn('mt-4 rounded-md border p-3 text-sm', e.status === 'DAMAGED' ? 'border-destructive/40 bg-destructive/10' : 'border-white/10 bg-white/5')} data-testid="text-builder-instrument-result" role="status">
+          <h3 className="font-bold">Rocket Builder — Scientific Instruments</h3>
+          <p className="mt-1">{e.name}: <strong>{e.status === 'DAMAGED' ? 'Damaged' : 'Operational'}</strong></p>
+          <p className="mt-1 text-xs text-muted-foreground">{e.warning ?? 'The instrument survived the mission. Lowest-priced variant: 50% damage chance.'}</p>
+        </div>
+      ))}
       {lost && <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-foreground/85" data-testid="text-results-lost">Samples and science gathered on the Moon only count once recovered on Earth. Everything that did not come home is lost.</p>}
     </div>
   );

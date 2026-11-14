@@ -36,7 +36,7 @@ export function FlightStatusPane({ session }: Props) {
   const loaded = plan?.fuelLoadedKg ?? session.fueling?.loadedKg ?? 0;
   const remaining = f?.remainingFuelKg ?? loaded;
   const fuelPct = loaded ? (remaining / loaded) * 100 : 0;
-  const statusText = o ? o.returnManeuver.replaceAll('_',' ') : failed ? 'Aborted' : f ? MANEUVER[f.maneuver] : '--';
+  const statusText = j?.phase === 'LAUNCH_FAILURE' ? 'Weather abort' : o ? o.returnManeuver.replaceAll('_',' ') : failed ? 'Aborted' : f ? MANEUVER[f.maneuver] : '--';
 
   const warn = failed && (
     <p role="alert" className="flex gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive" data-testid="alert-pane-failed">

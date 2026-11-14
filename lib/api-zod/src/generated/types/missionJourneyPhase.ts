@@ -27,4 +27,5 @@ export const MissionJourneyPhase = {
   REENTRY: "REENTRY",
   RECOVERY: "RECOVERY",
   RESULTS: "RESULTS",
+  LAUNCH_FAILURE: "LAUNCH_FAILURE",
 } as const;

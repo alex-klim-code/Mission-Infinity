@@ -5,7 +5,7 @@ import { assessFuel, compareFuel, fuelDescription, fuelRole } from './rocket-fue
 
 function part(id: string, categoryId: string, systems?: string[][]): RocketComponent {
   return {
-    id, categoryId, name: id, price: 100, massKg: 1, quality: null,
+    id, categoryId, name: id, price: 100, massKg: 1, quality: null, damageRisk: 25,
     parameters: '', description: '', dataStatus: 'TEST', source: 'Test fixture',
     originalCategory: '', referenceUrl: '', qualityMethodology: '',
     fuel: { role: categoryId === 'fuel-tanks' ? 'tank' : 'engine',

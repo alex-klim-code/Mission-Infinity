@@ -5,8 +5,12 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { HardwareCheck } from "./hardwareCheck";
+import type { LaunchAttempt } from "./launchAttempt";
 
 export interface MissionFlightPlan {
+  launchAttempts?: LaunchAttempt[];
+  hardwareChecks?: HardwareCheck[];
   routeId: string;
   routeLabel: string;
   distanceKm: number;

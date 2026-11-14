@@ -1,10 +1,11 @@
+import { Paged } from './paged';
 import { Check, Crown, ExternalLink, Send } from 'lucide-react';
 import type { RocketCategory, RocketComponent, SessionActionHullId } from '@workspace/api-client-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
-import { purchaseRocketPart } from '@/lib/rocket-purchase';
-import { BODY_CATEGORY, HullVisual, Price, fmtKg, fmtSigned, formatExact, hullById, isHullOption, type Props } from './rocket-shared';
+import { useEngineeringGuard } from './engineering-guard';
+import { BODY_CATEGORY, HullVisual, Price, fmtKg, fmtRisk, damageRiskOf, fmtSigned, formatExact, hullById, isHullOption, isRepairLocked, type Props } from './rocket-shared';
 import { RocketFuelCheck } from './rocket-fuel-check';
 
 type DetailProps = {
@@ -14,6 +15,8 @@ type DetailProps = {
 
 export function OptionDetail({ option, category, props, official, byOption, remaining, onSelected }: DetailProps) {
   const { session, me, isHost, act, pending, pendingAction } = props;
+  const { guard, checking } = useEngineeringGuard();
+  const repairLocked = isRepairLocked(session, category.id);
   const body = category.id === BODY_CATEGORY || isHullOption(option);
   const hullBought = !!session.build?.selectedHullId;
   const currentId = official.get(category.id);
@@ -29,7 +32,7 @@ export function OptionDetail({ option, category, props, official, byOption, rema
   const mine = proposals.find((p) => p.playerId === me)?.optionId === option.id;
   const screen = session.build?.screen ?? 'INTRO';
   const hullId = option.id as SessionActionHullId;
-  const locked = completed || (body && hullBought) || (!body && !hullBought);
+  const locked = completed || repairLocked || (body && hullBought) || (!body && !hullBought);
   const overBudget = diff > remaining;
   // Guests advance their own navigator after a successful proposal; the Leader stays put.
   const proposeDone = isHost ? undefined : onSelected;
@@ -43,13 +46,14 @@ export function OptionDetail({ option, category, props, official, byOption, rema
   };
   const confirm = () => {
     if (overBudget) return;
-    purchaseRocketPart(props, category.id, option.id, onSelected);
+    guard({ kind: 'part', categoryId: category.id, optionId: option.id, after: onSelected });
   };
   const guestBlockedIntro = body && !isHost && screen === 'INTRO';
 
   const rows: [string, string][] = [
     ['Price', formatExact(option.price)],
     ['Mass', option.massKg == null ? 'No data' : fmtKg(option.massKg)],
+    ...((): [string, string][] => { const r = damageRiskOf(option, category); return r == null ? [] : [['Game damage risk', `${fmtRisk(r)}${option.quality == null ? ' (estimate: no quality rating)' : ''}. Gameplay value: higher quality means lower risk.`]]; })(),
     ['Game quality score', option.quality == null ? 'Not rated' : String(option.quality)],
     ['Data status', option.dataStatus || '--'],
     ['Original category', option.originalCategory || '--'],
@@ -90,6 +94,7 @@ export function OptionDetail({ option, category, props, official, byOption, rema
       <div className="glass mt-6 space-y-3 rounded-lg p-4" data-testid="panel-option-actions">
         <div className="text-sm text-muted-foreground" aria-live="polite" data-testid="text-option-status">
           {completed ? 'Rocket is complete. No further changes.'
+            : repairLocked ? 'Working part kept during repair. Only failed categories can change.'
             : body && hullBought ? 'The body is bought once and cannot be changed.'
             : !body && !hullBought ? 'Buy the rocket body first.'
             : guestBlockedIntro ? 'Waiting for the Leader to open body selection.'
@@ -104,14 +109,14 @@ export function OptionDetail({ option, category, props, official, byOption, rema
               {mine ? (<><Check className="h-4 w-4" /> Proposed</>) : (<><Send className="h-4 w-4" /> Propose</>)}
             </HudButton>
             {isHost && (
-              <HudButton variant="burn" disabled={pending || overBudget} loading={pendingAction === 'confirm-component' || pendingAction === 'confirm-hull' || pendingAction === 'build-next'} onClick={confirm} data-testid="button-confirm-option">
+              <HudButton variant="burn" disabled={pending || overBudget || checking} loading={checking || pendingAction === 'confirm-component' || pendingAction === 'confirm-hull' || pendingAction === 'build-next'} onClick={confirm} data-testid="button-confirm-option">
                 <Crown className="h-4 w-4" /> {current ? 'Confirm replacement' : 'Confirm purchase'}
               </HudButton>
             )}
           </div>
         )}
         {!isHost && !locked && <p className="text-[11px] text-muted-foreground">Proposals are free. The Leader confirms purchases.</p>}
-        {isHost && !locked && !isOfficial && <p className="text-[11px] text-muted-foreground">Nothing is charged until you confirm. A confirmed purchase moves you to the next category.</p>}
+        {isHost && !locked && !isOfficial && <p className="text-[11px] text-muted-foreground">Engineers review compatibility first. Nothing is charged until you confirm. A confirmed purchase moves you to the next category.</p>}
       </div>
     </div>
   );
@@ -125,6 +130,10 @@ export function OptionDialog({ option, category, onClose, onCloseAutoFocus, ...r
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.target as HTMLElement).focus();
+        }}
         onCloseAutoFocus={onCloseAutoFocus}
         className="flex max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-2xl flex-col gap-0 overflow-hidden border-white/10 bg-card p-0 [&>button]:z-10 [&>button]:rounded-md [&>button]:border [&>button]:border-white/15 [&>button]:bg-void/80 [&>button]:p-1.5 [&>button]:opacity-100 [&>button:hover]:border-ion [&>button:hover]:text-ion"
         data-testid="dialog-rocket-option"
@@ -136,9 +145,9 @@ export function OptionDialog({ option, category, onClose, onCloseAutoFocus, ...r
               <DialogTitle className="mt-1 font-display text-2xl font-bold uppercase leading-tight [overflow-wrap:anywhere] sm:text-3xl" data-testid="text-option-name">{option.name}</DialogTitle>
               <DialogDescription asChild><div className="mt-1"><Price value={option.price} className="text-base text-ion" /></div></DialogDescription>
             </div>
-            <div className="scroll-thin min-h-0 flex-1 overflow-y-auto p-5">
+            <Paged className="min-h-0 flex-1" innerClassName="p-5" label="Details" resetKey={option.id}>
               <OptionDetail option={option} category={category} {...rest} />
-            </div>
+            </Paged>
           </>
         )}
       </DialogContent>

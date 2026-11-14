@@ -1,3 +1,5 @@
+import { Paged } from './paged';
+import { FlightDamageAlarm } from './journey/flight-damage-alarm';
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, ChevronDown, Rocket } from 'lucide-react';
@@ -18,8 +20,7 @@ import { ScienceStage } from './science-stage';
 import { FuelStage } from './fuel-stage';
 import { ConstructionStage, MissionJourneyStage, FlightStatusPane } from './journey';
 import type { ActFn } from './session-shared';
-import { RocketFuelCheck } from './rocket-fuel-check';
-import { assessFuel, fuelCopy } from '@/lib/rocket-fuel';
+import { EngineeringGuardProvider } from './engineering-guard';
 
 export { HULLS, hullById, formatExact, BODY_CATEGORY } from './rocket-shared';
 
@@ -54,9 +55,6 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
   const [open, setOpen] = useState(false);
   const hull = hullById(summary.hullId);
   const ready = summary.count === summary.total && summary.total > 0;
-  const selectedParts = [...official.values()].flatMap(id => byOption.get(id) ? [byOption.get(id)!] : []);
-  const fuel = assessFuel(selectedParts);
-  const fuelCheck = <RocketFuelCheck parts={selectedParts} />;
   const finish = isHost && !session.assembly?.completed && (
     <HudButton variant="burn" className="w-full" disabled={!ready || pending} loading={pendingAction === 'finish-rocket'} onClick={() => act({ action: 'finish-rocket' })} data-testid="button-finish-rocket">
       <Rocket className="h-4 w-4" /> Finish rocket {summary.count}/{summary.total}
@@ -95,11 +93,10 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
             <div className="truncate font-display text-sm font-bold uppercase">{hull?.name ?? 'Body not bought'}</div>
             <div className="font-mono text-[11px] text-burn">{formatExact(summary.spent)} <span className="text-muted-foreground">spent</span></div>
             <div className="font-mono text-[10px] text-muted-foreground">{summary.count}/{summary.total} categories / {fmtKg(summary.dryMass)} known dry</div>
-            <div className="text-[10px] text-amber-200">{fuelCopy.title}: {fuel.conflicts ? `${fuelCopy.conflict} (${fuel.conflicts})` : fuelCopy.unverified}</div>
           </div>
           <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')} />
         </button>
-        {open && <div className="scroll-thin max-h-[45dvh] space-y-3 overflow-y-auto px-3 pb-3">{stats}{fuelCheck}{list}</div>}
+        {open && <div className="scroll-thin max-h-[45dvh] space-y-3 overflow-y-auto px-3 pb-3">{stats}{list}</div>}
         {finish && <div className="px-3 pb-2">{finish}</div>}
       </div>
       {/* desktop pane */}
@@ -112,7 +109,6 @@ function SummaryPane({ session, sections, summary, isHost, act, pending, pending
         {session.fueling?.opened && <p className="mt-2 font-mono text-xs text-ion" data-testid="text-summary-fuel">Fuel: {fmtKg(session.fueling.loadedKg)} / {formatExact(session.fueling.spent)}</p>}
         <p className="mt-2 text-[10px] leading-snug text-muted-foreground">Dry mass sums parts with known catalog mass only{summary.unknownMass ? ` (${summary.unknownMass} without data)` : ''}; body mass is not included. Not a total wet mass.</p>
         {finish && <div className="mt-3">{finish}</div>}
-        {fuelCheck}
         <div className="mt-4">{list}</div>
       </aside>
     </>
@@ -125,7 +121,7 @@ function Built({ session, sections, summary, official, byOption, mission, isHost
   const calm = useCalm();
   const hull = hullById(session.build?.selectedHullId);
   return (
-    <div className="scroll-thin relative z-10 h-full overflow-y-auto" data-testid="panel-rocket-built">
+    <div className="relative z-10" data-testid="panel-rocket-built">
       <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)] md:px-8">
         <motion.div initial={calm ? false : { opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>
           <HullVisual hullId={hull?.id} className="h-64 w-full md:h-[28rem]" />
@@ -143,7 +139,6 @@ function Built({ session, sections, summary, official, byOption, mission, isHost
             <div className="bg-void/85 p-3"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Remaining budget</dt><dd className="mt-0.5 font-mono text-lg text-ion" data-testid="text-built-remaining">{formatExact(summary.remaining)}</dd></div>
             <div className="bg-void/85 p-3"><dt className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Known dry mass (parts)</dt><dd className="mt-0.5 font-mono text-lg">{fmtKg(summary.dryMass)}</dd></div>
           </dl>
-          <RocketFuelCheck parts={[...official.values()].flatMap(id => byOption.get(id) ? [byOption.get(id)!] : [])} />
           <div className="mt-6 space-y-4" data-testid="list-built-config">
             {sections.map((s) => (
               <section key={s.id}>
@@ -180,6 +175,7 @@ export function RocketBuildView(props: Props) {
   const journey = session.journey;
   const journeyOpen = !!journey && journey.phase !== 'NONE';
   const flightStatus = !!journey && !['NONE','ROUTE','CALENDAR'].includes(journey.phase);
+  const repairing = !!session.engineering?.repairing && !session.assembly?.completed;
   const constructionOpen = !!journey?.construction.opened && !journey.construction.delivered && !session.fueling?.opened;
 
   if (catalog.isLoading)
@@ -207,17 +203,22 @@ export function RocketBuildView(props: Props) {
   const spent = session.build?.spent ?? 0;
   const summary: Summary = { spent, remaining: (mission?.budget ?? 0) - spent, count: cats.filter((c) => official.has(c.id)).length, total: cats.length, dryMass, unknownMass, hullId: session.build?.selectedHullId };
 
-  if (session.assembly?.completed && !session.science?.opened) return <Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} />;
+  if (session.assembly?.completed && !session.science?.opened) return <Paged className="relative z-10 h-full" label="Rocket"><Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} /></Paged>;
 
   return (
+    <EngineeringGuardProvider props={props} byOption={byOption}>
     <div className="relative z-10 flex h-full min-h-0 flex-col md:grid md:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
       <div className="md:order-2 md:min-h-0 md:contents">
         {flightStatus ? <FlightStatusPane {...props} /> : <SummaryPane session={session} sections={sections} summary={summary} isHost={props.isHost} act={props.act} pending={props.pending} pendingAction={props.pendingAction} official={official} byOption={byOption} />}
       </div>
-      <div className="scroll-thin min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden md:order-1" data-testid="panel-builder-left">
-        {journeyOpen ? <MissionJourneyStage {...props} /> : constructionOpen ? <ConstructionStage {...props} /> : session.fueling?.opened ? <FuelStage {...props} /> : session.science?.opened ? <ScienceStage {...props} /> :
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col md:order-1">
+      {['FLIGHT','MOON_ARRIVAL','FAILED'].includes(journey?.phase ?? '') && <FlightDamageAlarm alerts={journey?.flightAlerts ?? []} />}
+      <Paged className="min-h-0 min-w-0 flex-1 overflow-x-hidden" testid="panel-builder-left" label="Stage" resetKey={`${journey?.phase ?? ''}:${session.science?.opened}:${session.fueling?.opened}:${constructionOpen}`}>
+        {journeyOpen ? <MissionJourneyStage {...props} /> : repairing ? <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div> : constructionOpen ? <ConstructionStage {...props} /> : session.fueling?.opened ? <FuelStage {...props} /> : session.science?.opened ? <ScienceStage {...props} /> :
           <div className="mx-auto max-w-4xl px-3 py-4 md:px-6"><Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} /></div>}
+      </Paged>
       </div>
     </div>
+    </EngineeringGuardProvider>
   );
 }

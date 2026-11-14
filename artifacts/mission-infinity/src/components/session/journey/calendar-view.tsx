@@ -59,6 +59,7 @@ export function CalendarView({ session, isHost, act, pending, pendingAction }: P
                   <div className="font-mono text-xs text-muted-foreground" data-testid="text-calendar-selected-weather">{w.label} / UTC</div>
                 </div>
               </div>
+              {sel.condition === 'RAIN' && <p className="mt-3 flex gap-2 rounded-md border border-[hsl(205_80%_65%/.4)] bg-[hsl(205_80%_65%/.1)] p-2 text-xs text-[hsl(205_80%_75%)]" data-testid="text-calendar-rain-risk"><AlertTriangle className="h-4 w-4 shrink-0" /> Rain day: 25% chance the launch fails and the rocket needs repairs. This is a game balance rule, not a real weather prediction.</p>}
               {w.risk && <p role="alert" className="mt-3 flex gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive" data-testid="alert-calendar-weather"><AlertTriangle className="h-4 w-4 shrink-0" /> {sel.condition === 'STORM' ? 'Storm forecast. Launching in a storm is unsafe.' : 'Strong wind forecast. High winds can push a rocket off course.'} Consider another day.</p>}
             </>
           ) : <p className="text-sm text-muted-foreground">Tap a date to see its forecast.</p>}

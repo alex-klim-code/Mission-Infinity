@@ -6,6 +6,7 @@ import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { useCalm, type Props } from '../../rocket-shared';
 import { ModelNote, Stat, TickError, Waiting, clamp01, kg, num, useNow } from '../shared';
+import { ReturnCheckView } from './hardware-checks';
 import { LanderSvg, Warn, compOf, landerVariant } from './common';
 
 type Extra = { tickError?: boolean; onRetry?: () => void };
@@ -222,7 +223,7 @@ function CollectionView({ session, isHost, act, pending, pendingAction }: Props)
       {!ops.canCollect && <p className="mt-2 text-xs text-destructive" data-testid="text-cannot-collect">No working sample collector or container aboard. Physical collection is impossible.</p>}
       <div className="mt-4 flex flex-col gap-2 rounded-md border border-white/10 bg-void/70 p-3 sm:flex-row sm:items-center">
         <p className="flex-1 text-xs text-muted-foreground">{ops.sampleMassKg < 1 ? 'Below 1 kg of samples the main objective fails, but you can still lift off.' : 'Main sample objective covered. Additional sites add science.'}</p>
-        {isHost ? <HudButton variant="burn" disabled={!canGo} loading={pendingAction === 'start-return'} onClick={() => act({ action: 'start-return' })} data-testid="button-start-return"><ArrowUpRight className="h-4 w-4" /> Lift off for Earth</HudButton>
+        {isHost ? <HudButton variant="burn" disabled={!canGo} loading={pendingAction === 'start-return'} onClick={() => act({ action: 'start-return' })} data-testid="button-start-return"><ArrowUpRight className="h-4 w-4" /> Run pre-return check</HudButton>
           : <Waiting testid="text-return-guest">Waiting for the Leader to lift off</Waiting>}
       </div>
     </>
@@ -248,7 +249,7 @@ export function LunarGameplayStage(props: Props & Extra) {
     <div className="mx-auto max-w-5xl px-4 py-6 md:px-8" data-testid="panel-journey-lunar-gameplay">
       <div className="kicker mb-1">Stage 6 / Lunar landing and sample collection</div>
       <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-5xl" data-testid="text-lunar-stage-title">
-        {phase === 'SAMPLE_COLLECTION' ? 'Sample collection' : L.status === 'DESCENDING' ? 'Powered descent' : crashed ? 'Lander lost' : 'Landing preparation'}
+        {ops.returnCheckOpened ? 'Pre-return check' : phase === 'SAMPLE_COLLECTION' ? 'Sample collection' : L.status === 'DESCENDING' ? 'Powered descent' : crashed ? 'Lander lost' : 'Landing preparation'}
       </h1>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground" data-testid="text-lander-components">
         {[['Lander', lander], ['Legs', legs], ['Descent engine', engine]].map(([l, c]) => (
@@ -256,7 +257,7 @@ export function LunarGameplayStage(props: Props & Extra) {
         ))}
       </div>
 
-      {phase === 'SAMPLE_COLLECTION' ? <CollectionView {...props} /> : (
+      {ops.returnCheckOpened ? <ReturnCheckView {...props} ops={ops} /> : phase === 'SAMPLE_COLLECTION' ? <CollectionView {...props} /> : (
         <>
           <div className={cn('glass hud-corners relative mt-4 overflow-hidden rounded-lg', crashed && 'border-destructive/50')} style={{ aspectRatio: '800 / 360' }} data-testid="panel-landing-scene">
             <LandingScene ops={ops} calm={calm} />
@@ -282,7 +283,7 @@ export function LunarGameplayStage(props: Props & Extra) {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {isHost ? <>
                       <HudButton variant="burn" disabled={pending || blind} loading={pendingAction === 'start-landing'} onClick={() => act({ action: 'start-landing' })} data-testid="button-start-landing"><PlaneLanding className="h-4 w-4" /> Begin powered descent</HudButton>
-                      {blind && <HudButton variant="ghost" disabled={pending} loading={pendingAction === 'start-return'} onClick={() => act({ action: 'start-return' })} data-testid="button-abort-return"><ArrowUpRight className="h-4 w-4" /> Abort landing and return to Earth</HudButton>}
+                      {blind && <HudButton variant="ghost" disabled={pending} loading={pendingAction === 'start-return'} onClick={() => act({ action: 'start-return' })} data-testid="button-abort-return"><ArrowUpRight className="h-4 w-4" /> Abort landing: run pre-return check</HudButton>}
                     </> : <Waiting testid="text-landing-guest">Waiting for the Leader to begin descent</Waiting>}
                   </div>
                   {blind && <p className="mt-2 text-xs text-destructive" data-testid="text-landing-blocked">No camera and no alternative navigation. Landing is impossible; aborting fails the main objective but brings the craft home.</p>}
@@ -300,7 +301,7 @@ export function LunarGameplayStage(props: Props & Extra) {
           </div>
         </>
       )}
-      {phase === 'SAMPLE_COLLECTION' && <div className="mt-4"><EquipmentPanel ops={ops} /></div>}
+      {phase === 'SAMPLE_COLLECTION' && !ops.returnCheckOpened && <div className="mt-4"><EquipmentPanel ops={ops} /></div>}
       {phase === 'SAMPLE_COLLECTION' && tickError && <TickError onRetry={onRetry} testid="alert-collection-tick" />}
       <div className="mt-4"><ModelNote>Descent physics, sample mass and science are computed by Mission Control. The scene is illustrative.</ModelNote></div>
       {!calm && L.status === 'DESCENDING' && <motion.span className="sr-only">descending</motion.span>}

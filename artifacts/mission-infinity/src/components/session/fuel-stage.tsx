@@ -246,7 +246,7 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
   /* ---------- completed ---------- */
   if (f.completed) {
     return (
-      <div className="scroll-thin relative z-10 h-full overflow-y-auto" data-testid="panel-fuel-completed">
+      <div className="relative z-10" data-testid="panel-fuel-completed">
         <motion.div initial={calm ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="mx-auto grid max-w-4xl gap-6 px-4 py-8 md:grid-cols-[180px_1fr] md:px-8">
           <div className="relative mx-auto h-72 w-32">
             <HullVisual hullId={session.build?.selectedHullId} className="h-full" />
@@ -277,7 +277,7 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
 
   /* ---------- active station ---------- */
   return (
-    <div className="scroll-thin relative z-10 h-full overflow-y-auto" data-testid="panel-fuel-station">
+    <div className="relative z-10" data-testid="panel-fuel-station">
       <div className="mx-auto max-w-6xl px-3 py-5 md:px-6">
         <div className="kicker mb-1 flex items-center gap-2"><Fuel className="h-3.5 w-3.5 text-burn" /> Propellant operations</div>
         <h1 className="font-display text-3xl font-bold uppercase leading-tight sm:text-4xl" data-testid="text-fuel-title">Fuel Loading Station</h1>

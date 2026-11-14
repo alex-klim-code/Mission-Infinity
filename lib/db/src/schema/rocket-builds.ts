@@ -14,7 +14,7 @@ export const gameSessionBuilds = pgTable("game_session_builds", {
 }, t => [
   check("rocket_build_screen_valid", sql`${t.screen} in ('INTRO','HULL_SELECTION','HULL_CONFIRMED')`),
   check("rocket_build_spent_nonnegative", sql`${t.spent} >= 0`),
-  check("rocket_build_months_valid", sql`${t.elapsedMonths} between 0 and 36`),
+  check("rocket_build_elapsed_months_nonnegative", sql`${t.elapsedMonths} >= 0`),
 ]);
 export const insertGameSessionBuildSchema = createInsertSchema(gameSessionBuilds);
 export type InsertGameSessionBuild = z.infer<typeof insertGameSessionBuildSchema>;

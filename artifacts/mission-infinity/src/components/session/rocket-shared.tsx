@@ -20,6 +20,9 @@ export const formatExact = (n: number) => `$${Math.round(n).toLocaleString('en-U
 export const fmtSigned = (n: number) => (n === 0 ? '$0' : `${n > 0 ? '+' : '-'}${formatExact(Math.abs(n))}`);
 export const fmtKg = (n: number) => `${n.toLocaleString('en-US', { maximumFractionDigits: 6 })} kg`;
 
+/** Game damage risk (percent) for a part: per-component value from the server, falling back to its category. */
+export const damageRiskOf = (o: RocketComponent, _cat?: unknown): number | undefined => o.damageRisk;
+export const fmtRisk = (n: number) => `${Math.round(n * 10) / 10}%`;
 export const BODY_CATEGORY = 'rocket-body';
 export const isHullOption = (o: RocketComponent) => o.categoryId === BODY_CATEGORY || !!hullById(o.id);
 
@@ -87,3 +90,10 @@ const ICONS: [RegExp, LucideIcon][] = [
 ];
 export const categoryIcon = (c: { id: string; name: string }): LucideIcon =>
   ICONS.find(([r]) => r.test(c.id) || r.test(c.name))?.[1] ?? Boxes;
+
+/** During a repair only the failed categories may change; working parts stay locked. */
+export function isRepairLocked(session: GameSession, categoryId: string) {
+  const e = session.engineering;
+  if (!e?.repairing) return false;
+  return !e.failedCategoryIds.includes(categoryId);
+}

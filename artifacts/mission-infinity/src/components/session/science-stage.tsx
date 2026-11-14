@@ -6,6 +6,7 @@ import { ErrorState, HudButton } from '@/components/ui-kit';
 import { errMsg } from '@/lib/game';
 import { cn } from '@/lib/utils';
 import { fmtKg, formatExact, useCalm, type Props } from './rocket-shared';
+import { useEngineeringGuard } from './engineering-guard';
 
 const fmtW = (n: number) => `${n.toLocaleString('en-US', { maximumFractionDigits: 2 })} W`;
 const fmtPts = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -36,6 +37,7 @@ const Disclaimer = () => (
 
 export function ScienceStage({ session, mission, me, isHost, act, pending, pendingAction }: Props) {
   const calm = useCalm();
+  const { guard, checking } = useEngineeringGuard();
   const catalog = useGetGameCatalog();
   const list = useMemo(() => catalog.data?.scientificInstruments ?? [], [catalog.data]);
   const sci = session.science;
@@ -61,7 +63,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
     const t = totals(list, sci.instrumentIds);
     const bought = list.filter((i) => sci.instrumentIds.includes(i.id));
     return (
-      <div className="scroll-thin relative z-10 h-full overflow-y-auto" data-testid="panel-science-completed">
+      <div className="relative z-10" data-testid="panel-science-completed">
         <motion.div initial={calm ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="mx-auto max-w-4xl px-4 py-8 md:px-8">
           <div className="kicker mb-2 flex items-center gap-2"><Check className="h-3.5 w-3.5 text-burn" /> Stage 2 complete</div>
           <h1 className="font-display text-4xl font-bold uppercase leading-tight sm:text-5xl" data-testid="text-science-completed">Payload Locked</h1>
@@ -110,7 +112,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
   const proposals = sci?.proposals ?? [];
 
   return (
-    <div className="scroll-thin relative z-10 h-full overflow-y-auto" data-testid="panel-science-select">
+    <div className="relative z-10" data-testid="panel-science-select">
       <div className="mx-auto grid max-w-6xl gap-6 px-3 py-6 md:grid-cols-[minmax(0,1fr)_340px] md:px-8">
         <div className="min-w-0">
           <div className="kicker mb-2 flex items-center gap-2"><Microscope className="h-3.5 w-3.5 text-burn" /> Stage 2 / Scientific instruments</div>
@@ -177,7 +179,7 @@ export function ScienceStage({ session, mission, me, isHost, act, pending, pendi
                 <Send className="h-4 w-4" /> Propose {t.n ? `${t.n} instruments` : 'no instruments'}
               </HudButton>
               {isHost ? (
-                <HudButton variant="burn" className="w-full" disabled={over || pending} loading={pendingAction === 'purchase-instruments'} onClick={() => act({ action: 'purchase-instruments', instrumentIds: ids })} data-testid="button-purchase-instruments">
+                <HudButton variant="burn" className="w-full" disabled={over || pending || checking} loading={checking || pendingAction === 'purchase-instruments'} onClick={() => guard({ kind: 'science', instrumentIds: ids })} data-testid="button-purchase-instruments">
                   <ShoppingCart className="h-4 w-4" /> Purchase {formatExact(t.price)}
                 </HudButton>
               ) : (

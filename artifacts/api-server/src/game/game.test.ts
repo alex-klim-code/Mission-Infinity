@@ -190,7 +190,10 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await gameDb.updateTable("game_session_builds").set({spent:50000000+cheap.price}).where("session_id","=",session.id).execute();
       let expected = 50000000;
       for(const category of componentCategories) {
-        const option = [...category.options].sort((a,b)=>a.price-b.price)[0];
+        // This scenario purchases every optional instrument; provision the
+        // training-model power bus accordingly. Risky designs have separate tests.
+        const option = [...category.options].sort(category.id==="electrical-power-system"
+          ?(a,b)=>(b.quality??0)-(a.quality??0):(a,b)=>a.price-b.price)[0];
         expected += option.price;
         await updateSession(leader,session.id,{action:"confirm-component",optionId:option.id});
       }

@@ -176,6 +176,22 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SessionResult' }
+  /game/sessions/{id}/engineering-advice:
+    post:
+      operationId: previewEngineering
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EngineeringPreview' }
+      responses:
+        '200':
+          description: Compatibility preview; no purchase or random outcome
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EngineeringAdvice' }
   /game/sessions/{id}/messages:
     get:
       operationId: getSessionMessages
@@ -509,6 +525,8 @@ components:
         science: { $ref: '#/components/schemas/ScienceLoadout' }
         fueling: { $ref: '#/components/schemas/FuelLoad' }
         journey: { $ref: '#/components/schemas/MissionJourney' }
+        engineering: { $ref: '#/components/schemas/EngineeringState' }
+        finance: { $ref: '#/components/schemas/MissionFinance' }
         createdAt: { type: string }
     RocketBuild:
       type: object
@@ -529,8 +547,13 @@ components:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments, open-fueling, set-fuel-target, connect-fuel-hose, disconnect-fuel-hose, start-fueling, fuel-tick, pause-fueling, confirm-fuel, start-construction, journey-tick, open-briefing, briefing-continue, confirm-briefing-date, launch-flight, check-instruments, continue-lunar, start-landing, set-landing-thrust, collect-site, start-return, view-results] }
+        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments, open-fueling, set-fuel-target, connect-fuel-hose, disconnect-fuel-hose, start-fueling, fuel-tick, pause-fueling, confirm-fuel, start-construction, journey-tick, open-briefing, briefing-continue, confirm-briefing-date, launch-flight, check-instruments, continue-lunar, start-landing, set-landing-thrust, collect-site, start-return, view-results, rebuild-rocket, request-funding, funding-tick, repair-weather-launch] }
+        acceptedIssueIds: { type: array, maxItems: 20, uniqueItems: true, items: { type: string } }
+        requestId: { type: string, format: uuid }
+        amount: { type: integer, minimum: 1000000, maximum: 400000000 }
+        reason: { type: string, minLength: 10, maxLength: 600 }
         thrust: { type: number, minimum: 0, maximum: 100 }
+        confirmReturn: { type: boolean, description: 'Explicit Leader confirmation after opening the pre-return hardware check.' }
         siteId: { type: string, enum: [regolith, crater, ridge] }
         briefingDate: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
         quantityKg: { type: integer, minimum: 0, maximum: 30000 }
@@ -571,8 +594,13 @@ components:
       type: object
       required: [construction, phase, weather, briefingDate, plan, flight, diagnostics, diagnosticsProgress, diagnosticsComplete, availableSciencePoints, maxSciencePoints]
       properties:
+        launchFailure:
+          anyOf:
+            - { $ref: '#/components/schemas/LaunchAttempt' }
+            - { type: 'null' }
+        flightAlerts: { type: array, items: { $ref: '#/components/schemas/HardwareCheck' } }
         construction: { $ref: '#/components/schemas/MissionConstruction' }
-        phase: { type: string, enum: [NONE, ROUTE, CALENDAR, MISSION_DAY, FLIGHT, MOON_ARRIVAL, DIAGNOSTICS, LUNAR_OPERATIONS, FAILED, LANDING, SAMPLE_COLLECTION, LANDING_FAILED, RETURN_FLIGHT, RETURN_FAILED, REENTRY, RECOVERY, RESULTS] }
+        phase: { type: string, enum: [NONE, ROUTE, CALENDAR, MISSION_DAY, FLIGHT, MOON_ARRIVAL, DIAGNOSTICS, LUNAR_OPERATIONS, FAILED, LANDING, SAMPLE_COLLECTION, LANDING_FAILED, RETURN_FLIGHT, RETURN_FAILED, REENTRY, RECOVERY, RESULTS, LAUNCH_FAILURE] }
         operations:
           anyOf:
             - { $ref: '#/components/schemas/MissionOperations' }
@@ -602,10 +630,98 @@ components:
         elapsedMonths: { type: integer }
         delivered: { type: boolean }
         legacy: { type: boolean }
+    CompatibilityIssue:
+      type: object
+      required: [id, title, message, categoryIds, optionIds, repairCategoryId, alternatives, source]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        message: { type: string }
+        categoryIds: { type: array, items: { type: string } }
+        optionIds: { type: array, items: { type: string } }
+        repairCategoryId: { type: string }
+        alternatives: { type: array, items: { type: string } }
+        source: { type: string, enum: [GAME_RULE] }
+    EngineeringAdvice:
+      type: object
+      required: [easy, issues, disclaimer]
+      properties:
+        easy: { type: boolean }
+        issues: { type: array, items: { $ref: '#/components/schemas/CompatibilityIssue' } }
+        disclaimer: { type: string }
+    EngineeringPreview:
+      type: object
+      properties:
+        optionId: { type: string }
+        instrumentIds: { type: array, maxItems: 7, uniqueItems: true, items: { type: string } }
+    EngineeringCheck:
+      type: object
+      required: [id, label, status, message]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        status: { type: string, enum: [PENDING, DONE, FAIL] }
+        message: { type: string }
+    EngineeringAttempt:
+      type: object
+      required: [number, status, months, elapsedBefore, issues]
+      properties:
+        number: { type: integer }
+        status: { type: string, enum: [BUILDING, FAILED, PASSED] }
+        months: { type: integer }
+        elapsedBefore: { type: integer }
+        issues: { type: array, items: { $ref: '#/components/schemas/CompatibilityIssue' } }
+    EngineeringState:
+      type: object
+      required: [status, attempt, repairing, failedCategoryIds, elapsedBefore, deadlineMonths, issues, checks, history]
+      properties:
+        status: { type: string, enum: [DESIGN, BUILDING, FAILED, PASSED] }
+        attempt: { type: integer }
+        repairing: { type: boolean }
+        failedCategoryIds: { type: array, items: { type: string } }
+        elapsedBefore: { type: integer }
+        deadlineMonths: { type: integer }
+        issues: { type: array, items: { $ref: '#/components/schemas/CompatibilityIssue' } }
+        checks: { type: array, items: { $ref: '#/components/schemas/EngineeringCheck' } }
+        history: { type: array, items: { $ref: '#/components/schemas/EngineeringAttempt' } }
+    MissionFinance:
+      type: object
+      required: [baseBudget, totalBudget, approvedFunding, maxRequests, requests]
+      properties:
+        baseBudget: { type: integer }
+        totalBudget: { type: integer }
+        approvedFunding: { type: integer }
+        maxRequests: { type: integer }
+        requests: { type: array, items: { $ref: '#/components/schemas/MissionFundingRequest' } }
+    MissionFundingRequest:
+      type: object
+      required: [id, amount, reason, status, submittedAt, decidedAt, progress]
+      properties:
+        id: { type: string }
+        amount: { type: integer }
+        reason: { type: string }
+        status: { type: string, enum: [SUBMITTED, UNDER_REVIEW, APPROVED, DENIED] }
+        submittedAt: { type: string }
+        decidedAt: { type: [string, 'null'] }
+        progress: { type: number }
+    HardwareCheck:
+      type: object
+      required: [id, categoryId, name, quality, damageRisk, status, critical]
+      properties:
+        detectedAtProgress: { type: number, minimum: 0, maximum: 1 }
+        id: { type: string }
+        categoryId: { type: string }
+        name: { type: string }
+        quality: { type: [number, 'null'] }
+        damageRisk: { type: number }
+        status: { type: string, enum: [OPERATIONAL, DAMAGED] }
+        critical: { type: boolean }
     MissionOperations:
       type: object
       required: [landing, equipment, components, warnings, hasCamera, alternativeNavigation, canCollect, collectionProgress, siteId, siteStartedAt, collectedSites, sampleMassKg, scienceEarned, remainingFuelKg, returnInitialFuelKg, returnStartedAt, returnRequiredKg, returnProgress, returnManeuver, reentryStartedAt, recoveryStartedAt, missionDay, failure, results]
       properties:
+        hardwareChecks: { type: array, items: { $ref: '#/components/schemas/HardwareCheck' } }
+        returnCheckOpened: { type: boolean }
         landing: { $ref: '#/components/schemas/MissionLanding' }
         equipment: { type: array, items: { $ref: '#/components/schemas/MissionEquipment' } }
         components: { type: array, items: { $ref: '#/components/schemas/MissionSelectedComponent' } }
@@ -692,10 +808,25 @@ components:
       properties:
         date: { type: string }
         condition: { type: string, enum: [SUNNY, PARTLY_CLOUDY, CLOUDY, RAIN, STRONG_WIND, STORM] }
+    LaunchAttempt:
+      type: object
+      required: [id, startedAt, briefingDate, weather, failed, repairCost, repairBaseCost, repairedAt, initialFuelKg]
+      properties:
+        id: { type: string, format: uuid }
+        startedAt: { type: string }
+        briefingDate: { type: string }
+        weather: { type: string }
+        failed: { type: boolean }
+        repairCost: { type: integer }
+        repairBaseCost: { type: integer }
+        repairedAt: { type: [string, 'null'] }
+        initialFuelKg: { type: number }
     MissionFlightPlan:
       type: object
       required: [routeId, routeLabel, distanceKm, outboundDays, returnDays, totalDays, dryMassKg, initialMassKg, engineCount, engineNames, thrustN, specificImpulseSeconds, fuelLoadedKg, departureFuelKg, arrivalFuelKg, requiredOutboundKg, requiredReturnKg, requiredFuelKg, massAssumed, assumptions, animationDurationMs]
       properties:
+        launchAttempts: { type: array, items: { $ref: '#/components/schemas/LaunchAttempt' } }
+        hardwareChecks: { type: array, items: { $ref: '#/components/schemas/HardwareCheck' } }
         routeId: { type: string }
         routeLabel: { type: string }
         distanceKm: { type: number }
@@ -772,8 +903,9 @@ components:
         sourceLocation: { type: string }
     RocketComponent:
       type: object
-      required: [id, categoryId, name, price, massKg, parameters, description, quality, dataStatus, source, originalCategory, referenceUrl, qualityMethodology]
+      required: [id, categoryId, name, price, massKg, parameters, description, quality, dataStatus, source, originalCategory, referenceUrl, qualityMethodology, damageRisk]
       properties:
+        damageRisk: { type: number, minimum: 0, maximum: 100, description: 'Gameplay damage chance in percent, resolved once after lunar arrival.' }
         fuel:
           anyOf:
             - { $ref: '#/components/schemas/RocketFuel' }

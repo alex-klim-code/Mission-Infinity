@@ -7,6 +7,8 @@ import { Portrait } from '@/components/ui-kit';
 import { MessageComposer } from '@/components/session/session-shared';
 import { ChatHistory } from '@/components/session/chat-history';
 import { cn } from '@/lib/utils';
+import { FundingControl } from '@/components/session/funding-panel';
+import { MissionNotifications } from '@/components/session/mission-notifications';
 
 export type CrewFlag = (sp: SessionPlayer, leader: boolean) => { on: boolean; label: string };
 
@@ -114,8 +116,8 @@ export function CrewBar({ session, flag, meId, onOpenBadge, children }: { sessio
   return (
     <div className="relative z-20 shrink-0 border-t border-white/[.08] bg-void/80 backdrop-blur-xl" data-testid="bar-crew">
       {children}
-      <div className="mx-auto flex max-w-6xl items-end gap-2 px-3 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 md:px-8">
-        <ul className="flex min-w-0 flex-1 items-end gap-0.5 sm:gap-3" aria-label="Crew">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-end gap-2 px-3 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 md:px-8">
+        <ul className="flex min-w-0 flex-1 basis-[3.75rem] items-end overflow-x-auto gap-0.5 sm:basis-[12rem] sm:gap-3" aria-label="Crew">
           {crew.map((sp) => {
             const leader = sp.player.id === session.hostId;
             const f = flag(sp, leader);
@@ -150,7 +152,8 @@ export function CrewBar({ session, flag, meId, onOpenBadge, children }: { sessio
             );
           })}
         </ul>
-        <div className="flex shrink-0 items-center gap-2 self-center">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 self-center sm:gap-2">
+          <FundingControl session={session} meId={meId} />
           <button className={cn(roundBtn, 'border-white/15 bg-void/60 hover:border-ion hover:text-ion')} onClick={() => setChat(value => !value)} aria-label={chat ? 'Close crew chat' : 'Open crew chat'} aria-expanded={chat} aria-controls="crew-chat-panel" title="Crew chat" data-testid="button-open-chat">
             <MessageSquare className="h-4 w-4" />
             {anyLive && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-ion" aria-hidden />}
@@ -158,6 +161,7 @@ export function CrewBar({ session, flag, meId, onOpenBadge, children }: { sessio
           <button className={cn(roundBtn, 'border-burn/40 bg-burn/10 text-burn hover:border-burn')} onClick={() => setAi(true)} aria-label="Open advisor notepad (AI not connected)" title="Advisor notepad" data-testid="button-open-ai">
             <Sparkles className="h-4 w-4" />
           </button>
+          <MissionNotifications key={`notification:${session.id}:${meId}`} session={session} meId={meId} />
         </div>
       </div>
       <CrewChatDialog key={`chat:${session.id}:${meId}`} open={chat} onOpenChange={setChat} session={session} meId={meId} />

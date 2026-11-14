@@ -320,6 +320,12 @@ export interface RocketFuel {
 }
 
 export interface RocketComponent {
+  /**
+   * Gameplay damage chance in percent, resolved once after lunar arrival.
+   * @minimum 0
+   * @maximum 100
+   */
+  damageRisk: number;
   fuel?: RocketFuel | null;
   id: string;
   categoryId: string;
@@ -538,6 +544,43 @@ export interface FuelLoad {
   fuelType: string;
 }
 
+export interface LaunchAttempt {
+  id: string;
+  startedAt: string;
+  briefingDate: string;
+  weather: string;
+  failed: boolean;
+  repairCost: number;
+  repairBaseCost: number;
+  /** @nullable */
+  repairedAt: string | null;
+  initialFuelKg: number;
+}
+
+export type HardwareCheckStatus =
+  (typeof HardwareCheckStatus)[keyof typeof HardwareCheckStatus];
+
+export const HardwareCheckStatus = {
+  OPERATIONAL: "OPERATIONAL",
+  DAMAGED: "DAMAGED",
+} as const;
+
+export interface HardwareCheck {
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  detectedAtProgress?: number;
+  id: string;
+  categoryId: string;
+  name: string;
+  /** @nullable */
+  quality: number | null;
+  damageRisk: number;
+  status: HardwareCheckStatus;
+  critical: boolean;
+}
+
 export interface MissionConstruction {
   opened: boolean;
   /** @nullable */
@@ -572,6 +615,7 @@ export const MissionJourneyPhase = {
   REENTRY: "REENTRY",
   RECOVERY: "RECOVERY",
   RESULTS: "RESULTS",
+  LAUNCH_FAILURE: "LAUNCH_FAILURE",
 } as const;
 
 export type MissionLandingStatus =
@@ -648,6 +692,8 @@ export interface MissionResults {
 }
 
 export interface MissionOperations {
+  hardwareChecks?: HardwareCheck[];
+  returnCheckOpened?: boolean;
   landing: MissionLanding;
   equipment: MissionEquipment[];
   components: MissionSelectedComponent[];
@@ -698,6 +744,8 @@ export interface MissionWeather {
 }
 
 export interface MissionFlightPlan {
+  launchAttempts?: LaunchAttempt[];
+  hardwareChecks?: HardwareCheck[];
   routeId: string;
   routeLabel: string;
   distanceKm: number;
@@ -768,6 +816,8 @@ export interface InstrumentDiagnostic {
 }
 
 export interface MissionJourney {
+  launchFailure?: LaunchAttempt | null;
+  flightAlerts?: HardwareCheck[];
   construction: MissionConstruction;
   phase: MissionJourneyPhase;
   operations?: MissionOperations | null;
@@ -781,6 +831,108 @@ export interface MissionJourney {
   diagnosticsComplete: boolean;
   availableSciencePoints: number;
   maxSciencePoints: number;
+}
+
+export type EngineeringStateStatus =
+  (typeof EngineeringStateStatus)[keyof typeof EngineeringStateStatus];
+
+export const EngineeringStateStatus = {
+  DESIGN: "DESIGN",
+  BUILDING: "BUILDING",
+  FAILED: "FAILED",
+  PASSED: "PASSED",
+} as const;
+
+export type CompatibilityIssueSource =
+  (typeof CompatibilityIssueSource)[keyof typeof CompatibilityIssueSource];
+
+export const CompatibilityIssueSource = {
+  GAME_RULE: "GAME_RULE",
+} as const;
+
+export interface CompatibilityIssue {
+  id: string;
+  title: string;
+  message: string;
+  categoryIds: string[];
+  optionIds: string[];
+  repairCategoryId: string;
+  alternatives: string[];
+  source: CompatibilityIssueSource;
+}
+
+export type EngineeringCheckStatus =
+  (typeof EngineeringCheckStatus)[keyof typeof EngineeringCheckStatus];
+
+export const EngineeringCheckStatus = {
+  PENDING: "PENDING",
+  DONE: "DONE",
+  FAIL: "FAIL",
+} as const;
+
+export interface EngineeringCheck {
+  id: string;
+  label: string;
+  status: EngineeringCheckStatus;
+  message: string;
+}
+
+export type EngineeringAttemptStatus =
+  (typeof EngineeringAttemptStatus)[keyof typeof EngineeringAttemptStatus];
+
+export const EngineeringAttemptStatus = {
+  BUILDING: "BUILDING",
+  FAILED: "FAILED",
+  PASSED: "PASSED",
+} as const;
+
+export interface EngineeringAttempt {
+  number: number;
+  status: EngineeringAttemptStatus;
+  months: number;
+  elapsedBefore: number;
+  issues: CompatibilityIssue[];
+}
+
+export interface EngineeringState {
+  status: EngineeringStateStatus;
+  attempt: number;
+  repairing: boolean;
+  failedCategoryIds: string[];
+  elapsedBefore: number;
+  deadlineMonths: number;
+  issues: CompatibilityIssue[];
+  checks: EngineeringCheck[];
+  history: EngineeringAttempt[];
+}
+
+export type MissionFundingRequestStatus =
+  (typeof MissionFundingRequestStatus)[keyof typeof MissionFundingRequestStatus];
+
+export const MissionFundingRequestStatus = {
+  SUBMITTED: "SUBMITTED",
+  UNDER_REVIEW: "UNDER_REVIEW",
+  APPROVED: "APPROVED",
+  DENIED: "DENIED",
+} as const;
+
+export interface MissionFundingRequest {
+  id: string;
+  amount: number;
+  reason: string;
+  status: MissionFundingRequestStatus;
+  submittedAt: string;
+  /** @nullable */
+  decidedAt: string | null;
+  progress: number;
+}
+
+export interface MissionFinance {
+  baseBudget: number;
+  totalBudget: number;
+  approvedFunding: number;
+  maxRequests: number;
+  requests: MissionFundingRequest[];
 }
 
 export interface GameSession {
@@ -798,6 +950,8 @@ export interface GameSession {
   science?: ScienceLoadout;
   fueling?: FuelLoad;
   journey?: MissionJourney;
+  engineering?: EngineeringState;
+  finance?: MissionFinance;
   createdAt: string;
 }
 
@@ -842,6 +996,10 @@ export const SessionActionAction = {
   "collect-site": "collect-site",
   "start-return": "start-return",
   "view-results": "view-results",
+  "rebuild-rocket": "rebuild-rocket",
+  "request-funding": "request-funding",
+  "funding-tick": "funding-tick",
+  "repair-weather-launch": "repair-weather-launch",
 } as const;
 
 export type SessionActionSiteId =
@@ -864,11 +1022,26 @@ export const SessionActionHullId = {
 
 export interface SessionAction {
   action: SessionActionAction;
+  /** @maxItems 20 */
+  acceptedIssueIds?: string[];
+  requestId?: string;
+  /**
+   * @minimum 1000000
+   * @maximum 400000000
+   */
+  amount?: number;
+  /**
+   * @minLength 10
+   * @maxLength 600
+   */
+  reason?: string;
   /**
    * @minimum 0
    * @maximum 100
    */
   thrust?: number;
+  /** Explicit Leader confirmation after opening the pre-return hardware check. */
+  confirmReturn?: boolean;
   siteId?: SessionActionSiteId;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   briefingDate?: string;
@@ -883,6 +1056,18 @@ export interface SessionAction {
   hullId?: SessionActionHullId;
   ready?: boolean;
   expectedScene?: number;
+}
+
+export interface EngineeringAdvice {
+  easy: boolean;
+  issues: CompatibilityIssue[];
+  disclaimer: string;
+}
+
+export interface EngineeringPreview {
+  optionId?: string;
+  /** @maxItems 7 */
+  instrumentIds?: string[];
 }
 
 export interface SessionResult {

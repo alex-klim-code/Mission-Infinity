@@ -1,3 +1,4 @@
+import { Paged } from './paged';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
@@ -32,13 +33,15 @@ import { MissionSummary } from './mission-summary';
 import { formatExact } from './rocket-build';
 import { useToast } from '@/hooks/use-toast';
 import { usePlayerAccount } from '@/hooks/use-player-account';
+import { recordMissionNotifications } from '@/hooks/use-mission-notifications';
 import { cn } from '@/lib/utils';
 
 export type ActFn = (data: SessionAction, after?: () => void) => void;
 
 export function useSessionAct(id: string) {
   const mut = useUpdateGameSession();
-  const { queryKey: playerQueryKey } = usePlayerAccount();
+  const account = usePlayerAccount();
+  const { queryKey: playerQueryKey } = account;
   const qc = useQueryClient();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -65,7 +68,14 @@ export function useSessionAct(id: string) {
           after?.();
         },
         onError: (e) => {
-          toast({ title: 'Command rejected', description: errMsg(e), variant: 'destructive' });
+          const message=errMsg(e);
+          const current=qc.getQueryData<GameSession>(getGetGameSessionQueryKey(id));
+          const playerId=account.data?.character?.id??account.data?.id;
+          if(playerId)recordMissionNotifications(id,playerId,[{
+            id:`command:${crypto.randomUUID()}`,title:'Command rejected',message,severity:'error',category:'Mission command',scope:'event',
+          }]);
+          const building=current?.status==='MISSION_STARTED'&&!current.assembly?.completed&&(!current.journey||current.journey.phase==='NONE');
+          if(!building||!playerId)toast({ title: 'Command rejected', description: message, variant: 'destructive' });
           void qc.invalidateQueries({ queryKey: getGetGameSessionQueryKey(id) });
         },
       },
@@ -88,9 +98,9 @@ export function BriefingDialog({ mission, open, onOpenChange }: { mission: Missi
           <DialogTitle className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">{mission.title}</DialogTitle>
           <DialogDescription className="text-muted-foreground">{mission.subtitle}</DialogDescription>
         </div>
-        <div className="scroll-thin max-h-[calc(88dvh-130px)] overflow-y-auto p-5 sm:p-6" data-testid="panel-briefing-dialog">
+        <Paged className="max-h-[calc(88dvh-130px)]" innerClassName="p-5 sm:p-6" label="Briefing" testid="panel-briefing-dialog">
           <BriefingBody mission={mission} />
-        </div>
+        </Paged>
       </DialogContent>
     </Dialog>
   );
@@ -173,7 +183,9 @@ export function SessionTopBar({ session, mission, me, act, pending, onOpenBadge 
                 ? session.journey.phase === 'RESULTS' ? 'Stage 8 / Mission Results'
                   : ['RETURN_FLIGHT','RETURN_FAILED','REENTRY','RECOVERY'].includes(session.journey.phase) ? 'Stage 7 / Return to Earth'
                   : ['LUNAR_OPERATIONS','LANDING','SAMPLE_COLLECTION','LANDING_FAILED'].includes(session.journey.phase) ? 'Stage 6 / Lunar Landing & Samples'
+                  : session.journey.phase === 'LAUNCH_FAILURE' ? 'Stage 4 / Launch Recovery — Weather Abort'
                   : session.journey.phase === 'DIAGNOSTICS' ? 'Stage 5 / Instrument Diagnostics' : 'Stage 4 / Mission Briefing'
+                : session.engineering?.repairing ? 'Stage 1 / Rocket Construction — Repair'
                 : session.journey?.construction.opened && !session.journey.construction.delivered && !session.fueling?.opened
                   ? 'Rocket Construction & Delivery' : session.fueling?.opened ? 'Stage 3 / Rocket Fueling' : session.science?.opened ? 'Stage 2 / Scientific Instruments' : 'Stage 1 / Rocket Construction'
               : 'Mission preparation'}

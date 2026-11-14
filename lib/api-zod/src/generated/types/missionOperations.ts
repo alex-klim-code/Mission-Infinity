@@ -5,12 +5,15 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { HardwareCheck } from "./hardwareCheck";
 import type { MissionEquipment } from "./missionEquipment";
 import type { MissionLanding } from "./missionLanding";
 import type { MissionResults } from "./missionResults";
 import type { MissionSelectedComponent } from "./missionSelectedComponent";
 
 export interface MissionOperations {
+  hardwareChecks?: HardwareCheck[];
+  returnCheckOpened?: boolean;
   landing: MissionLanding;
   equipment: MissionEquipment[];
   components: MissionSelectedComponent[];

@@ -1,4 +1,5 @@
 import { requireCondition, type GameConnection } from "./database";
+import {effectiveMissionBudget} from "./mission-finance";
 
 // Explicit gameplay values from the fueling brief, not tank engineering data.
 export const fuelSettings = { capacityKg: 30000, pricePerKg: 8, rateKgPerSecond: 1500, fuelType: "RP-1 / LOX (training simulation)" };
@@ -54,8 +55,7 @@ export async function updateFueling(
     return;
   }
   const build = await db.selectFrom("game_session_builds").selectAll().where("session_id", "=", session.id).executeTakeFirstOrThrow();
-  const mission = await db.selectFrom("missions").select("definition").where("id", "=", session.mission_id).executeTakeFirstOrThrow();
-  const remaining = (mission.definition as { budget: number }).budget - build.spent;
+  const remaining = await effectiveMissionBudget(db,session) - build.spent;
   if (action === "start-fueling") {
     requireCondition(row.connected, 409, "Connect the fuel hose first.");
     requireCondition(row.target_kg > row.loaded_kg, 409, "Increase the target quantity first.");

@@ -30,6 +30,8 @@ import type {
   Career,
   Catalog,
   CharacterInput,
+  EngineeringAdvice,
+  EngineeringPreview,
   FriendAction,
   GameSession,
   GetSessionMessagesParams,
@@ -1886,6 +1888,124 @@ export const useUpdateGameSession = <
   TContext
 > => {
   return useMutation(getUpdateGameSessionMutationOptions(options), queryClient);
+};
+
+export const getPreviewEngineeringUrl = (id: string) => {
+  return `/api/game/sessions/${id}/engineering-advice`;
+};
+
+export const previewEngineering = async (
+  id: string,
+  engineeringPreview: EngineeringPreview,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EngineeringAdvice> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EngineeringAdvice>(getPreviewEngineeringUrl(id), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(engineeringPreview),
+  });
+};
+
+export const getPreviewEngineeringMutationKey = () =>
+  ["previewEngineering"] as const;
+
+export const getPreviewEngineeringMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewEngineering>>,
+    TError,
+    PreviewEngineeringMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewEngineering>>,
+  TError,
+  PreviewEngineeringMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewEngineeringMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewEngineering>>,
+    PreviewEngineeringMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return previewEngineering(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewEngineeringMutationResult = NonNullable<
+  Awaited<ReturnType<typeof previewEngineering>>
+>;
+export type PreviewEngineeringMutationBody = BodyType<EngineeringPreview>;
+export type PreviewEngineeringMutationError = ErrorType<unknown>;
+export type PreviewEngineeringMutationVariables = {
+  id: string;
+  data: BodyType<EngineeringPreview>;
+};
+
+export const usePreviewEngineering = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewEngineering>>,
+      TError,
+      PreviewEngineeringMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewEngineering>>,
+  TError,
+  PreviewEngineeringMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getPreviewEngineeringMutationOptions(options),
+    queryClient,
+  );
 };
 
 export const getGetSessionMessagesUrl = (

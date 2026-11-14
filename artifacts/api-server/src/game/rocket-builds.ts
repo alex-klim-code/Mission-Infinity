@@ -1,4 +1,5 @@
 import { requireCondition, type GameConnection } from "./database";
+import {effectiveMissionBudget} from "./mission-finance";
 
 export const rocketHulls = {
   "falcon-shadow": { name: "Falcon Shadow", price: 50000000 },
@@ -46,8 +47,7 @@ export async function updateRocketBuild(
   }
   requireCondition(build.screen === "HULL_SELECTION", 409, "Open hull selection first.");
   const hull = rocketHulls[hullId as keyof typeof rocketHulls];
-  const mission = await db.selectFrom("missions").select("definition").where("id", "=", session.mission_id).executeTakeFirstOrThrow();
-  const budget = (mission.definition as { budget: number }).budget;
+  const budget = await effectiveMissionBudget(db,session);
   requireCondition(build.spent + hull.price <= budget, 409, "The mission budget is insufficient.");
   await db.updateTable("game_session_builds").set({
     selected_hull_id: hullId, spent: build.spent + hull.price, screen: "HULL_CONFIRMED",

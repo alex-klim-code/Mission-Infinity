@@ -47,4 +47,8 @@ export const SessionActionAction = {
   "collect-site": "collect-site",
   "start-return": "start-return",
   "view-results": "view-results",
+  "rebuild-rocket": "rebuild-rocket",
+  "request-funding": "request-funding",
+  "funding-tick": "funding-tick",
+  "repair-weather-launch": "repair-weather-launch",
 } as const;
