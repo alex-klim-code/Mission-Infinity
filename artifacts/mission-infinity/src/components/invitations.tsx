@@ -38,7 +38,7 @@ export function InvitationRow({ inv }: { inv: Invitation }) {
     <div className="flex flex-col gap-3 rounded-lg border border-burn/30 bg-burn/[.05] p-4 sm:flex-row sm:items-center" data-testid={`row-invitation-${inv.id}`}>
       {(() => {
         const who = incoming ? inv.from : inv.to;
-        return <Portrait presetId={who.presetId} name={who.name} size={44} online={who.online} ring="burn" />;
+        return <Portrait player={who} size={44} online={who.online} ring="burn" />;
       })()}
       <div className="min-w-0 flex-1">
         <div className="text-sm">

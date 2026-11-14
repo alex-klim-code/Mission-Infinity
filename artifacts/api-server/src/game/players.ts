@@ -1,6 +1,8 @@
 import { sql } from "kysely";
 import { gameDb, requireCondition, type GameConnection } from "./database";
 import { isOnline } from "./presence";
+import { SaveCharacterBody, type CharacterInput } from "@workspace/api-zod";
+import countries from "i18n-iso-countries";
 
 export async function resolveUser(authId: string) {
   const user = await gameDb.insertInto("users").values({ auth_id: authId })
@@ -11,7 +13,10 @@ export async function resolveUser(authId: string) {
 
 export async function getPlayer(id: string, db: GameConnection = gameDb) {
   const c = await db.selectFrom("user_characters").selectAll().where("user_id", "=", id).executeTakeFirst();
-  return c ? { id, name: c.name, age: c.age, gender: c.gender, presetId: c.preset_id, online: isOnline(id) } : null;
+  return c ? {
+    id, name: c.name, age: c.age, gender: c.gender, presetId: c.preset_id,
+    countryCode: c.country_code, appearance: c.appearance, online: isOnline(id),
+  } : null;
 }
 
 export async function requireCharacter(id: string, db: GameConnection = gameDb) {
@@ -29,18 +34,29 @@ export async function getAccount(id: string) {
   return { id, character, activeSessionId: member?.session_id ?? null };
 }
 
-export async function savePlayer(id: string, input: {name: string; age: number; gender: string; presetId: string}) {
+export async function savePlayer(id: string, rawInput: CharacterInput) {
+  const input = SaveCharacterBody.parse(rawInput);
   const name = input.name.trim();
   requireCondition(/^[\p{L}\p{N}][\p{L}\p{N} ._'’-]{2,23}$/u.test(name), 400,
     "Use 3–24 letters, numbers, spaces, apostrophes, periods or hyphens.");
-  const preset = await gameDb.selectFrom("character_presets").select("id").where("id", "=", input.presetId).executeTakeFirst();
+  const existing = await gameDb.selectFrom("user_characters").selectAll().where("user_id", "=", id).executeTakeFirst();
+  const presetId = input.presetId ?? existing?.preset_id ?? "engineer-01";
+  // Omitted appearance means preserve it, allowing older clients to edit names safely.
+  const appearance = input.appearance === undefined ? existing?.appearance ?? null : input.appearance;
+  const countryCode = input.countryCode ?? appearance?.countryCode ?? existing?.country_code ?? (existing ? null : "PL");
+  requireCondition(countryCode === null || (/^[A-Z]{2}$/.test(countryCode) && countries.isValid(countryCode)), 400, "Select a valid country.");
+  if (appearance) {
+    requireCondition(appearance.base === input.gender, 400, "Character identity and appearance must match.");
+    requireCondition(appearance.countryCode === countryCode, 400, "Character country and uniform flag must match.");
+  }
+  const preset = await gameDb.selectFrom("character_presets").select("id").where("id", "=", presetId).executeTakeFirst();
   requireCondition(preset, 400, "Select a valid character appearance.");
   await gameDb.insertInto("user_characters").values({
     user_id: id, name, normalized_name: name.toLowerCase(), age: input.age, gender: input.gender,
-    preset_id: input.presetId, updated_at: new Date(),
+    preset_id: presetId, country_code: countryCode, appearance, updated_at: new Date(),
   }).onConflict(o => o.column("user_id").doUpdateSet({
     name, normalized_name: name.toLowerCase(), age: input.age, gender: input.gender,
-    preset_id: input.presetId, updated_at: new Date(),
+    preset_id: presetId, country_code: countryCode, appearance, updated_at: new Date(),
   })).execute();
   return getPlayer(id);
 }

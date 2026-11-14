@@ -1,5 +1,6 @@
 import { Kysely, PostgresDialect, type Generated, type ColumnType, type Transaction } from "kysely";
 import { pool } from "@workspace/db";
+import type { CharacterAppearance } from "@workspace/api-zod";
 
 type Time = ColumnType<Date, Date | string | undefined, Date | string>;
 interface Users {
@@ -14,6 +15,8 @@ interface Characters {
   age: number;
   gender: string;
   preset_id: string;
+  country_code: string | null;
+  appearance: CharacterAppearance | null;
   updated_at: Time;
 }
 interface Sessions {

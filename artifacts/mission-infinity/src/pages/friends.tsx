@@ -17,7 +17,7 @@ function PlayerRow({ p, actions }: { p: Player; actions: { act: Act; label: stri
   const { toast } = useToast();
   return (
     <div className="flex items-center gap-3 rounded-lg border border-white/[.07] bg-white/[.02] p-3 transition-colors hover:border-white/15" data-testid={`row-player-${p.id}`}>
-      <Portrait presetId={p.presetId} name={p.name} size={44} online={p.online} />
+      <Portrait player={p} size={44} online={p.online} />
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{p.name}</div>
         <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">

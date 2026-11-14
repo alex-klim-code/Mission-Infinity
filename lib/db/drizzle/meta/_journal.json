@@ -8,6 +8,13 @@
       "when": 1794650586249,
       "tag": "0000_mission-infinity",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794652510349,
+      "tag": "0001_character-appearance",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,18 @@
 
 A cinematic, cooperative browser game about becoming a mission leader at the fictional **Asterion Aerospace**. Phase 1 covers sign-in, character creation, friends, invitations, a 1–4-player lobby, six introductory scenes, a mission briefing and synchronized acceptance. It ends at **MISSION INITIATED — TO BE CONTINUED**.
 
+## Custom characters
+
+Onboarding uses Identity, Age, Country and Character Customization, followed by a saved-badge confirmation. Ages are 14–60 (default 20); the initial country is Poland. A searchable ISO 3166-1 country selector controls both the personnel file and the flag sewn into the shared Asterion uniform.
+
+Appearance configuration is stored in PostgreSQL, including its version, identity base, expression, skin tone, hairstyle, hair color, country and stable seed. SVGs are generated locally using **DiceBear Core 10.7.0** and the **Avataaars definition from DiceBear Styles 10.6.0**; these versions are pinned deliberately so an ordinary reinstall does not change saved characters. The modern DiceBear v10 `Style`/`Avatar` API differs from older `createAvatar` tutorials.
+
+The schema extension is additive: existing portraits and profile IDs are retained. Existing profiles have no custom appearance until their owners explicitly save one. Omitting appearance from an older client's save preserves the saved custom configuration; explicitly setting it to `null` restores the legacy portrait. No bulk replacement or random backfill is performed.
+
+The same saved configuration is returned with players in friends, invitations and sessions. Uniform flags are served locally, not from an external avatar service. DiceBear/Avataaars credits are retained in the style definition; distributed core and flag licenses are under `public/licenses` and `public/flags/LICENSE`.
+
+For managed PostgreSQL, apply development schema changes through the normal Publish flow. Do not run the historical Drizzle SQL files against production or add startup/build migration commands. The updated age check, nullable country and nullable appearance must be included when publishing.
+
 There is deliberately no spacecraft engineering, rocket selection, orbital mechanics or mission simulation.
 
 ## Stack
@@ -81,7 +93,9 @@ The backend test suite exercises real PostgreSQL transactions with disposable fi
 
 Anonymous HTTP checks verify that public content is accessible and protected profile endpoints return 401. This is not a substitute for a live Google OAuth browser round trip.
 
-**Not certified by these tests:** an interactive Google sign-in/logout round trip, signed-in page rendering, simultaneous real users in separate browsers, production OAuth/domain configuration, load testing and a published deployment. These require their corresponding real environments and are not represented as completed automated checks.
+The custom-character update additionally passed 17 server/domain checks and five local avatar checks. A development browser run with two separate programmatically authenticated Clerk contexts verified onboarding, appearance saving and reloading, settings edits, friend requests, invitations, lobby and story portraits, plus the mobile creator layout. The initial-base hairstyle issue found by that run was corrected and covered by local tests.
+
+**Not certified by these checks:** an interactive Google sign-in/logout round trip, production OAuth/domain configuration, load testing and a published deployment. Browser authentication used overridden test claims rather than the external provider. The final small tab-layout correction was checked in code, not with another browser run.
 
 ## Publishing
 

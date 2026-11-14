@@ -14,6 +14,89 @@ export interface ActionResult {
   message: string;
 }
 
+export type CharacterAppearanceVersion = typeof CharacterAppearanceVersion[keyof typeof CharacterAppearanceVersion];
+
+
+export const CharacterAppearanceVersion = {
+  NUMBER_1: 1,
+} as const;
+
+export type CharacterAppearanceBase = typeof CharacterAppearanceBase[keyof typeof CharacterAppearanceBase];
+
+
+export const CharacterAppearanceBase = {
+  female: 'female',
+  male: 'male',
+} as const;
+
+export type CharacterAppearanceFace = typeof CharacterAppearanceFace[keyof typeof CharacterAppearanceFace];
+
+
+export const CharacterAppearanceFace = {
+  calm: 'calm',
+  focused: 'focused',
+  bright: 'bright',
+  confident: 'confident',
+} as const;
+
+export type CharacterAppearanceSkinTone = typeof CharacterAppearanceSkinTone[keyof typeof CharacterAppearanceSkinTone];
+
+
+export const CharacterAppearanceSkinTone = {
+  NUMBER_614335: '614335',
+  d08b5b: 'd08b5b',
+  ae5d29: 'ae5d29',
+  edb98a: 'edb98a',
+  ffdbb4: 'ffdbb4',
+} as const;
+
+export type CharacterAppearanceHairstyle = typeof CharacterAppearanceHairstyle[keyof typeof CharacterAppearanceHairstyle];
+
+
+export const CharacterAppearanceHairstyle = {
+  shortFlat: 'shortFlat',
+  shortCurly: 'shortCurly',
+  theCaesar: 'theCaesar',
+  bob: 'bob',
+  bun: 'bun',
+  curly: 'curly',
+  straight01: 'straight01',
+  fro: 'fro',
+  shavedSides: 'shavedSides',
+  longButNotTooLong: 'longButNotTooLong',
+} as const;
+
+export type CharacterAppearanceHairColor = typeof CharacterAppearanceHairColor[keyof typeof CharacterAppearanceHairColor];
+
+
+export const CharacterAppearanceHairColor = {
+  '2c1b18': '2c1b18',
+  '4a312c': '4a312c',
+  NUMBER_724133: '724133',
+  a55728: 'a55728',
+  b58143: 'b58143',
+  d6b370: 'd6b370',
+  ecdcbf: 'ecdcbf',
+  e8e1e1: 'e8e1e1',
+} as const;
+
+export interface CharacterAppearance {
+  version: CharacterAppearanceVersion;
+  base: CharacterAppearanceBase;
+  face: CharacterAppearanceFace;
+  skinTone: CharacterAppearanceSkinTone;
+  hairstyle: CharacterAppearanceHairstyle;
+  hairColor: CharacterAppearanceHairColor;
+  /** @pattern ^[A-Z]{2}$ */
+  countryCode: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     * @pattern ^[A-Za-z0-9:_-]+$
+     */
+  avatarSeed: string;
+}
+
 export type CharacterInputGender = typeof CharacterInputGender[keyof typeof CharacterInputGender];
 
 
@@ -30,12 +113,15 @@ export interface CharacterInput {
      */
   name: string;
   /**
-     * @minimum 21
+     * @minimum 14
      * @maximum 60
      */
   age: number;
   gender: CharacterInputGender;
-  presetId: string;
+  presetId?: string;
+  /** @pattern ^[A-Z]{2}$ */
+  countryCode?: string;
+  appearance?: CharacterAppearance | null;
 }
 
 export type PlayerGender = typeof PlayerGender[keyof typeof PlayerGender];
@@ -53,6 +139,9 @@ export interface Player {
   age: number;
   gender: PlayerGender;
   presetId: string;
+  /** @nullable */
+  countryCode?: string | null;
+  appearance?: CharacterAppearance | null;
   online: boolean;
 }
 

@@ -22,9 +22,11 @@ export const userCharacters = pgTable("user_characters", {
   age: integer("age").notNull(),
   gender: text("gender").notNull(),
   presetId: text("preset_id").notNull().references(() => characterPresets.id),
+  countryCode: text("country_code"),
+  appearance: jsonb("appearance"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, t => [
-  check("character_age_range", sql`${t.age} >= 21 and ${t.age} <= 60`),
+  check("character_age_range", sql`${t.age} >= 14 and ${t.age} <= 60`),
   check("character_gender", sql`${t.gender} in ('female','male','unspecified')`),
 ]);
 

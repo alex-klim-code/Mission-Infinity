@@ -12,11 +12,12 @@ export const GENDERS: { id: Gender; label: string; note: string }[] = [
   { id: 'unspecified', label: 'Unspecified', note: 'Addressed by name only' },
 ];
 
-export function GenderPicker({ value, onChange }: { value: Gender | null; onChange: (g: Gender) => void }) {
+export function GenderPicker({ value, onChange, allowUnspecified = true }: { value: Gender | null; onChange: (g: Gender) => void; allowUnspecified?: boolean }) {
   const { blip } = usePrefs();
+  const opts = GENDERS.filter((g) => allowUnspecified || g.id !== 'unspecified');
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      {GENDERS.map((g, i) => {
+    <div className={cn('grid gap-3', opts.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2')} role="radiogroup">
+      {opts.map((g, i) => {
         const on = value === g.id;
         return (
           <motion.button
@@ -25,6 +26,8 @@ export function GenderPicker({ value, onChange }: { value: Gender | null; onChan
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
+            role="radio"
+            aria-checked={on}
             onClick={() => {
               blip();
               onChange(g.id);
@@ -46,7 +49,7 @@ export function GenderPicker({ value, onChange }: { value: Gender | null; onChan
 }
 
 export function AgeControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  const clamp = (n: number) => Math.max(21, Math.min(60, n));
+  const clamp = (n: number) => Math.max(14, Math.min(60, n));
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="flex items-center gap-6">
@@ -62,7 +65,7 @@ export function AgeControl({ value, onChange }: { value: number; onChange: (n: n
       </div>
       <input
         type="range"
-        min={21}
+        min={14}
         max={60}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
@@ -71,8 +74,8 @@ export function AgeControl({ value, onChange }: { value: number; onChange: (n: n
         aria-label="Age"
       />
       <div className="flex w-full max-w-md justify-between font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        <span>21 Graduate</span>
-        <span>40 Veteran</span>
+        <span>14 Cadet</span>
+        <span>37 Veteran</span>
         <span>60 Legend</span>
       </div>
     </div>

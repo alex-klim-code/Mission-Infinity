@@ -1,6 +1,8 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Loader2, RotateCw, TriangleAlert } from 'lucide-react';
+import type { Player } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
+import { CharacterAvatar } from '@/components/character-avatar';
 import { imgUrl, portraitFor } from '@/lib/game';
 import { usePrefs } from '@/lib/prefs';
 
@@ -41,6 +43,7 @@ export function HudButton({
 }
 
 export function Portrait({
+  player,
   presetId,
   name,
   size = 48,
@@ -48,6 +51,7 @@ export function Portrait({
   className,
   ring = 'ion',
 }: {
+  player?: Pick<Player, 'presetId' | 'name' | 'appearance'> | null;
   presetId?: string;
   name?: string;
   size?: number;
@@ -64,11 +68,13 @@ export function Portrait({
           ring === 'burn' && 'ring-2 ring-burn/70',
         )}
       >
-        {presetId ? (
-          <img src={imgUrl(portraitFor(presetId))} alt={name ?? 'Engineer portrait'} className="h-full w-full object-cover" loading="lazy" />
+        {player?.appearance ? (
+          <CharacterAvatar appearance={player.appearance} title={player.name} />
+        ) : (player?.presetId ?? presetId) ? (
+          <img src={imgUrl(portraitFor(player?.presetId ?? presetId))} alt={player?.name ?? name ?? 'Engineer portrait'} className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <div className="flex h-full w-full items-center justify-center font-display text-muted-foreground">
-            {(name ?? '?').slice(0, 2).toUpperCase()}
+            {(player?.name ?? name ?? '?').slice(0, 2).toUpperCase()}
           </div>
         )}
       </div>
@@ -122,5 +128,16 @@ export function EmptyState({ icon, title, text, action }: { icon: ReactNode; tit
       <p className="max-w-sm text-sm text-muted-foreground">{text}</p>
       {action}
     </div>
+  );
+}
+
+/** Large portrait: saved custom look, or the legacy preset image. */
+export function PlayerPortrait({ player, className }: { player: Pick<Player, 'presetId' | 'name' | 'appearance'>; className?: string }) {
+  return player.appearance ? (
+    <div className={cn('aspect-[4/5] w-full overflow-hidden bg-[#081322]', className)}>
+      <CharacterAvatar appearance={player.appearance} title={player.name} className="h-full w-full" />
+    </div>
+  ) : (
+    <img src={imgUrl(portraitFor(player.presetId))} alt={player.name} className={cn('aspect-[4/5] w-full object-cover', className)} />
   );
 }

@@ -51,6 +51,13 @@ export const GetGameCatalogResponse = zod.object({
 })
 
 
+export const getPlayerResponseCharacterOneAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getPlayerResponseCharacterOneAppearanceOneAvatarSeedMax = 100;
+
+
+export const getPlayerResponseCharacterOneAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+
+
 export const GetPlayerResponse = zod.object({
   "id": zod.string(),
   "character": zod.union([zod.object({
@@ -59,6 +66,17 @@ export const GetPlayerResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getPlayerResponseCharacterOneAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getPlayerResponseCharacterOneAppearanceOneAvatarSeedMax).regex(getPlayerResponseCharacterOneAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 }),zod.null()]),
   "activeSessionId": zod.string().nullable()
@@ -68,17 +86,41 @@ export const GetPlayerResponse = zod.object({
 export const saveCharacterBodyNameMin = 3;
 export const saveCharacterBodyNameMax = 24;
 
-export const saveCharacterBodyAgeMin = 21;
+export const saveCharacterBodyAgeMin = 14;
 export const saveCharacterBodyAgeMax = 60;
 
+export const saveCharacterBodyCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const saveCharacterBodyAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const saveCharacterBodyAppearanceOneAvatarSeedMax = 100;
+
+
+export const saveCharacterBodyAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
 
 
 export const SaveCharacterBody = zod.object({
   "name": zod.string().min(saveCharacterBodyNameMin).max(saveCharacterBodyNameMax),
   "age": zod.number().int().min(saveCharacterBodyAgeMin).max(saveCharacterBodyAgeMax),
   "gender": zod.enum(['female', 'male', 'unspecified']),
-  "presetId": zod.string()
+  "presetId": zod.string().optional(),
+  "countryCode": zod.string().regex(saveCharacterBodyCountryCodeRegExp).optional(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(saveCharacterBodyAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(saveCharacterBodyAppearanceOneAvatarSeedMax).regex(saveCharacterBodyAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional()
 })
+
+export const saveCharacterResponseAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const saveCharacterResponseAppearanceOneAvatarSeedMax = 100;
+
+
+export const saveCharacterResponseAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+
 
 export const SaveCharacterResponse = zod.object({
   "id": zod.string(),
@@ -86,6 +128,17 @@ export const SaveCharacterResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(saveCharacterResponseAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(saveCharacterResponseAppearanceOneAvatarSeedMax).regex(saveCharacterResponseAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 })
 
@@ -98,6 +151,38 @@ export const GetSocialQueryParams = zod.object({
   "q": zod.coerce.string().max(getSocialQueryQMax).optional()
 })
 
+export const getSocialResponseFriendsItemAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getSocialResponseFriendsItemAppearanceOneAvatarSeedMax = 100;
+
+
+export const getSocialResponseFriendsItemAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+export const getSocialResponseIncomingItemAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getSocialResponseIncomingItemAppearanceOneAvatarSeedMax = 100;
+
+
+export const getSocialResponseIncomingItemAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+export const getSocialResponseSentItemAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getSocialResponseSentItemAppearanceOneAvatarSeedMax = 100;
+
+
+export const getSocialResponseSentItemAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+export const getSocialResponseSearchItemAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getSocialResponseSearchItemAppearanceOneAvatarSeedMax = 100;
+
+
+export const getSocialResponseSearchItemAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+export const getSocialResponseInvitationsItemFromAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getSocialResponseInvitationsItemFromAppearanceOneAvatarSeedMax = 100;
+
+
+export const getSocialResponseInvitationsItemFromAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+export const getSocialResponseInvitationsItemToAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getSocialResponseInvitationsItemToAppearanceOneAvatarSeedMax = 100;
+
+
+export const getSocialResponseInvitationsItemToAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+
+
 export const GetSocialResponse = zod.object({
   "friends": zod.array(zod.object({
   "id": zod.string(),
@@ -105,6 +190,17 @@ export const GetSocialResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getSocialResponseFriendsItemAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getSocialResponseFriendsItemAppearanceOneAvatarSeedMax).regex(getSocialResponseFriendsItemAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 })),
   "incoming": zod.array(zod.object({
@@ -113,6 +209,17 @@ export const GetSocialResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getSocialResponseIncomingItemAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getSocialResponseIncomingItemAppearanceOneAvatarSeedMax).regex(getSocialResponseIncomingItemAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 })),
   "sent": zod.array(zod.object({
@@ -121,6 +228,17 @@ export const GetSocialResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getSocialResponseSentItemAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getSocialResponseSentItemAppearanceOneAvatarSeedMax).regex(getSocialResponseSentItemAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 })),
   "search": zod.array(zod.object({
@@ -129,6 +247,17 @@ export const GetSocialResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getSocialResponseSearchItemAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getSocialResponseSearchItemAppearanceOneAvatarSeedMax).regex(getSocialResponseSearchItemAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 })),
   "invitations": zod.array(zod.object({
@@ -140,6 +269,17 @@ export const GetSocialResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getSocialResponseInvitationsItemFromAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getSocialResponseInvitationsItemFromAppearanceOneAvatarSeedMax).regex(getSocialResponseInvitationsItemFromAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 }),
   "to": zod.object({
@@ -148,6 +288,17 @@ export const GetSocialResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getSocialResponseInvitationsItemToAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getSocialResponseInvitationsItemToAppearanceOneAvatarSeedMax).regex(getSocialResponseInvitationsItemToAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 }),
   "missionTitle": zod.string(),
@@ -174,6 +325,13 @@ export const CreateGameSessionBody = zod.object({
   "mode": zod.enum(['solo', 'crew'])
 })
 
+export const createGameSessionResponsePlayersItemPlayerAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const createGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedMax = 100;
+
+
+export const createGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+
+
 export const CreateGameSessionResponse = zod.object({
   "id": zod.string(),
   "roomCode": zod.string(),
@@ -189,6 +347,17 @@ export const CreateGameSessionResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(createGameSessionResponsePlayersItemPlayerAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(createGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedMax).regex(createGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 }),
   "ready": zod.boolean(),
@@ -203,6 +372,13 @@ export const CreateGameSessionResponse = zod.object({
 export const GetGameSessionParams = zod.object({
   "id": zod.coerce.string()
 })
+
+export const getGameSessionResponsePlayersItemPlayerAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const getGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedMax = 100;
+
+
+export const getGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+
 
 export const GetGameSessionResponse = zod.object({
   "id": zod.string(),
@@ -219,6 +395,17 @@ export const GetGameSessionResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(getGameSessionResponsePlayersItemPlayerAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(getGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedMax).regex(getGameSessionResponsePlayersItemPlayerAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 }),
   "ready": zod.boolean(),
@@ -240,6 +427,13 @@ export const UpdateGameSessionBody = zod.object({
   "expectedScene": zod.number().int().optional()
 })
 
+export const updateGameSessionResponseSessionOnePlayersItemPlayerAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const updateGameSessionResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedMax = 100;
+
+
+export const updateGameSessionResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+
+
 export const UpdateGameSessionResponse = zod.object({
   "session": zod.union([zod.object({
   "id": zod.string(),
@@ -256,6 +450,17 @@ export const UpdateGameSessionResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(updateGameSessionResponseSessionOnePlayersItemPlayerAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(updateGameSessionResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedMax).regex(updateGameSessionResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 }),
   "ready": zod.boolean(),
@@ -290,6 +495,13 @@ export const RespondToInvitationBody = zod.object({
   "action": zod.enum(['accept', 'decline'])
 })
 
+export const respondToInvitationResponseSessionOnePlayersItemPlayerAppearanceOneCountryCodeRegExp = new RegExp('^[A-Z]{2}$');
+export const respondToInvitationResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedMax = 100;
+
+
+export const respondToInvitationResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedRegExp = new RegExp('^[A-Za-z0-9:_-]+$');
+
+
 export const RespondToInvitationResponse = zod.object({
   "session": zod.union([zod.object({
   "id": zod.string(),
@@ -306,6 +518,17 @@ export const RespondToInvitationResponse = zod.object({
   "age": zod.number().int(),
   "gender": zod.enum(['female', 'male', 'unspecified']),
   "presetId": zod.string(),
+  "countryCode": zod.string().nullish(),
+  "appearance": zod.union([zod.object({
+  "version": zod.literal(1),
+  "base": zod.enum(['female', 'male']),
+  "face": zod.enum(['calm', 'focused', 'bright', 'confident']),
+  "skinTone": zod.enum(['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4']),
+  "hairstyle": zod.enum(['shortFlat', 'shortCurly', 'theCaesar', 'bob', 'bun', 'curly', 'straight01', 'fro', 'shavedSides', 'longButNotTooLong']),
+  "hairColor": zod.enum(['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1']),
+  "countryCode": zod.string().regex(respondToInvitationResponseSessionOnePlayersItemPlayerAppearanceOneCountryCodeRegExp),
+  "avatarSeed": zod.string().min(1).max(respondToInvitationResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedMax).regex(respondToInvitationResponseSessionOnePlayersItemPlayerAppearanceOneAvatarSeedRegExp)
+}),zod.null()]).optional(),
   "online": zod.boolean()
 }),
   "ready": zod.boolean(),

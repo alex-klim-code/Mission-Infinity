@@ -1,0 +1,1 @@
+- [Avatar identity defaults](avatar-identity.md) — distinguish correct starting defaults from restrictions on deliberately customized hairstyles.

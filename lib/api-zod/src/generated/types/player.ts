@@ -5,6 +5,7 @@
  * Mission Infinity Phase 1 cooperative game API
  * OpenAPI spec version: 1.0.0
  */
+import type { CharacterAppearance } from './characterAppearance';
 import type { PlayerGender } from './playerGender';
 
 export interface Player {
@@ -13,5 +14,8 @@ export interface Player {
   age: number;
   gender: PlayerGender;
   presetId: string;
+  /** @nullable */
+  countryCode?: string | null;
+  appearance?: CharacterAppearance | null;
   online: boolean;
 }

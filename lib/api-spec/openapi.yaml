@@ -169,14 +169,32 @@ components:
       properties:
         ok: { type: boolean }
         message: { type: string }
+    CharacterAppearance:
+      type: object
+      additionalProperties: false
+      required: [version, base, face, skinTone, hairstyle, hairColor, countryCode, avatarSeed]
+      properties:
+        version: { type: integer, enum: [1] }
+        base: { type: string, enum: [female, male] }
+        face: { type: string, enum: [calm, focused, bright, confident] }
+        skinTone: { type: string, enum: ['614335', 'd08b5b', 'ae5d29', 'edb98a', 'ffdbb4'] }
+        hairstyle: { type: string, enum: [shortFlat, shortCurly, theCaesar, bob, bun, curly, straight01, fro, shavedSides, longButNotTooLong] }
+        hairColor: { type: string, enum: ['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'ecdcbf', 'e8e1e1'] }
+        countryCode: { type: string, pattern: '^[A-Z]{2}$' }
+        avatarSeed: { type: string, minLength: 1, maxLength: 100, pattern: '^[A-Za-z0-9:_-]+$' }
     CharacterInput:
       type: object
-      required: [name, age, gender, presetId]
+      required: [name, age, gender]
       properties:
         name: { type: string, minLength: 3, maxLength: 24 }
-        age: { type: integer, minimum: 21, maximum: 60 }
+        age: { type: integer, minimum: 14, maximum: 60 }
         gender: { type: string, enum: [female, male, unspecified] }
         presetId: { type: string }
+        countryCode: { type: string, pattern: '^[A-Z]{2}$' }
+        appearance:
+          anyOf:
+            - { $ref: '#/components/schemas/CharacterAppearance' }
+            - { type: 'null' }
     Player:
       type: object
       required: [id, name, age, gender, presetId, online]
@@ -186,6 +204,11 @@ components:
         age: { type: integer }
         gender: { type: string, enum: [female, male, unspecified] }
         presetId: { type: string }
+        countryCode: { type: [string, 'null'] }
+        appearance:
+          anyOf:
+            - { $ref: '#/components/schemas/CharacterAppearance' }
+            - { type: 'null' }
         online: { type: boolean }
     PlayerAccount:
       type: object

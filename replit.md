@@ -14,6 +14,8 @@ A browser-based cooperative space mission story for 1–4 players.
 - Product requirement: Google-only sign-in with no separate registration form. Do not confuse hiding email/password UI with disabling that method in the authentication service.
 - Position the product as an educational space mission game for ages 14+, accessible without prior engineering knowledge and with planned beginner-to-advanced scenarios.
 - Monthly missions are a goal, not an established release schedule. Never invent advisers, credentials or NASA involvement.
+- Character onboarding now targets ages 14–60 (default 20), Female/Male bases, and a searchable country selector defaulting to Poland. Preserve legacy profiles and their portraits until their owner explicitly customizes them.
+- Custom characters use deterministic DiceBear avatars with the same Asterion Aerospace uniform and an integrated country flag. Save appearance configuration, not generated images.
 
 ## Run and verify
 

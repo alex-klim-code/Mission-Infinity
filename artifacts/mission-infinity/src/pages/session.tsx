@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Starfield } from '@/components/starfield';
 import { FullScreenLoader, LinkStatusPill, RequireCharacter } from '@/components/shell';
-import { EmptyState, ErrorState, HudButton, Portrait } from '@/components/ui-kit';
+import { EmptyState, ErrorState, HudButton, PlayerPortrait, Portrait } from '@/components/ui-kit';
 import { SCENE_STATUS_LABEL, errMsg, errStatus, formatBudget, imgUrl, invalidateGame, invalidateSocial } from '@/lib/game';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -76,7 +76,7 @@ function CrewStrip({ session, mode }: { session: GameSession; mode: 'lobby' | 'c
         const flag = mode === 'lobby' ? sp.ready || host : mode === 'continue' ? sp.continueReady || host : sp.accepted;
         return (
           <div key={sp.player.id} className="group relative" title={`${sp.player.name}${host ? ' (host)' : ''}`} data-testid={`crew-${sp.player.id}`}>
-            <Portrait presetId={sp.player.presetId} name={sp.player.name} size={40} ring={flag ? 'ion' : 'none'} className={cn(!sp.connected && 'opacity-40')} />
+            <Portrait player={sp.player} size={40} ring={flag ? 'ion' : 'none'} className={cn(!sp.connected && 'opacity-40')} />
             {host && <Crown className="absolute -top-2 left-1/2 h-3.5 w-3.5 -translate-x-1/2 text-burn" />}
             {flag && !host && (
               <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-ion text-void">
@@ -215,7 +215,7 @@ function InvitePanel({ session }: { session: GameSession }) {
             const was = pendingOut.has(f.id);
             return (
               <div key={f.id} className="flex items-center gap-3 rounded-md border border-white/[.06] p-2.5">
-                <Portrait presetId={f.presetId} name={f.name} size={36} online={f.online} />
+                <Portrait player={f} size={36} online={f.online} />
                 <div className="min-w-0 flex-1 truncate text-sm font-semibold">{f.name}</div>
                 <HudButton
                   variant={was ? 'ghost' : 'ion'}
@@ -298,7 +298,7 @@ function Lobby({ session, mission, me, isHost }: { session: GameSession; mission
                 <motion.div key={sp?.player.id ?? `empty-${i}`} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
                   {sp ? (
                     <div className={cn('relative overflow-hidden rounded-lg border', sp.ready || sp.player.id === session.hostId ? 'border-ion/50' : 'border-white/10')} data-testid={`slot-player-${sp.player.id}`}>
-                      <img src={imgUrl(`/images/portrait-${(sp.player.presetId.match(/\d+/)?.[0] ?? '1').padStart(2, '0')}.png`)} alt={sp.player.name} className={cn('aspect-[3/4] w-full object-cover', !sp.connected && 'grayscale opacity-50')} />
+                      <PlayerPortrait player={sp.player} className={cn('aspect-[3/4]', !sp.connected && 'grayscale opacity-50')} />
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-void via-void/80 to-transparent p-3">
                         <div className="flex items-center gap-1.5 truncate font-semibold">
                           {sp.player.id === session.hostId && <Crown className="h-3.5 w-3.5 shrink-0 text-burn" />}
@@ -520,7 +520,7 @@ function StartMission({ session, mission, isHost }: { session: GameSession; miss
           <div className="mt-10 flex flex-wrap justify-center gap-5">
             {session.players.map((sp) => (
               <div key={sp.player.id} className="flex w-20 flex-col items-center gap-2" data-testid={`start-crew-${sp.player.id}`}>
-                <Portrait presetId={sp.player.presetId} name={sp.player.name} size={72} ring={sp.player.id === session.hostId ? 'burn' : 'ion'} />
+                <Portrait player={sp.player} size={72} ring={sp.player.id === session.hostId ? 'burn' : 'ion'} />
                 <span className="w-full truncate text-xs font-semibold">{sp.player.name}</span>
                 {sp.player.id === session.hostId && <span className="font-mono text-[9px] uppercase tracking-widest text-burn">Host</span>}
               </div>
@@ -588,7 +588,7 @@ function Finale({ session, mission }: { session: GameSession; mission?: Mission 
           <div className="flex flex-wrap justify-center gap-4">
             {session.players.map((sp) => (
               <div key={sp.player.id} className="flex flex-col items-center gap-2">
-                <Portrait presetId={sp.player.presetId} name={sp.player.name} size={64} ring={sp.player.id === session.hostId ? 'burn' : 'ion'} />
+                <Portrait player={sp.player} size={64} ring={sp.player.id === session.hostId ? 'burn' : 'ion'} />
                 <span className="text-xs font-semibold">{sp.player.name}</span>
               </div>
             ))}

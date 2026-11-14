@@ -60,6 +60,69 @@ test("Mission Infinity server-authoritative game rules", async t => {
       await assert.rejects(savePlayer(a, { name: "Invalid", age: 30, gender: "male", presetId: "unknown" }));
       await assert.rejects(savePlayer(b, { name: account.character!.name.toUpperCase(), age: 30, gender: "male", presetId: "engineer-02" }));
     });
+    await t.test("custom appearance persists exactly, supports ages 14–60, and preserves legacy edits", async () => {
+      const [a] = await players(1);
+      const before = (await getAccount(a)).character!;
+      assert.equal(before.appearance, null);
+      const appearance = {
+        version: 1, base: "female", face: "bright", skinTone: "614335",
+        hairstyle: "curly", hairColor: "d6b370", countryCode: "PL", avatarSeed: `avatar:${a}`,
+      } as const;
+      await savePlayer(a, { name: before.name, age: 14, gender: "female", countryCode: "PL", appearance });
+      let saved = (await getAccount(a)).character!;
+      assert.deepEqual(saved.appearance, appearance);
+      assert.equal(saved.countryCode, "PL");
+      assert.equal(saved.age, 14);
+      assert.equal(saved.presetId, before.presetId);
+      // Older clients omitting the new fields must not erase a customized character.
+      await savePlayer(a, { name: before.name, age: 60, gender: "female", presetId: before.presetId });
+      saved = (await getAccount(a)).character!;
+      assert.deepEqual(saved.appearance, appearance);
+      assert.equal(saved.countryCode, "PL");
+      await assert.rejects(savePlayer(a, { name: before.name, age: 13, gender: "female" }));
+      await assert.rejects(savePlayer(a, { name: before.name, age: 61, gender: "female" }));
+      await assert.rejects(gameDb.updateTable("user_characters").set({ age: 13 }).where("user_id", "=", a).execute());
+      // An explicit legacy restore remains possible without deleting profile or country.
+      await savePlayer(a, { name: before.name, age: 20, gender: "female", appearance: null });
+      assert.equal((await getAccount(a)).character!.appearance, null);
+      assert.equal((await getAccount(a)).character!.presetId, before.presetId);
+    });
+    await t.test("appearance rejects unsupported controls, invalid countries and inconsistent flags or bases", async () => {
+      const [a] = await players(1);
+      const appearance = {
+        version: 1, base: "male", face: "focused", skinTone: "edb98a",
+        hairstyle: "theCaesar", hairColor: "2c1b18", countryCode: "DE", avatarSeed: `avatar:${a}`,
+      } as const;
+      const input = { name: `Custom ${a.slice(0, 8)}`, age: 20, gender: "male" as const, countryCode: "DE", appearance };
+      await savePlayer(a, input);
+      await assert.rejects(savePlayer(a, { ...input, countryCode: "PL" }));
+      await assert.rejects(savePlayer(a, { ...input, gender: "female" }));
+      await assert.rejects(savePlayer(a, { ...input, countryCode: "ZZ", appearance: { ...appearance, countryCode: "ZZ" } }));
+      await assert.rejects(savePlayer(a, { ...input, appearance: { ...appearance, avatarSeed: "<svg-onload>" } }));
+      await assert.rejects(savePlayer(a, { ...input, appearance: { ...appearance, face: "unsupported" as "focused" } }));
+      await assert.rejects(savePlayer(a, { ...input, appearance: { ...appearance, hairstyle: "unsupported" as "theCaesar" } }));
+      assert.deepEqual((await getAccount(a)).character!.appearance, appearance);
+    });
+    await t.test("saved custom appearances reach friends, invitations and both multiplayer clients unchanged", async () => {
+      const [a, b] = await players(2);
+      const appearance = {
+        version: 1, base: "female", face: "confident", skinTone: "ae5d29",
+        hairstyle: "bob", hairColor: "e8e1e1", countryCode: "JP", avatarSeed: `crew:${a}`,
+      } as const;
+      await savePlayer(a, { name: `Crew ${a.slice(0, 8)}`, age: 20, gender: "female", countryCode: "JP", appearance });
+      const room = await createSession(a, "earth-observer", "crew");
+      const invitationId = await invite(a, b, room.id);
+      const recipientSocial = await socialState(b);
+      assert.deepEqual(recipientSocial.friends.find(p => p.id === a)!.appearance, appearance);
+      assert.deepEqual(recipientSocial.invitations.find(i => i.id === invitationId)!.from.appearance, appearance);
+      await respondToInvite(b, invitationId, "accept");
+      for (const viewer of [a, b]) {
+        assert.deepEqual((await sessionState(room.id, viewer)).players.find(p => p.player.id === a)!.player.appearance, appearance);
+      }
+      const changed = { ...appearance, countryCode: "GB", face: "calm" as const };
+      await savePlayer(a, { name: `Crew ${a.slice(0, 8)}`, age: 20, gender: "female", countryCode: "GB", appearance: changed });
+      assert.deepEqual((await sessionState(room.id, b)).players.find(p => p.player.id === a)!.player.appearance, changed);
+    });
     await t.test("friend requests prevent self, duplicate and unauthorized replies; accept and remove persist", async () => {
       const [a, b, outsider] = await players(3);
       await assert.rejects(friendshipAction(a, a, "send"));

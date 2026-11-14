@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import { Pencil } from 'lucide-react';
 import { getGetCareerQueryKey, useGetCareer, type PlayerAccount } from '@workspace/api-client-react';
 import { AppShell, PageHeader, RequireCharacter } from '@/components/shell';
-import { ErrorState, Panel, SkeletonBlock } from '@/components/ui-kit';
-import { errMsg, imgUrl, portraitFor } from '@/lib/game';
+import { ErrorState, Panel, PlayerPortrait, SkeletonBlock } from '@/components/ui-kit';
+import { errMsg, imgUrl } from '@/lib/game';
+import { countryName } from '@/lib/avatar';
 
 function ProfileInner({ account }: { account: PlayerAccount }) {
   const c = account.character!;
@@ -16,11 +17,11 @@ function ProfileInner({ account }: { account: PlayerAccount }) {
       <div className="grid gap-6 md:grid-cols-[340px_1fr]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Panel className="overflow-hidden">
-            <img src={imgUrl(portraitFor(c.presetId))} alt={c.name} className="aspect-[4/5] w-full object-cover" />
+            <PlayerPortrait player={c} />
             <div className="p-5">
               <div className="font-mono text-[10px] uppercase tracking-[.25em] text-ion">Asterion Aerospace</div>
               <div className="mt-1 font-display text-3xl font-bold uppercase" data-testid="text-profile-name">{c.name}</div>
-              <div className="mt-1 text-sm text-muted-foreground">Age {c.age} / {c.gender} / {c.presetId}</div>
+              <div className="mt-1 text-sm text-muted-foreground">Age {c.age} / {c.gender}{c.countryCode ? ` / ${countryName(c.countryCode)}` : ''}</div>
               <Link href="/settings" className="mt-5 inline-flex items-center gap-2 text-sm text-ion hover:underline" data-testid="link-edit-character">
                 <Pencil className="h-3.5 w-3.5" /> Edit engineer
               </Link>

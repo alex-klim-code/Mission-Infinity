@@ -101,7 +101,7 @@ export function AppShell({ account, children }: { account: PlayerAccount; childr
             </div>
             {c && (
               <Link href="/profile" className="flex items-center gap-2" data-testid="link-player-chip">
-                <Portrait presetId={c.presetId} name={c.name} size={34} />
+                <Portrait player={c} size={34} />
                 <span className="hidden text-sm font-semibold lg:inline" data-testid="text-player-name">{c.name}</span>
               </Link>
             )}
