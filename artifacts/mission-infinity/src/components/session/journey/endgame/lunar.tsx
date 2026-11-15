@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertOctagon, ArrowUpRight, CheckCircle2, Drill, Gauge, PlaneLanding, VideoOff } from 'lucide-react';
+import { AlertOctagon, ArrowUpRight, CheckCircle2, Drill, Gauge, PlaneLanding } from 'lucide-react';
 import type { MissionOperations, SessionActionSiteId } from '@workspace/api-client-react';
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
 import { useCalm, type Props } from '../../rocket-shared';
 import { Stat, TickError, Waiting, clamp01, kg, num, useNow } from '../shared';
 import { ReturnCheckView } from './hardware-checks';
+import { LandingScene } from './landing-scene';
 import { LanderSvg, Warn, compOf, landerVariant } from './common';
 
 type Extra = { tickError?: boolean; onRetry?: () => void };
@@ -106,35 +107,6 @@ function ThrustControl({ ops, isHost, act, pending }: { ops: MissionOperations; 
       {isHost&&<HudButton variant="ion" className="mt-2 w-full" disabled={disabled||pending} onClick={()=>change(ops.landing.recommendedThrust)} data-testid="button-landing-guidance">Use recommended thrust</HudButton>}
       {!isHost && <p className="mt-1 text-[11px] text-muted-foreground">The Leader is flying the descent.</p>}
     </div>
-  );
-}
-
-function LandingScene({ ops, calm }: { ops: MissionOperations; calm: boolean }) {
-  const L = ops.landing;
-  const variant = landerVariant(compOf(ops.components, 'lander')?.name);
-  const crashed = L.status === 'CRASHED';
-  const maxAlt = Math.max(L.altitudeM, 2000);
-  const altPx = L.status === 'LANDED' || crashed ? 0 : (Math.min(L.altitudeM, maxAlt) / maxAlt) ** 0.6 * 230;
-  const y = 292 - altPx;
-  if (!ops.hasCamera)
-    return (
-      <div className="absolute inset-0 grid place-items-center bg-[hsl(220_20%_3%)]" data-testid="panel-no-video">
-        <div className="text-center">
-          <VideoOff className="mx-auto h-8 w-8 text-muted-foreground" />
-          <div className={cn('mt-2 font-mono text-lg tracking-[.4em] text-muted-foreground', !calm && 'pulse-dot')}>NO VIDEO SIGNAL</div>
-          <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">{ops.alternativeNavigation ? 'Flying on radar / inertial navigation telemetry' : 'No navigation source available'}</div>
-        </div>
-      </div>
-    );
-  return (
-    <svg viewBox="0 0 800 360" className="absolute inset-0 h-full w-full" aria-hidden>
-      <Surface />
-      {L.status === 'DESCENDING' && !calm && L.altitudeM < 60 && <ellipse cx="400" cy="296" rx={60 - L.altitudeM} ry="5" fill="hsl(30 10% 75% / .35)" />}
-      <g transform={`translate(400 ${y - 8}) scale(1.4)`} style={{ transition: calm ? undefined : 'transform 0.5s linear' }}>
-        <LanderSvg variant={variant} flame={L.status === 'DESCENDING' ? L.thrust / 100 : 0} crashed={crashed} />
-      </g>
-      {crashed && <g><circle cx="410" cy="292" r="40" fill="hsl(20 90% 50% / .25)" /><path d="M370 296 L360 278 M450 294 L466 276 M405 286 L400 262" stroke="hsl(30 10% 70%)" strokeWidth="2" /></g>}
-    </svg>
   );
 }
 
@@ -262,7 +234,7 @@ export function LunarGameplayStage(props: Props & Extra) {
       {ops.returnCheckOpened ? <ReturnCheckView {...props} ops={ops} /> : phase === 'SAMPLE_COLLECTION' ? <CollectionView {...props} /> : (
         <>
           <div className={cn('glass hud-corners relative mt-4 overflow-hidden rounded-lg', crashed && 'border-destructive/50')} style={{ aspectRatio: '800 / 360' }} data-testid="panel-landing-scene">
-            <LandingScene ops={ops} calm={calm} />
+            <LandingScene ops={ops} calm={calm}><Surface /></LandingScene>
             <div className="absolute right-3 top-3 space-y-1 rounded-sm border border-white/15 bg-void/80 px-2 py-1.5 font-mono text-[10px] uppercase tracking-widest" role="status" aria-live="polite">
               <div>Alt <span className="tabular-nums text-ion" data-testid="text-landing-altitude">{num(L.altitudeM, 0)} m</span></div>
               <div>V-down <span className={cn('tabular-nums', vTone)} data-testid="text-landing-velocity">{num(L.velocityMps, 1)} m/s</span></div>

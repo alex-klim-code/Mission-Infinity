@@ -570,7 +570,7 @@ components:
       type: object
       required: [action]
       properties:
-        action: { type: string, enum: [ready, start, next, accept, initiate, leave, continue-ready, build-next, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments, open-fueling, set-fuel-target, connect-fuel-hose, disconnect-fuel-hose, start-fueling, fuel-tick, pause-fueling, confirm-fuel, start-construction, journey-tick, open-briefing, briefing-continue, confirm-briefing-date, launch-flight, check-instruments, continue-lunar, start-landing, set-landing-thrust, collect-site, start-return, view-results, rebuild-rocket, request-funding, funding-tick, repair-weather-launch] }
+        action: { type: string, enum: [ready, start, next, skip-introduction, accept, initiate, leave, continue-ready, build-next, build-demo-rocket, choose-hull, confirm-hull, choose-component, confirm-component, finish-rocket, open-science, propose-instruments, purchase-instruments, open-fueling, set-fuel-target, connect-fuel-hose, disconnect-fuel-hose, start-fueling, fuel-tick, pause-fueling, confirm-fuel, start-construction, journey-tick, open-briefing, briefing-continue, confirm-briefing-date, launch-flight, check-instruments, continue-lunar, start-landing, set-landing-thrust, collect-site, start-return, view-results, rebuild-rocket, request-funding, funding-tick, repair-weather-launch] }
         acceptedIssueIds: { type: array, maxItems: 20, uniqueItems: true, items: { type: string } }
         requestId: { type: string, format: uuid }
         amount: { type: integer, minimum: 1000000, maximum: 400000000 }

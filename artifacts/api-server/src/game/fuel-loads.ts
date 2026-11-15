@@ -3,7 +3,7 @@ import { requireKnownPayloadFeasible } from "./payload-capacity";
 import {effectiveMissionBudget} from "./mission-finance";
 
 // Explicit gameplay values from the fueling brief, not tank engineering data.
-export const fuelSettings = { capacityKg: 30000, pricePerKg: 8, rateKgPerSecond: 1500, fuelType: "RP-1 / LOX (training simulation)" };
+export const fuelSettings = { capacityKg: 30000, pricePerKg: 8, rateKgPerSecond: 6000, fuelType: "RP-1 / LOX (training simulation)" };
 const heartbeatLimitMs = 1500;
 
 /** No offline fueling: a missed heartbeat expires the hold after 1.5 seconds. */

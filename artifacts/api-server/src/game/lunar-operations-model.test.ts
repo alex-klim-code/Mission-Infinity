@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { componentCategories } from "./rocket-catalog";
 import { scientificInstruments } from "./scientific-instruments";
 import { makeFlightPlan } from "./mission-flight-model";
-import { advanceOperations, makeOperations, missionResults, recommendedThrust } from "./lunar-operations-model";
+import { advanceOperations, LANDING_TIME_SCALE, makeOperations, missionResults, recommendedThrust } from "./lunar-operations-model";
 
 const selections=Object.fromEntries(componentCategories.map(c=>[c.id,c.options.reduce((a,b)=>(a.quality??0)>(b.quality??0)?a:b).id]));
 const diagnostics=scientificInstruments.filter(i=>i.powerW!==null).map(i=>({instrumentId:i.id,name:i.name,quality:i.quality,status:"OPERATIONAL" as const,
@@ -70,6 +70,38 @@ test("landing assist also guides saved descents across long gaps and slower engi
   assert.equal(result.phase,"SAMPLE_COLLECTION");
   assert.equal(result.operations.landing.status,"LANDED");
   assert.ok(result.operations.remainingFuelKg<10000);
+});
+
+test("powered descent runs three simulation seconds per wall second without duplicating fuel use",()=>{
+  const o=makeOperations(selections,diagnostics,10000);
+  o.landing={...o.landing,status:"DESCENDING",startedAt:new Date(time).toISOString(),lastTickAt:new Date(time).toISOString()};
+  const next=advanceOperations("LANDING",o,plan,time+1000);
+  assert.equal(LANDING_TIME_SCALE,3);
+  assert.equal(next.operations.landing.elapsedSeconds,3);
+  assert.ok(next.operations.landing.altitudeM<o.landing.altitudeM);
+  assert.ok(next.operations.landing.fuelUsedKg>0);
+  assert.ok(Math.abs(next.operations.remainingFuelKg+next.operations.landing.fuelUsedKg-10000)<.01);
+  const retried=advanceOperations(next.phase,next.operations,plan,time+1000).operations;
+  assert.deepEqual([retried.remainingFuelKg,retried.landing.fuelUsedKg,retried.landing.altitudeM,retried.landing.elapsedSeconds],
+    [next.operations.remainingFuelKg,next.operations.landing.fuelUsedKg,next.operations.landing.altitudeM,next.operations.landing.elapsedSeconds],
+    "Same-timestamp retry cannot advance or burn fuel twice.");
+  assert.deepEqual(o.landing.elapsedSeconds,0,"The input save remains unchanged.");
+});
+
+test("accelerated assisted descents finish within thirty wall seconds with either throttle extreme",()=>{
+  for(const q of [55,95])for(const thrust of [0,100]){
+    let o=makeOperations(selections,diagnostics,10000);
+    o.components=o.components.map(c=>c.categoryId==="lunar-descent-engine"?{...c,quality:q}:c);
+    o.landing={...o.landing,status:"DESCENDING",thrust,startedAt:new Date(time).toISOString(),lastTickAt:new Date(time).toISOString()};
+    let phase:"LANDING"|"SAMPLE_COLLECTION"|"LANDING_FAILED"="LANDING";
+    for(let elapsed=500;elapsed<=30000&&phase==="LANDING";elapsed+=500){
+      o.landing.thrust=thrust;
+      const next=advanceOperations(phase,o,plan,time+elapsed);
+      phase=next.phase as typeof phase;o=next.operations;
+    }
+    assert.equal(phase,"SAMPLE_COLLECTION",`Q${q} at ${thrust}% throttle must land within thirty seconds`);
+    assert.ok(o.remainingFuelKg>0);
+  }
 });
 
 test("collections are resumable, unique and cannot farm samples or Science Points",()=>{

@@ -5,6 +5,7 @@ import { missionObjectiveWeights as weights, scienceScoring } from "./mission-sc
 
 export type JourneyPhase = MissionJourney["phase"];
 export const COLLECTION_MS=8000, RETURN_MS=20000, REENTRY_MS=12000, RECOVERY_MS=6000;
+export const LANDING_TIME_SCALE=3;
 export const sites = {regolith:2,crater:3,ridge:5} as const;
 const clamp=(n:number,min=0,max=1)=>Math.max(min,Math.min(max,n));
 const round=(n:number)=>Math.round(n*1000)/1000;
@@ -83,7 +84,9 @@ export function advanceOperations(phase:JourneyPhase,saved:MissionOperations,pla
   let next=phase;
   if(phase==="LANDING"&&o.landing.status==="DESCENDING") {
     const l=o.landing;
-    let dt=clamp((now-Date.parse(l.lastTickAt!))/1000,0,100);
+    // Accelerate only the landing clock; keep small physics steps and the same
+    // fuel cost per simulated second so shorter waits do not create free fuel.
+    let dt=clamp((now-Date.parse(l.lastTickAt!))/1000*LANDING_TIME_SCALE,0,100);
     while(dt>0&&l.status==="DESCENDING") {
       const step=Math.min(0.1,dt);
       // Always-on stability assist makes the controls forgiving, including old

@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { GetGameSessionResponse } from "@workspace/api-zod";
 import { gameDb, requireCondition, type GameConnection } from "./database";
 import { activeMembership, getPlayer, requireCharacter } from "./players";
 import { isOnline, joinSessionRoom, leaveSessionRoom, notifyUsers } from "./presence";
@@ -12,6 +13,7 @@ import { journeyState, openConstruction, updateJourney } from "./mission-journey
 import { updateLunarOperations } from "./lunar-operations";
 import { engineeringState,rebuildRocket } from "./engineering";
 import { financeState,updateFunding } from "./mission-finance";
+import { buildDemoRocket } from "./demo-build";
 
 export async function sessionMembers(id: string, db: GameConnection = gameDb) {
   return db.selectFrom("game_session_players").selectAll()
@@ -146,6 +148,9 @@ export async function updateSession(userId: string, id: string, input: { action:
       await updateFueling(tx, session, userId, input.action, input.quantityKg);
     } else if (["open-science", "propose-instruments", "purchase-instruments"].includes(input.action)) {
       await updateScience(tx, session, userId, input.action, input.instrumentIds,input.acceptedIssueIds);
+    } else if (input.action === "build-demo-rocket") {
+      requireCondition(host,403,"Only the Leader can build the recommended rocket.");
+      await buildDemoRocket(tx,session,userId,GetGameSessionResponse.parse(await sessionState(id,userId,tx)));
     } else if (["choose-component", "confirm-component", "finish-rocket"].includes(input.action)) {
       await updateAssembly(tx, session, userId, input.action, input.optionId,input.acceptedIssueIds);
     } else if (["build-next", "choose-hull", "confirm-hull"].includes(input.action)) {
@@ -166,6 +171,17 @@ export async function updateSession(userId: string, id: string, input: { action:
       await tx.updateTable("game_sessions").set({ status: story[0].stage, scene: story[0].id }).where("id", "=", id).execute();
       await tx.updateTable("game_invitations").set({ status: "expired" })
         .where("session_id", "=", id).where("status", "=", "pending").execute();
+    } else if (input.action === "skip-introduction") {
+      requireCondition(host,403,"Only the Leader can skip the introduction.");
+      const story=await getMissionStory(session.mission_id,tx);
+      const final=story[story.length-1];
+      requireCondition(final?.stage==="MISSION_ACCEPTANCE",409,"The mission start scene is unavailable.");
+      if(session.scene!==final.id||!["MISSION_ACCEPTANCE","READY_TO_START"].includes(session.status)){
+        requireCondition(session.status==="STORY"&&session.scene===story[0]?.id
+          &&input.expectedScene===session.scene,409,"The introduction can only be skipped from Graduation Day.");
+        await tx.updateTable("game_sessions").set({scene:final.id,status:final.stage}).where("id","=",id).execute();
+        await tx.updateTable("game_session_players").set({continue_ready:false,accepted:false}).where("session_id","=",id).execute();
+      }
     } else if (input.action === "continue-ready") {
       requireCondition(["STORY", "MISSION_BRIEFING"].includes(session.status), 409, "There is no scene to continue.");
       await tx.updateTable("game_session_players").set({ continue_ready: input.ready ?? !me.continue_ready }).where("id", "=", me.id).execute();

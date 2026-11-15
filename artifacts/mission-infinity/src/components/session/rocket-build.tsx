@@ -1,4 +1,5 @@
 import { ScrollPanel } from './scroll-panel';
+import { useDemoGuide } from '@/hooks/use-demo-guide';
 import { FlightDamageAlarm } from './journey/flight-damage-alarm';
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -175,6 +176,7 @@ function Built({ session, sections, summary, official, byOption, mission, isHost
 
 export function RocketBuildView(props: Props) {
   const { session, mission } = props;
+  const demo = useDemoGuide(session, props.me);
   const catalog = useGetGameCatalog();
   const sections = useMemo(() => catalog.data?.rocketCatalog ?? [], [catalog.data]);
   const { byOption, cats, official } = useOfficial(session, sections);
@@ -208,7 +210,7 @@ export function RocketBuildView(props: Props) {
     else unknownMass += 1;
   });
   const spent = session.build?.spent ?? 0;
-  const summary: Summary = { spent, remaining: (mission?.budget ?? 0) - spent, count: cats.filter((c) => official.has(c.id)).length, total: cats.length, dryMass, unknownMass, hullId: session.build?.selectedHullId };
+  const summary: Summary = { spent, remaining: (session.finance?.totalBudget ?? mission?.budget ?? 0) - spent, count: cats.filter((c) => official.has(c.id)).length, total: cats.length, dryMass, unknownMass, hullId: session.build?.selectedHullId };
 
   if (session.assembly?.completed && !session.science?.opened) return <ScrollPanel className="relative z-10 h-full" label="Rocket"><Built isHost={props.isHost} act={props.act} pendingAction={props.pendingAction} session={session} sections={sections} summary={summary} official={official} byOption={byOption} mission={mission} /></ScrollPanel>;
 
@@ -223,6 +225,13 @@ export function RocketBuildView(props: Props) {
       {['FLIGHT','MOON_ARRIVAL','FAILED'].includes(journey?.phase ?? '') && <FlightDamageAlarm alerts={journey?.flightAlerts ?? []} />}
       {catalogOpen ? (
         <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col overflow-hidden px-3 py-4 md:px-6" data-testid="panel-builder-left">
+          {demo.enabled && <div className="mb-3 flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-ion/30 bg-void/80 p-2" data-testid="panel-demo-build">
+            <HudButton variant="ion" disabled={!props.isHost||props.pending||!demo.plan?.feasible||!!demo.error} loading={props.pendingAction==='build-demo-rocket'} onClick={()=>props.act({action:'build-demo-rocket'})} data-testid="button-build-demo-rocket">
+              {demo.loading?'Finding recommended parts…':'Build recommended rocket'}
+            </HudButton>
+            <span className="text-xs text-muted-foreground">{!props.isHost?'Only the Leader can purchase the recommended rocket.':demo.error?'Recommendations unavailable.':demo.plan&&!demo.plan.feasible?'No recommended build fits the remaining budget.':'Parts are purchased from the mission budget. Science and fuel stay separate.'}</span>
+            {demo.error&&<button className="text-xs text-ion underline" onClick={()=>demo.refetch()} data-testid="button-retry-demo-build">Retry</button>}
+          </div>}
           <Navigator sections={sections} official={official} byOption={byOption} props={props} remaining={summary.remaining} />
         </div>
       ) : !journeyOpen && !constructionOpen && session.fueling?.opened && !session.fueling.completed ? (

@@ -254,6 +254,11 @@ function Story({ session, mission, scenes, me, isHost, openBadge }: StageProps &
       </div>
 
       <main className="relative min-h-0 flex-1 overflow-hidden">
+        {idx===0&&!isFinal&&<div className="absolute right-3 top-3 z-20 md:right-8">
+          <HudButton variant="ghost" className="border-white/25 bg-void/85 text-foreground shadow-lg backdrop-blur-md hover:bg-void" disabled={!isHost||pending} loading={pendingAction==='skip-introduction'} onClick={()=>act({action:'skip-introduction',expectedScene:session.scene})} data-testid="button-skip-introduction" title={isHost?'Go directly to Start Mission':'Only the Leader can skip the introduction'}>
+            Skip Introduction <ArrowRight className="h-4 w-4"/>
+          </HudButton>
+        </div>}
         <AnimatePresence mode="sync">
           <motion.div key={idx} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.1 }}>
             {scene && <img src={imgUrl(scene.image)} alt={scene.title} className="kenburns h-full w-full object-cover" data-testid="img-scene" />}
