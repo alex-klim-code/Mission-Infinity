@@ -1,0 +1,146 @@
+[
+  {
+    "id": "26a68701-71ca-45d7-b68d-948cd4f06283",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide1.tsx",
+    "title": "Mission: Infinity",
+    "description": "Okładka",
+    "speakerNotes": ""
+  },
+  {
+    "id": "b96deb7c-1984-47db-b5fd-6fa7b0707a87",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide2.tsx",
+    "title": "Twoje decyzje tworzą misję",
+    "description": "Czym jest gra",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fbe15571-1565-45e1-b38d-3b54781e6a83",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide3.tsx",
+    "title": "Zacznij od swojej postaci",
+    "description": "Tworzenie postaci",
+    "speakerNotes": ""
+  },
+  {
+    "id": "6c4750c8-97bb-4ad8-ba60-3df4c700996f",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide4.tsx",
+    "title": "Jedna załoga. Wspólne decyzje.",
+    "description": "Współpraca załogi",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c7b2f95c-bfa3-4f80-8f65-8cc0897f94f7",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide5.tsx",
+    "title": "Poznaj centrum dowodzenia",
+    "description": "Układ interfejsu",
+    "speakerNotes": ""
+  },
+  {
+    "id": "da9c5ee2-f52b-402e-b345-35a7d55eb287",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide6.tsx",
+    "title": "Misja LUNA — Lunar Sample Return",
+    "description": "Parametry misji",
+    "speakerNotes": ""
+  },
+  {
+    "id": "037367a0-783f-429c-8837-984d26ef2bd8",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide7.tsx",
+    "title": "Od Graduation Day do Start Mission",
+    "description": "Wprowadzenie fabularne",
+    "speakerNotes": ""
+  },
+  {
+    "id": "428c8f04-9a18-4a75-883f-26a5c3210a42",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide8.tsx",
+    "title": "Etap 1: zbuduj swoją rakietę",
+    "description": "Rocket Builder",
+    "speakerNotes": ""
+  },
+  {
+    "id": "83bb9a7b-ee9e-4288-8bde-f75c85dd832b",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide9.tsx",
+    "title": "Wybierz obudowę",
+    "description": "Trzy obudowy rakiety",
+    "speakerNotes": ""
+  },
+  {
+    "id": "362bee65-5192-4911-93f0-86b1a96bbc84",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10.tsx",
+    "title": "Jakość, zgodność i ryzyko",
+    "description": "Ryzyko części",
+    "speakerNotes": ""
+  },
+  {
+    "id": "6d414e4d-ff36-45e1-9c05-63bec3f55eeb",
+    "position": 11,
+    "filepath": "src/pages/slides/Slide11.tsx",
+    "title": "DEMO: pomoc przy pierwszej misji",
+    "description": "Tryb DEMO",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0df66d02-46bf-46fc-b7a4-ed94e01f56d1",
+    "position": 12,
+    "filepath": "src/pages/slides/Slide12.tsx",
+    "title": "Etap 2: dobierz sprzęt naukowy",
+    "description": "Instrumenty naukowe",
+    "speakerNotes": ""
+  },
+  {
+    "id": "aa6064c3-46bc-4fd0-82f0-f98852763475",
+    "position": 13,
+    "filepath": "src/pages/slides/Slide13.tsx",
+    "title": "Etap 3: masa i paliwo mają znaczenie",
+    "description": "Masa i paliwo",
+    "speakerNotes": ""
+  },
+  {
+    "id": "72bbe05e-7231-4807-9fbb-7f7694f9cd64",
+    "position": 14,
+    "filepath": "src/pages/slides/Slide14.tsx",
+    "title": "Przygotuj rakietę do startu",
+    "description": "Przygotowania startowe",
+    "speakerNotes": ""
+  },
+  {
+    "id": "55097cb3-affc-45a8-9daa-c33fd13c8ed0",
+    "position": 15,
+    "filepath": "src/pages/slides/Slide15.tsx",
+    "title": "Start następuje na Twoją komendę",
+    "description": "Start i lot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "faafd251-c508-4480-a6f3-98f82e7f22a7",
+    "position": 16,
+    "filepath": "src/pages/slides/Slide16.tsx",
+    "title": "Wyląduj i zbierz próbki",
+    "description": "Lądowanie i eksploracja",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f3862dd-9d45-41b0-ab35-c9b80b01a117",
+    "position": 17,
+    "filepath": "src/pages/slides/Slide17.tsx",
+    "title": "Sprawdź, czy możesz wrócić",
+    "description": "Powrót",
+    "speakerNotes": ""
+  },
+  {
+    "id": "7a9805f2-0cb7-490c-b7cd-c546d17b9ab9",
+    "position": 18,
+    "filepath": "src/pages/slides/Slide18.tsx",
+    "title": "Sukces to więcej niż udany start",
+    "description": "Raport końcowy",
+    "speakerNotes": ""
+  }
+]

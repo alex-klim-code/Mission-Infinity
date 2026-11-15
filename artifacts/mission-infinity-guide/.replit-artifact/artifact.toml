@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/mission-infinity-guide/"
+title = "Mission: Infinity — poznaj grę"
+description = "Prezentacja po polsku: 18 slajdów o najważniejszych funkcjach Mission: Infinity i przebiegu misji LUNA, od postaci i załogi przez budowę rakiety po powrót z Księżyca. Styl Cosmos Explorer."
+version = "1.0.0"
+id = "artifacts/mission-infinity-guide"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/mission-infinity-guide/" ]
+localPort = 19954
+
+[services.development]
+run = "pnpm --filter @workspace/mission-infinity-guide run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mission-infinity-guide", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/mission-infinity-guide/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19954"
+BASE_PATH = "/mission-infinity-guide/"
