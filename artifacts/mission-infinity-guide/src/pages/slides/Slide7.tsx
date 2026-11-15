@@ -1,6 +1,3 @@
-import grad from '@assets/Graduacja_przed_Politechniką_Warszawską_1794662243160.png';
-import offer from '@assets/Oficjalna_oferta_stażu_w_NASA_1794662575124.png';
-import nasa from '@assets/NASA__Inżynieria_misji_kosmicznej_1794662658308.png';
 const base = import.meta.env.BASE_URL;
 
 export default function Slide7() {
@@ -14,10 +11,9 @@ export default function Slide7() {
           </div>
           <div className="w-[2.5vw] h-[2.5vw] rounded-full border border-muted flex items-center justify-center"><div className="w-[0.5vw] h-[0.5vw] rounded-full bg-accent" /></div>
         </div>
-        <div className="grid grid-cols-3 gap-[2vw] mt-[4vh]">
-            <figure className="flex flex-col gap-[1.2vh] min-h-0"><img src={grad} crossOrigin="anonymous" alt="Graduation Day" className="w-full h-[30vh] object-cover" /><figcaption className="font-mono text-[1.5vw] text-muted">Graduation Day</figcaption></figure>
-            <figure className="flex flex-col gap-[1.2vh] min-h-0"><img src={offer} crossOrigin="anonymous" alt="Oferta udziału" className="w-full h-[30vh] object-cover" /><figcaption className="font-mono text-[1.5vw] text-muted">Oferta udziału</figcaption></figure>
-            <figure className="flex flex-col gap-[1.2vh] min-h-0"><img src={nasa} crossOrigin="anonymous" alt="Praca przy misji" className="w-full h-[30vh] object-cover" /><figcaption className="font-mono text-[1.5vw] text-muted">Praca przy misji</figcaption></figure>
+        <div className="grid grid-cols-2 gap-[3vw] mt-[3vh]">
+            <figure className="flex flex-col gap-[1vh] min-h-0"><div className="border border-muted/40 bg-[#0E1426] shadow-2xl"><img src={`${base}screens/17-graduation-day.jpg`} crossOrigin="anonymous" alt="Zrzut ekranu z gry: Graduation Day" className="block w-full h-[33vh] object-cover object-top" /></div><figcaption className="font-mono text-[1.5vw] text-muted">Zrzut ekranu z gry · Graduation Day</figcaption></figure>
+            <figure className="flex flex-col gap-[1vh] min-h-0"><div className="border border-muted/40 bg-[#0E1426] shadow-2xl"><img src={`${base}screens/18-start-mission.jpg`} crossOrigin="anonymous" alt="Zrzut ekranu z gry: Start Mission" className="block w-full h-[33vh] object-cover object-top" /></div><figcaption className="font-mono text-[1.5vw] text-muted">Zrzut ekranu z gry · Start Mission</figcaption></figure>
         </div>
         <div className="grid grid-cols-2 gap-x-[4vw] mt-[2vh]">
           <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.2vh]">

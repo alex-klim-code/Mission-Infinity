@@ -14,3 +14,9 @@ mtime_ms = 1794731152696
 storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:340f4622-3b75-4575-80fe-2610815ed36b/78a31337-a978-4ce3-9807-6cb7024a53c1/acff026b-806f-4427-b722-4d7f007692f9"
 storage_version_token = "1794731177381662"
 content_type = "text/html"
+
+[[outputs]]
+id = "_HTPK9zVP4mb0Hg76333e"
+uri = "file://.local/outputs/Mission--Infinity---poznaj-gr-.pptx"
+type = "slides"
+title = "Mission: Infinity — poznaj grę.pptx"

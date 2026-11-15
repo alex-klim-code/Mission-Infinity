@@ -11,30 +11,33 @@ export default function Slide12() {
           </div>
           <div className="w-[2.5vw] h-[2.5vw] rounded-full border border-muted flex items-center justify-center"><div className="w-[0.5vw] h-[0.5vw] rounded-full bg-accent" /></div>
         </div>
-        <div className="flex-1 grid grid-cols-[7fr_5fr] gap-[4vw] mt-[5vh] min-h-0">
+        <div className="flex-1 grid grid-cols-[1fr_1fr] gap-[3vw] mt-[4vh] min-h-0">
           <div className="flex flex-col justify-center">
-          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.6vh]">
+          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.3vh]">
             <span className="font-mono text-[1.5vw] text-accent">01</span>
             <p className="font-body text-[2vw] leading-snug text-text [text-wrap:pretty]">Zapewnij kamerę, system pobierania próbek i pojemnik na próbki</p>
           </div>
-          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.6vh]">
+          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.3vh]">
             <span className="font-mono text-[1.5vw] text-accent">02</span>
             <p className="font-body text-[2vw] leading-snug text-text [text-wrap:pretty]">Odpowiedni sprzęt z Rocket Builder jest zaliczany bez ponownej opłaty</p>
           </div>
-          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.6vh]">
+          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.3vh]">
             <span className="font-mono text-[1.5vw] text-accent">03</span>
             <p className="font-body text-[2vw] leading-snug text-text [text-wrap:pretty]">Dodaj opcjonalne instrumenty do badań Księżyca</p>
           </div>
-          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.6vh]">
+          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.3vh]">
             <span className="font-mono text-[1.5vw] text-accent">04</span>
             <p className="font-body text-[2vw] leading-snug text-text [text-wrap:pretty]">Sprawdź zestaw i zatwierdź Purchase</p>
           </div>
-          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.6vh]">
+          <div className="flex gap-[1.6vw] items-baseline border-t border-[#6A8AAA]/30 py-[1.3vh]">
             <span className="font-mono text-[1.5vw] text-accent">05</span>
             <p className="font-body text-[2vw] leading-snug text-text [text-wrap:pretty]">Więcej instrumentów oznacza większy koszt i masę</p>
           </div>
           </div>
-          <div className="relative overflow-hidden"><img src={`${base}img/laboratory.png`} crossOrigin="anonymous" alt="Laboratorium misji" className="absolute inset-0 w-full h-full object-cover" /></div>
+          <figure className="flex flex-col justify-center gap-[1.2vh] min-h-0">
+            <div className="border border-muted/40 bg-[#0E1426] shadow-2xl"><img src={`${base}screens/23-scientific-instruments-selection.jpg`} crossOrigin="anonymous" alt="Zrzut ekranu z gry: Wybór instrumentów naukowych" className="block w-full h-auto" /></div>
+            <figcaption className="font-mono text-[1.5vw] text-muted">Zrzut ekranu z gry · Wybór instrumentów naukowych</figcaption>
+          </figure>
         </div>
         <div className="mt-auto flex justify-between items-end font-mono text-[1.5vw] text-muted">
           <span>MISSION: INFINITY</span>

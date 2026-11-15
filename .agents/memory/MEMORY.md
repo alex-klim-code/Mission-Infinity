@@ -7,3 +7,5 @@
 - [Floating panel focus](portal-focus-safety.md) — overlapping body portals can intercept typing; check DOM counts and namespace sibling panel keys.
 - [Live control request budgets](live-control-budgets.md) — budget combined ticks and player inputs separately from ordinary writes; lost updates do not pause the flight.
 - [Viewport and dialog checks](viewport-pagination.md) — verify initial opening, complete controls and the ends of internal scroll regions, not only absence of document scroll.
+- [Presentation visuals](presentation-visuals.md) — use real game screenshots in the Mission: Infinity presentation, not reconstructed UI or illustrative substitutes.
+- [Browser recording export](browser-recording-export.md) — verify the documented recording export callback is exposed before scheduling lengthy gameplay capture.
