@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as RKeyboardEvent, type PointerEvent as RPointerEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as RKeyboardEvent, type PointerEvent as RPointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, ArrowRight, Check, CheckCircle2, Fuel, Link2, Lock, Plug, Unplug } from 'lucide-react';
 import type { SessionAction } from '@workspace/api-client-react';
+import { recommendGameplayFuel } from '@workspace/mission-physics';
+import { useGameplayPayloadInput } from '@/hooks/use-payload-capacity';
 import { HudButton } from '@/components/ui-kit';
 import { cn } from '@/lib/utils';
+import { availableFuelBudget } from '@/lib/fuel-budget';
 import { HullVisual, formatExact, hullById, useCalm, type Props } from './rocket-shared';
 
 const kg = (n: number) => `${Math.round(n).toLocaleString('en-US')} kg`;
@@ -29,6 +32,12 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
   const calm = useCalm();
   const f = session.fueling;
   const hull = hullById(session.build?.selectedHullId);
+  // Use the saved loadout, not an unrelated local instrument-selection draft.
+  const { input, catalogReady } = useGameplayPayloadInput(session, session.science?.instrumentIds);
+  const remainingBudget = availableFuelBudget(session, mission);
+  const recommendation = useMemo(() => f && catalogReady ? recommendGameplayFuel(input, {
+    capacityKg: f.capacityKg, loadedKg: f.loadedKg, pricePerKg: f.pricePerKg, availableBudget: remainingBudget,
+  }) : null, [input, catalogReady, f?.capacityKg, f?.loadedKg, f?.pricePerKg, remainingBudget]);
 
   /* ---------- server mirror refs ---------- */
   const fRef = useRef(f);
@@ -38,7 +47,7 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
   const availableRef = useRef(0);
-  availableRef.current = Math.max(0, (mission?.budget ?? 0) - (session.build?.spent ?? 0));
+  availableRef.current = Math.max(0, remainingBudget);
   const holdingRef = useRef(false);
   const inflightRef = useRef(false);
   const lastTickRef = useRef(0);
@@ -185,15 +194,13 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
   }
 
   const canOperate = isHost && !f.completed;
-  const budget = mission?.budget ?? 0;
-  const spentNow = session.build?.spent ?? 0;
-  const available = budget - spentNow; // fuel spent already included
+  const available = remainingBudget; // fuel spent already included
   const visualKg = Math.min(f.capacityKg, Math.max(0, visual));
   const visualCost = f.spent + Math.max(0, visualKg - f.loadedKg) * f.pricePerKg;
   const fill = f.capacityKg ? (visualKg / f.capacityKg) * 100 : 0;
   const progress = f.targetKg ? Math.min(100, (visualKg / f.targetKg) * 100) : 0;
   const draftNum = Math.round(Number(draft));
-  const draftValid = Number.isFinite(draftNum) && draftNum >= Math.ceil(f.loadedKg) && draftNum <= f.capacityKg && draftNum <= 30000;
+  const draftValid = Number.isFinite(draftNum) && draftNum >= Math.ceil(f.loadedKg) && draftNum <= f.capacityKg;
   const extraCost = Math.max(0, (draftValid ? draftNum : f.targetKg) - f.loadedKg) * f.pricePerKg;
   const affordableKg = Math.floor(f.loadedKg + Math.max(0, available) / f.pricePerKg);
   const unaffordable = extraCost > available;
@@ -379,6 +386,28 @@ export function FuelStage({ session, mission, isHost, act, pending, pendingActio
 
             <div className="glass rounded-lg p-3" data-testid="panel-fuel-target">
               <div className="kicker mb-2">Fuel quantity</div>
+              <div className="mb-3 rounded-md border border-ion/25 bg-ion/5 p-2 text-[11px]" data-testid="panel-fuel-recommendation">
+                <h2 className="font-mono uppercase tracking-wide text-ion">Indicative fuel recommendation</h2>
+                {!catalogReady ? (
+                  <p className="mt-1 text-muted-foreground">Loading configuration data…</p>
+                ) : recommendation ? (
+                  <>
+                    <p className="mt-1" data-testid="text-fuel-recommended-quantity">Target: <strong>{kg(recommendation.targetKg)}</strong> total</p>
+                    <p data-testid="text-fuel-recommended-cost">Total fuel price: {formatExact(recommendation.totalCost)}</p>
+                    <p className="text-muted-foreground">Still to load: {kg(recommendation.additionalKg)} · {formatExact(recommendation.additionalCost)} additional</p>
+                    {!recommendation.affordable && <p className="mt-1 text-destructive" data-testid="text-fuel-recommendation-budget">Insufficient budget: {formatExact(recommendation.budgetShortfall)} more needed. A smaller affordable load would not meet this estimate.</p>}
+                    <button type="button"
+                      disabled={!canOperate || f.loading || holding || pending || recommendation.targetKg === f.targetKg}
+                      onPointerDown={(e) => e.preventDefault()}
+                      onClick={() => commitTarget(recommendation.targetKg)}
+                      className="mt-2 rounded border border-ion/50 px-2 py-1 font-mono text-ion hover:bg-ion/10 disabled:opacity-40"
+                      data-testid="button-apply-fuel-recommendation">Use suggested quantity</button>
+                  </>
+                ) : (
+                  <p className="mt-1 text-destructive" data-testid="text-fuel-recommendation-impossible">No fuel quantity from the current load to tank capacity makes this configuration and payload feasible. Review the payload or rocket parts; loaded fuel cannot be removed.</p>
+                )}
+                <p className="mt-1 text-muted-foreground">Quality-based estimate for the current rocket and payload, not a flight guarantee. Applying only sets the target: no pumping, payment or confirmation.</p>
+              </div>
               <input
                 type="range" min={0} max={f.capacityKg} step={100}
                 value={Math.max(minKg, Number(draft) || 0)}

@@ -1,5 +1,6 @@
 /** Strict specification solver; the game uses the quality-based helper exported below. */
 export { assessGameplayPayload } from "./gameplay";
+export { recommendGameplayFuel, type FuelRecommendationLimits } from "./fuel-recommendation";
 export const G0 = 9.81;
 export const ENGINE_CATEGORIES = new Set(["main-engines", "upper-stage-engines", "orbital-maneuvering", "lunar-descent-engine", "lunar-ascent-system"]);
 const PAYLOAD_CATEGORIES = new Set(["sample-collection", "sample-container", "scientific-instruments"]);
