@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "FiWxtnRYJtgyil7nQ5IUP"
+uri = "file://docs/Mission-Infinity-Specyfikacja-techniczna.html"
+type = "html"
+title = "Mission: Infinity — specyfikacja techniczna"
+description = "Samodzielny dokument po polsku: architektura, biblioteki i wersje, baza danych, komunikacja, logika misji oraz ograniczenia. Można otworzyć w przeglądarce i wydrukować do PDF."
+logical_id = "78a31337-a978-4ce3-9807-6cb7024a53c1"
+content_hash = "sha256:61e394a35d6fa72817c46542476fe835f233dec218b08cb24047d8528641c6e6"
+size = 22429
+mtime_ms = 1794731152696
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:340f4622-3b75-4575-80fe-2610815ed36b/78a31337-a978-4ce3-9807-6cb7024a53c1/acff026b-806f-4427-b722-4d7f007692f9"
+storage_version_token = "1794731177381662"
+content_type = "text/html"

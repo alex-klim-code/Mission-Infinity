@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mission: Infinity — specyfikacja techniczna</title>
+  <style>
+    :root{color-scheme:light;--ink:#172b40;--muted:#526477;--accent:#086f81;--line:#d9e3eb}
+    *{box-sizing:border-box}body{margin:0;background:#eef3f7;color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1080px;margin:32px auto;padding:48px 54px;background:white;border:1px solid var(--line);border-radius:12px}
+    header{border-bottom:3px solid var(--accent);padding-bottom:24px;margin-bottom:32px}.eyebrow{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.15em;text-transform:uppercase}
+    h1{font-size:36px;line-height:1.2;margin:12px 0}h2{font-size:23px;margin:34px 0 14px}h3{font-size:17px;margin:22px 0 8px}
+    p{margin:10px 0}li{margin:5px 0}.meta,.muted{color:var(--muted)}a{color:var(--accent)}nav{background:#f4f8fa;padding:18px 24px;border-radius:8px}
+    nav ol{columns:2;margin:8px 0;padding-left:22px}table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0}
+    th,td{text-align:left;vertical-align:top;padding:11px 12px;border:1px solid var(--line);overflow-wrap:anywhere}th{background:#edf5f7}
+    code{font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f0f4f7;border-radius:3px;padding:2px 4px;overflow-wrap:anywhere}
+    pre{white-space:pre-wrap;background:#102638;color:#edf6fa;padding:20px;border-radius:8px;font:13px/1.6 ui-monospace,monospace}
+    .note{border-left:4px solid var(--accent);background:#f0f7f9;padding:12px 18px;margin:18px 0}
+    footer{border-top:1px solid var(--line);margin-top:36px;padding-top:16px;font-size:12px;color:var(--muted)}
+    @media(max-width:700px){main{margin:0;padding:24px 16px;border:0;border-radius:0}h1{font-size:29px}nav ol{columns:1}th,td{padding:7px;font-size:12px}}
+    @media print{body{background:white;font-size:10pt}main{max-width:none;margin:0;padding:0;border:0}h2,h3{break-after:avoid}tr,.note{break-inside:avoid}nav{display:none}a{color:inherit}pre{background:#f0f4f7;color:#172b40}footer{font-size:9pt}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Dokumentacja projektu</div>
+    <h1>Mission: Infinity<br>Specyfikacja techniczna</h1>
+    <p>Architektura, technologie, biblioteki i najważniejsze zasady działania gry.</p>
+    <p class="meta">Stan sprawdzony w repozytorium: 15 listopada 2026 r.<br>Dokument opisuje aktualną implementację, a nie wyłącznie pierwotne założenia.</p>
+  </header>
+
+  <nav aria-label="Spis treści">
+    <strong>Spis treści</strong>
+    <ol>
+      <li><a href="#produkt">Charakterystyka produktu</a></li>
+      <li><a href="#architektura">Architektura systemu</a></li>
+      <li><a href="#frontend">Frontend i interfejs</a></li>
+      <li><a href="#postacie">Postacie i grafika 3D</a></li>
+      <li><a href="#backend">Backend i komunikacja</a></li>
+      <li><a href="#dane">Baza danych i pliki</a></li>
+      <li><a href="#gra">Logika misji</a></li>
+      <li><a href="#bezpieczenstwo">Bezpieczeństwo i niezawodność</a></li>
+      <li><a href="#narzedzia">Narzędzia i weryfikacja</a></li>
+      <li><a href="#struktura">Struktura kodu i ograniczenia</a></li>
+    </ol>
+  </nav>
+
+  <section id="produkt">
+    <h2>1. Charakterystyka produktu</h2>
+    <p><strong>Mission: Infinity</strong> jest przeglądarkową grą edukacyjną o planowaniu i realizacji misji kosmicznych. Obsługuje rozgrywkę solo i współpracę załogi liczącej do czterech graczy. Aktualnie rozbudowaną misją jest <strong>LUNA — Lunar Sample Return</strong>, obejmująca przygotowanie rakiety, lot na Księżyc, badania i powrót na Ziemię.</p>
+    <ul>
+      <li>Interfejs gry jest w języku angielskim, w stylistyce Asterion Aerospace.</li>
+      <li>Lider zatwierdza kluczowe przejścia i wspólne zakupy; pozostali gracze mogą proponować wybory.</li>
+      <li>Profile, postacie, stan misji i historia czatu są przechowywane po stronie serwera.</li>
+      <li>Gra działa w przeglądarce. Nie wymaga instalacji aplikacji natywnej.</li>
+    </ul>
+  </section>
+
+  <section id="architektura">
+    <h2>2. Architektura systemu</h2>
+    <p>Projekt ma strukturę <strong>monorepo pnpm</strong>: aplikacja webowa, serwer API oraz współdzielone pakiety TypeScript znajdują się w jednym repozytorium.</p>
+    <pre>Przeglądarka gracza
+  React + TypeScript + Vite
+        │
+        ├── HTTP / REST ──► Express + Clerk ──► Fastify / API gry
+        │                                           │
+        └── Socket.IO ◄──────────────────────────────┤
+                                                    ├── Kysely + pg ──► PostgreSQL
+                                                    └── App Storage ──► pliki
+
+Współdzielone pakiety:
+OpenAPI → Orval → klient React Query + schematy Zod
+mission-physics → wspólne obliczenia rozgrywki</pre>
+    <p><strong>Express i Fastify nie są dwoma niezależnymi serwerami biznesowymi.</strong> Express stanowi warstwę wejściową HTTP i uwierzytelniania, a Fastify obsługuje endpointy gry w tym samym backendzie.</p>
+    <p>Stan gry jest autorytatywnie zatwierdzany na serwerze. Animacje i lokalne podglądy nie zastępują walidacji zakupu, budżetu ani uprawnień lidera.</p>
+  </section>
+
+  <section id="frontend">
+    <h2>3. Frontend i interfejs</h2>
+    <p>Poniższe numery odnoszą się do wersji zainstalowanych w sprawdzonym środowisku. Dokładny zestaw zależności utrwala <code>pnpm-lock.yaml</code>; zakresy dopuszczalnych wersji znajdują się w <code>package.json</code>.</p>
+    <table>
+      <thead><tr><th>Technologia / biblioteka</th><th>Wersja</th><th>Zastosowanie</th></tr></thead>
+      <tbody>
+        <tr><td>TypeScript</td><td>linia 5.9</td><td>Typowanie interfejsu, API, modeli danych i logiki misji.</td></tr>
+        <tr><td>React / React DOM</td><td>19.1.10</td><td>Komponenty, ekrany gry i interaktywne formularze.</td></tr>
+        <tr><td>Vite</td><td>7.3.7</td><td>Serwer deweloperski, aktualizacje kodu i budowanie frontendu.</td></tr>
+        <tr><td>Tailwind CSS</td><td>4.3.3</td><td>Responsywne style, układ paneli oraz motyw wizualny.</td></tr>
+        <tr><td>TanStack React Query</td><td>5.104.1</td><td>Pobieranie danych API, pamięć podręczna, mutacje i ponawianie odczytów.</td></tr>
+        <tr><td>Wouter</td><td>3.13.0</td><td>Routing, m.in. ekran profilu, postaci, misji i konkretnej sesji.</td></tr>
+        <tr><td>Framer Motion</td><td>12.43.0</td><td>Przejścia, animacje scen, powiadomień, lotu i lądowania.</td></tr>
+        <tr><td>Lucide React</td><td>0.545.0</td><td>Ikony interfejsu, sekcji budowy i przycisków.</td></tr>
+        <tr><td>Clerk React</td><td>6.18.7</td><td>Komponenty logowania i dostęp do stanu uwierzytelnienia.</td></tr>
+        <tr><td>Socket.IO Client</td><td>4.8.4</td><td>Odbiór zdarzeń dotyczących zmian sesji i danych społecznościowych.</td></tr>
+      </tbody>
+    </table>
+    <h3>Biblioteki pomocnicze</h3>
+    <ul>
+      <li><strong>shadcn/ui i Radix UI</strong> — lokalne komponenty interfejsu oraz mechanizmy dialogów, tooltipów, suwaków i innych kontrolek. shadcn/ui jest zestawem komponentów w kodzie projektu, nie oddzielnym silnikiem gry.</li>
+      <li><strong>class-variance-authority, clsx i tailwind-merge</strong> — warianty komponentów i łączenie klas CSS.</li>
+      <li><strong>Zustand</strong> — lokalne preferencje interfejsu; nie stanowi źródła prawdy dla wspólnego budżetu lub misji.</li>
+      <li><strong>i18n-iso-countries i country-flag-icons</strong> — dane krajów i flagi powiązane z profilem postaci.</li>
+      <li><strong>React Hook Form, Recharts i pozostałe pakiety UI</strong> są obecne w bibliotece komponentów projektu. Ich instalacja nie oznacza, że każdy ekran gry korzysta z formularzy lub wykresów tych bibliotek.</li>
+    </ul>
+    <p>Układ rozgrywki zachowuje stały nagłówek i stopkę załogi. Dłuższe treści przewijają się wewnątrz odpowiedniego panelu. Po prawej stronie dostępne są podgląd rakiety, koszty i charakterystyki.</p>
+  </section>
+
+  <section id="postacie">
+    <h2>4. Postacie i grafika 3D</h2>
+    <table>
+      <thead><tr><th>Biblioteka</th><th>Wersja</th><th>Rola i status</th></tr></thead>
+      <tbody>
+        <tr><td>DiceBear Core</td><td>10.7.0</td><td>Aktywny, wbudowany kreator awatarów. Generuje spójny wygląd na podstawie zapisanej konfiguracji.</td></tr>
+        <tr><td>DiceBear Styles</td><td>10.6.0</td><td>Definicja stylu Avataaars wykorzystywana w renderowaniu postaci.</td></tr>
+        <tr><td>Three.js</td><td>0.187.0</td><td>Renderowanie modeli 3D w zachowanym podglądzie istniejących postaci GLB.</td></tr>
+        <tr><td>React Three Fiber</td><td>9.8.2</td><td>Integracja sceny Three.js z komponentami React.</td></tr>
+        <tr><td>React Three Drei</td><td>10.7.9</td><td>Pomocnicze kontrolki sceny, m.in. obracanie i przybliżanie modelu.</td></tr>
+        <tr><td>Avaturn SDK</td><td>1.1.4</td><td>Pakiet pozostał z wcześniejszej integracji. Zewnętrzny edytor nie jest aktualnie udostępnioną metodą tworzenia postaci.</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>Istotne rozróżnienie:</strong> aktualny onboarding korzysta z kreatora wewnątrz gry, bez przekierowania do Avaturn. Zachowane modele 3D mogą nadal być wyświetlane dla zgodności z istniejącymi profilami. Obecność Three.js nie oznacza, że cała gra lub rakieta są pełną symulacją 3D.</div>
+    <p>Konfiguracja postaci obejmuje wygląd, wiek, kraj i nazwę gracza. Awatary wbudowanego kreatora mają wspólny motyw munduru Asterion Aerospace oraz flagę wybranego kraju. Podgląd 3D wykorzystuje GLTFLoader i obsługę modeli GLB; kod zawiera również dekoder Meshopt.</p>
+    <p>Sceny misji łączą ilustracje, obrazy rakiet, elementy SVG i animacje React. Uwzględniane są ustawienia ograniczenia animacji.</p>
+  </section>
+
+  <section id="backend">
+    <h2>5. Backend i komunikacja</h2>
+    <table>
+      <thead><tr><th>Technologia / biblioteka</th><th>Wersja</th><th>Zastosowanie</th></tr></thead>
+      <tbody>
+        <tr><td>Node.js</td><td>24.22.1 w sprawdzonym środowisku</td><td>Uruchamianie backendu i narzędzi projektu.</td></tr>
+        <tr><td>Express</td><td>5.3.0</td><td>Warstwa HTTP, middleware Clerk i przekazanie żądań do API gry.</td></tr>
+        <tr><td>Fastify</td><td>5.12.8</td><td>Trasy gry, parsowanie żądań, limity i obsługa błędów.</td></tr>
+        <tr><td>Clerk Express</td><td>2.1.89</td><td>Weryfikacja sesji uwierzytelnienia po stronie serwera.</td></tr>
+        <tr><td>Socket.IO</td><td>4.8.4</td><td>Powiadomienia pokojów i użytkowników oraz mechanizmy obecności graczy.</td></tr>
+        <tr><td>Zod</td><td>3.25.76</td><td>Walidacja danych przychodzących i odpowiedzi API.</td></tr>
+        <tr><td>Pino</td><td>9.14.0</td><td>Strukturalne logi serwera; Pino HTTP obsługuje logowanie żądań.</td></tr>
+      </tbody>
+    </table>
+    <h3>Kontrakt API</h3>
+    <p><strong>OpenAPI</strong> jest źródłem definicji kontraktu HTTP. Generator <strong>Orval</strong> tworzy klienta API, hooki React Query oraz schematy walidacji. Pozwala to utrzymywać zgodność nazw pól i typów pomiędzy frontendem a backendem.</p>
+    <ul>
+      <li><code>/api/game/me</code> — konto i postać bieżącego gracza.</li>
+      <li><code>/api/game/catalog</code> — katalog misji i wyposażenia.</li>
+      <li><code>/api/game/sessions/:id</code> — aktualny stan konkretnej sesji.</li>
+      <li><code>/api/game/sessions/:id/actions</code> — zatwierdzane przez serwer działania gracza.</li>
+      <li><code>/api/game/sessions/:id/messages</code> — wysyłanie i odczyt historii czatu.</li>
+      <li><code>/api/socket.io</code> — komunikacja realtime, odrębna od endpointów REST.</li>
+    </ul>
+    <p>Logowanie obsługuje Clerk z zewnętrznymi dostawcami tożsamości. Interfejs ma wspólny ekran wejścia dla nowych i istniejących użytkowników; widoczność Google i Apple zależy także od konfiguracji dostawców w Clerk. Sam kod interfejsu nie potwierdza aktywnej konfiguracji OAuth w środowisku produkcyjnym.</p>
+  </section>
+
+  <section id="dane">
+    <h2>6. Baza danych i pliki</h2>
+    <table>
+      <thead><tr><th>Rozwiązanie</th><th>Rola</th></tr></thead>
+      <tbody>
+        <tr><td>PostgreSQL</td><td>Trwałe dane kont, postaci, relacji graczy, zaproszeń, sesji, czatu, zakupów i postępu misji. Wersja samego serwera PostgreSQL nie została w tym dokumencie zweryfikowana.</td></tr>
+        <tr><td>Kysely 0.29.9</td><td>Typowane zapytania SQL i transakcje logiki gry.</td></tr>
+        <tr><td>pg 8.23.1</td><td>Sterownik PostgreSQL oraz pula połączeń.</td></tr>
+        <tr><td>Drizzle ORM 0.45.4 / Drizzle Kit</td><td>Definicje schematu i narzędzia jego synchronizacji; nie zastępują Kysely w głównej logice transakcyjnej gry.</td></tr>
+        <tr><td>App Storage / Google Cloud Storage SDK 8.2.0</td><td>Przechowywanie i udostępnianie obsługiwanych plików, m.in. ilustracji oraz istniejących zasobów awatarów.</td></tr>
+        <tr><td>localStorage przeglądarki</td><td>Lokalne ustawienia, m.in. osobiste włączenie wskazówek DEMO. Nie przechowuje autorytatywnego wspólnego stanu misji.</td></tr>
+      </tbody>
+    </table>
+    <p>Historia czatu jest zapisywana niezależnie od tymczasowych powiadomień po prawej stronie ekranu. Zniknięcie powiadomienia nie usuwa wiadomości z historii.</p>
+    <p>Źródłem katalogu części były dostarczone dane arkusza. Rozgrywka korzysta z przygotowanego katalogu w kodzie i API, a nie z konieczności ponownego otwierania Excela przy każdym wyborze.</p>
+  </section>
+
+  <section id="gra">
+    <h2>7. Logika misji i obliczenia</h2>
+    <p>Logika domenowa jest napisana w TypeScript. Wspólny pakiet <code>@workspace/mission-physics</code> udostępnia obliczenia wykorzystywane przez klienta i serwer.</p>
+    <ul>
+      <li><strong>Rocket Builder:</strong> siedem sekcji, 28 kategorii, trzy zachowane obudowy i katalog podzespołów. Zakupy uwzględniają budżet oraz wcześniej opłacone elementy.</li>
+      <li><strong>Scientific Instruments:</strong> wyposażenie wymagane i opcjonalne, masa ładunku, punktacja naukowa oraz zaliczanie odpowiedniego wyposażenia z wcześniejszego etapu.</li>
+      <li><strong>Tankowanie:</strong> ilość kupionego i załadowanego paliwa, cena, koszt oraz kontrola postępu napełniania.</li>
+      <li><strong>Budowa, lot i lądowanie:</strong> etapy zapisywane na serwerze, animacje telemetryczne, sterowanie i kontrole sprzętu.</li>
+      <li><strong>Ryzyko:</strong> jakość części wpływa na model uszkodzeń; uwzględniane są zdarzenia pogodowe, naprawy i ograniczenia powrotu.</li>
+      <li><strong>Finanse:</strong> wspólne zakupy oraz mechanizm wniosków o dodatkowy budżet misji.</li>
+      <li><strong>Raport:</strong> wynik misji, zrealizowane cele i rezultaty naukowe.</li>
+    </ul>
+    <h3>Dynamiczny ładunek</h3>
+    <p>Pojemność ładunkowa nie jest stałym limitem. Aktualna implementacja wylicza ją jako <strong>uproszczony model oparty na jakości konfiguracji</strong>, masie sprzętu, paliwie i potrzebach lotu na Księżyc oraz powrotu. Interfejs prezentuje m.in. maksymalny i bieżący ładunek, zapas pojemności, całkowitą masę, TWR i delta-v.</p>
+    <p>To model rozgrywki, a nie certyfikowana analiza rzeczywistej rakiety. Parametry zastępcze modelu nie powinny być przedstawiane jako dane producenta części.</p>
+    <h3>DEMO i pominięcie wstępu</h3>
+    <p>DEMO jest osobistym ustawieniem podpowiedzi. Przycisk <strong>Build recommended rocket</strong> pozwala liderowi kupić i ukończyć zalecany projekt etapu 1 jednym działaniem, bez darmowych środków i bez podwójnego naliczania zakupów. Instrumenty naukowe i paliwo pozostają osobnymi etapami. <strong>Skip Introduction</strong> przenosi lidera z Graduation Day do Start Mission; nie uruchamia samodzielnie misji ani nie zastępuje gotowości załogi.</p>
+  </section>
+
+  <section id="bezpieczenstwo">
+    <h2>8. Bezpieczeństwo i niezawodność</h2>
+    <ul>
+      <li>Serwer sprawdza uwierzytelnienie, członkostwo w sesji i uprawnienia lidera.</li>
+      <li>Dane żądań i odpowiedzi są walidowane schematami Zod.</li>
+      <li>Wrażliwe przejścia i zakupy korzystają z transakcji oraz blokad rekordu sesji, aby ograniczyć wyścigi i podwójne naliczanie.</li>
+      <li>Kontrola oczekiwanego etapu zapobiega niezamierzonemu pomijaniu scen przy powtórzeniu polecenia.</li>
+      <li>Obecne są kontrole pochodzenia żądań oraz limity przypisane do uwierzytelnionego użytkownika.</li>
+      <li>Stan już wczytanej misji i konta jest zachowywany przy przejściowym błędzie sieci lub ograniczeniu 429. Użytkownik widzi komunikat o opóźnieniu aktualizacji.</li>
+      <li>Ponawianie uwzględnia nagłówek <code>Retry-After</code>. Odmowa dostępu nie jest traktowana jak zwykła przerwa sieciowa.</li>
+      <li>Zdarzenia realtime są grupowane: nie wywołują już odczytu profilu przy każdym tyknięciu lotu.</li>
+    </ul>
+    <table>
+      <thead><tr><th>Grupa żądań</th><th>Aktualny limit na użytkownika / minutę</th></tr></thead>
+      <tbody>
+        <tr><td>Odczyt stanu sesji i planu DEMO</td><td>600</td></tr>
+        <tr><td>Pozostałe odczyty objęte polityką</td><td>240</td></tr>
+        <tr><td>Polecenia sesji, w tym sterowanie lotem</td><td>600</td></tr>
+        <tr><td>Pozostałe operacje zapisu</td><td>80</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">Limity opisują aktualną implementację, nie gwarancję przepustowości. Niektóre publiczne endpointy, np. katalog, mają odrębną obsługę.</p>
+  </section>
+
+  <section id="narzedzia">
+    <h2>9. Narzędzia programistyczne i weryfikacja</h2>
+    <ul>
+      <li><strong>pnpm 10.26.1</strong> w sprawdzonym środowisku — zarządzanie monorepo i zależnościami.</li>
+      <li><strong>TypeScript / tsc</strong> — kontrola typów i zależności pomiędzy pakietami.</li>
+      <li><strong>esbuild</strong> — budowanie serwera API.</li>
+      <li><strong>tsx i node:test</strong> — uruchamianie testów jednostkowych i domenowych w TypeScript.</li>
+      <li><strong>Testy PostgreSQL</strong> — weryfikacja transakcji, uprawnień, zakupów i przejść pomiędzy etapami na danych testowych.</li>
+      <li><strong>Testy przeglądarkowe Playwright</strong> — wykorzystywane do sprawdzania wybranych przepływów interfejsu, także po zalogowaniu. Nie oznacza to automatycznego pokrycia każdego ekranu.</li>
+    </ul>
+    <h3>Najważniejsze polecenia</h3>
+    <table>
+      <thead><tr><th>Polecenie</th><th>Działanie</th></tr></thead>
+      <tbody>
+        <tr><td><code>pnpm --filter @workspace/mission-infinity run dev</code></td><td>Uruchamia frontend.</td></tr>
+        <tr><td><code>pnpm --filter @workspace/api-server run dev</code></td><td>Buduje i uruchamia API w trybie deweloperskim.</td></tr>
+        <tr><td><code>pnpm run typecheck</code></td><td>Sprawdza typy bibliotek i aplikacji.</td></tr>
+        <tr><td><code>pnpm --filter @workspace/api-server test</code></td><td>Uruchamia zestaw testów domenowych backendu.</td></tr>
+        <tr><td><code>pnpm --filter @workspace/api-spec run codegen</code></td><td>Regeneruje klienta i schematy na podstawie OpenAPI.</td></tr>
+        <tr><td><code>pnpm run build</code></td><td>Sprawdza typy i uruchamia zdefiniowane procesy budowania pakietów.</td></tr>
+      </tbody>
+    </table>
+    <p>Do działania backendu potrzebne są skonfigurowane połączenie z bazą, uwierzytelnienie i — dla funkcji plikowych — dostęp do magazynu plików. Dokument celowo nie zawiera sekretów ani danych dostępowych.</p>
+  </section>
+
+  <section id="struktura">
+    <h2>10. Struktura kodu i ograniczenia</h2>
+    <table>
+      <thead><tr><th>Lokalizacja</th><th>Zawartość</th></tr></thead>
+      <tbody>
+        <tr><td><code>artifacts/mission-infinity</code></td><td>Aplikacja React, strony, komponenty, animacje i lokalne zasoby.</td></tr>
+        <tr><td><code>artifacts/api-server/src/game</code></td><td>Reguły gry, stan sesji, katalogi, obliczenia domenowe i testy.</td></tr>
+        <tr><td><code>artifacts/api-server/src/routes/game.ts</code></td><td>Endpointy API gry.</td></tr>
+        <tr><td><code>lib/api-spec</code></td><td>Kontrakt OpenAPI i konfiguracja generowania kodu.</td></tr>
+        <tr><td><code>lib/api-client-react</code></td><td>Klient HTTP, typy i hooki React Query.</td></tr>
+        <tr><td><code>lib/api-zod</code></td><td>Współdzielone schematy walidacji.</td></tr>
+        <tr><td><code>lib/db</code></td><td>Schemat i integracja z bazą danych.</td></tr>
+        <tr><td><code>lib/mission-physics</code></td><td>Współdzielony model parametrów i paliwa misji.</td></tr>
+        <tr><td><code>artifacts/mockup-sandbox</code></td><td>Oddzielne środowisko podglądu komponentów; nie jest serwerem logiki gry.</td></tr>
+      </tbody>
+    </table>
+    <h3>Ograniczenia aktualnej architektury</h3>
+    <ul>
+      <li>Obecność graczy, powiadomienia Socket.IO i liczniki ograniczenia żądań korzystają ze stanu procesu. Obsługa wielu równoległych instancji API wymaga wspólnego adaptera i współdzielonego przechowywania tych danych.</li>
+      <li>Dane logowania dostawców OAuth są konfiguracją środowiska, a nie treścią repozytorium. Nie zostały w tym dokumencie ujawnione ani potwierdzone dla produkcji.</li>
+      <li>Nie każdy zainstalowany pakiet reprezentuje aktywną funkcję produktu. Dotyczy to w szczególności pozostawionego SDK Avaturn oraz pomocniczych komponentów UI.</li>
+      <li>Dokumentacja nie jest audytem bezpieczeństwa, wydajności ani licencji wszystkich zależności.</li>
+    </ul>
+  </section>
+
+  <footer>
+    Źródła: manifesty pakietów, plik blokady zależności, aktualny kod aplikacji i API oraz dokumentacja projektu w repozytorium.
+    Ten plik jest samodzielnym dokumentem HTML: nie pobiera zewnętrznych zasobów i można go otworzyć bez uruchamiania gry lub wydrukować do PDF z przeglądarki.
+  </footer>
+</main>
+</body>
+</html>

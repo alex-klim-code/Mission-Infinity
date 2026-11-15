@@ -4,7 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { getGetPlayerQueryKey } from '@workspace/api-client-react';
 import { usePlayerAccount } from './use-player-account';
-import { invalidateGame, invalidateSessions, invalidateSocial } from '@/lib/game';
+import { invalidateGame, invalidateSocial } from '@/lib/game';
+import { createRealtimeRefreshQueue } from '@/lib/realtime-refresh';
 
 export type LinkStatus = 'offline' | 'connecting' | 'online';
 const RealtimeContext = createContext<LinkStatus>('offline');
@@ -28,6 +29,16 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       withCredentials: true,
     });
     let hadConnected = false;
+    const refresh = createRealtimeRefreshQueue(
+      () => {
+        // Session responses already include chat and crew. DEMO plans are keyed
+        // by revision and must not be invalidated again on each flight tick.
+        void qc.invalidateQueries({ predicate: q =>
+          typeof q.queryKey[0] === 'string' && /^\/api\/game\/sessions\/[^/]+$/.test(q.queryKey[0]) },
+        { cancelRefetch: false });
+      },
+      () => { void qc.invalidateQueries({ queryKey: getGetPlayerQueryKey() }, { cancelRefetch: false }); },
+    );
     socket.on('connect', () => {
       setStatus('online');
       if (hadConnected) void invalidateGame(qc);
@@ -39,15 +50,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       setStatus('online');
       void invalidateGame(qc);
     });
-    socket.on('game:changed', () => {
-      void invalidateSessions(qc);
-      void qc.invalidateQueries({ queryKey: getGetPlayerQueryKey() });
-    });
+    socket.on('game:changed', () => refresh.enqueue());
     socket.on('social:changed', () => {
       void invalidateSocial(qc);
       void qc.invalidateQueries({ queryKey: getGetPlayerQueryKey() });
     });
     return () => {
+      refresh.dispose();
       socket.removeAllListeners();
       socket.io.removeAllListeners();
       socket.disconnect();

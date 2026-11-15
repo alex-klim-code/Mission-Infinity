@@ -27,6 +27,7 @@ import { EmptyState, ErrorState, HudButton, Portrait } from '@/components/ui-kit
 import { SCENE_STATUS_LABEL, errMsg, errStatus, formatBudget, imgUrl, invalidateSocial } from '@/lib/game';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { connectionRetryDelay, isAccountConnectionError } from '@/lib/account-query-policy';
 
 /* ---------------- LOBBY ---------------- */
 
@@ -396,11 +397,17 @@ function CenterMessage({ title, text }: { title: string; text: string }) {
 function SessionInner({ account, id }: { account: PlayerAccount; id: string }) {
   const [badgeId, setBadgeId] = useState<string | null>(null);
   const { data: session, isLoading, error, refetch } = useGetGameSession(id, {
-    query: { queryKey: getGetGameSessionQueryKey(id), refetchInterval: 2000, retry: (n, e) => errStatus(e) !== 404 && errStatus(e) !== 403 && n < 2 },
+    query: {
+      queryKey: getGetGameSessionQueryKey(id),
+      refetchInterval: q => q.state.error && isAccountConnectionError(q.state.error)
+        ? Math.max(5000, connectionRetryDelay(0, q.state.error)) : 2000,
+      retry: (n, e) => n < 3 && isAccountConnectionError(e),
+      retryDelay: connectionRetryDelay,
+    },
   });
   const catalog = useGetGameCatalog();
   if (isLoading || catalog.isLoading) return <FullScreenLoader label="Joining crew channel" />;
-  if (error || !session) {
+  if (!session || (error && !isAccountConnectionError(error))) {
     const s = errStatus(error);
     if (s === 404 || s === 403) return <CenterMessage title="Session unavailable" text="This session no longer exists, or you are not part of its crew." />;
     return (
@@ -425,6 +432,7 @@ function SessionInner({ account, id }: { account: PlayerAccount; id: string }) {
   const badgeMember = session.players.find((p) => p.player.id === badgeId) ?? null;
   return (
     <>
+      {error && <div role="status" data-testid="session-reconnecting" className="pointer-events-none fixed left-1/2 top-20 z-[70] w-max max-w-[90vw] -translate-x-1/2 rounded border border-amber-400/50 bg-void/95 px-3 py-2 text-xs text-amber-200">Live updates delayed. Reconnecting automatically…</div>}
       {session.status === 'MISSION_STARTED' ? <Build {...props} /> : session.status === 'LOBBY' ? <Lobby {...props} /> : <Story {...props} scenes={scenes} />}
       <MessageNotifications key={`${session.id}:${meId}`} session={session} meId={meId} />
       <BadgeDialog member={badgeMember} isLeader={badgeMember?.player.id === session.hostId} isSelf={badgeMember?.player.id === meId} onOpenChange={(o) => !o && setBadgeId(null)} />

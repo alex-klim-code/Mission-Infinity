@@ -65,8 +65,7 @@ export function useSessionAct(id: string) {
             return;
           }
           qc.setQueryData(getGetGameSessionQueryKey(id), res.session);
-          if (data.action === 'initiate') void invalidateGame(qc);
-          else void qc.invalidateQueries({ queryKey: getGetPlayerQueryKey() });
+          if (data.action === 'initiate' || data.action === 'start') void invalidateGame(qc);
           after?.();
         },
         onError: (e) => {
@@ -78,7 +77,7 @@ export function useSessionAct(id: string) {
           }]);
           const building=current?.status==='MISSION_STARTED'&&!current.assembly?.completed&&(!current.journey||current.journey.phase==='NONE');
           if(!building||!playerId)toast({ title: 'Command rejected', description: message, variant: 'destructive' });
-          void qc.invalidateQueries({ queryKey: getGetGameSessionQueryKey(id) });
+          void qc.invalidateQueries({ queryKey: getGetGameSessionQueryKey(id) }, { cancelRefetch: false });
         },
       },
     );

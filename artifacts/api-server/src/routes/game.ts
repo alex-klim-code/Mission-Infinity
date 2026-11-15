@@ -17,7 +17,7 @@ import { getCatalog } from "../game/content";
 import { getAccount, getCareer, resolveUser, savePlayer } from "../game/players";
 import { friendshipAction, socialState } from "../game/social";
 import { createSession, notifySession, sessionState, updateSession } from "../game/sessions";
-import { consumeGameRate, gameRatePolicy } from "../game/rate-policy";
+import { consumeGameRate, gameRatePolicy, gameRateRetryAfter } from "../game/rate-policy";
 import {previewEngineering} from "../game/engineering";
 import {demoPlan} from "../game/demo-plan";
 import {GetDemoPlanResponse} from "@workspace/api-zod";
@@ -62,7 +62,7 @@ function idParam(req: FastifyRequest) {
   return z.string().uuid().parse((req.params as {id: string}).id);
 }
 
-gameApi.addHook("onRequest", async request => {
+gameApi.addHook("onRequest", async (request, reply) => {
   const route = request.url.split("?")[0];
   if (route === "/api/healthz" || route === "/api/game/catalog") return;
   validateOrigin(request.raw);
@@ -70,7 +70,11 @@ gameApi.addHook("onRequest", async request => {
   const authId = auth?.userId;
   requireCondition(authId, 401, "Sign in to access your mission.");
   const policy=gameRatePolicy(request.method,route);
-  requireCondition(consumeGameRate(windows,`${authId}:${policy.bucket}`,policy.limit),429,"Too many requests. Please wait a moment.");
+  const key=`${authId}:${policy.bucket}`;
+  if(!consumeGameRate(windows,key,policy.limit)){
+    reply.header("Retry-After",gameRateRetryAfter(windows,key));
+    throw new GameError(429,"Too many requests. Please wait a moment.");
+  }
   request.playerId = await resolveUser(authId);
 });
 

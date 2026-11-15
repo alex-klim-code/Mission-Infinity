@@ -170,7 +170,7 @@ export function RequireCharacter({ children, allowNoCharacter }: { children: (a:
 function AccountGate({ children, allowNoCharacter }: { children: (a: PlayerAccount) => ReactNode; allowNoCharacter?: boolean }) {
   const { data, isLoading, error, refetch } = usePlayerAccount();
   if (isLoading) return <FullScreenLoader />;
-  if (error || !data)
+  if (!data || (error && !isAccountConnectionError(error)))
     return (
       <div className="relative flex min-h-[100dvh] items-center justify-center bg-background p-6">
         <Starfield />
@@ -183,7 +183,10 @@ function AccountGate({ children, allowNoCharacter }: { children: (a: PlayerAccou
       </div>
     );
   if (!data.character && !allowNoCharacter) return <Redirect to="/character" />;
-  return <>{children(data)}</>;
+  return <>
+    {error && <div role="status" data-testid="account-reconnecting" className="pointer-events-none fixed left-1/2 top-2 z-[80] w-max max-w-[90vw] -translate-x-1/2 rounded border border-amber-400/50 bg-void/95 px-3 py-2 text-xs text-amber-200">Account connection delayed. Reconnecting automatically…</div>}
+    {children(data)}
+  </>;
 }
 
 export function PageHeader({ kicker, title, sub, right }: { kicker: string; title: string; sub?: string; right?: ReactNode }) {
